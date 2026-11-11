@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>记忆脑图 · 视觉样张（第二版）</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:14px/1.6 "Segoe UI Variable Text","Segoe UI","Microsoft YaHei UI","PingFang SC",sans-serif;background:#f7f7f6;color:#18181b;display:flex;flex-direction:column;transition:background .35s,color .35s}
+body.dark{background:#0c0c0d;color:#ededef}
+.bar{flex:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 32px 0}
+.bar b{font-size:14px;font-weight:600;white-space:nowrap}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:10px;background:#ececea;border:1px solid #e3e3df;transition:background .35s,border-color .35s}
+body.dark .seg{background:#1c1c1f;border-color:#26262a}
+.seg button{font:inherit;font-size:13px;border:0;border-radius:7px;padding:4px 13px;background:none;color:#71717a;cursor:pointer;transition:background .2s,color .2s}
+.seg button.on{background:#fff;color:#18181b;font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+body.dark .seg button{color:#8b8b93}body.dark .seg button.on{background:#2a2a2e;color:#ededef}
+.bar p{margin:0;font-size:12.5px;color:#71717a;flex:1 1 100%;max-width:900px;padding-bottom:2px}
+body.dark .bar p{color:#8b8b93}
+.sp{flex:1}
+.stage{flex:1;min-height:0;padding:14px 32px 28px;display:flex}
+.box{position:relative;flex:1;min-height:0;border-radius:14px;overflow:hidden;border:1px solid #e7e7e4;background:#fff;transition:background .35s,border-color .35s}
+body.dark .box{border-color:#26262a;background:#131315}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.legend{position:absolute;left:18px;bottom:14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#71717a;pointer-events:none}
+body.dark .legend{color:#8b8b93}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend canvas{position:static;width:14px;height:14px}
+.tools{position:absolute;left:16px;top:14px}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>记忆脑图 · 视觉样张（第二版）</b>
+  <div class="seg" id="style"><button data-s="zone" class="on">C 色域</button><button data-s="fine">D 层次</button><button data-s="now">现状</button></div>
+  <span class="sp"></span>
+  <div class="seg" id="theme"><button data-t="light" class="on">浅色</button><button data-t="dark">深色</button></div>
+  <p id="desc"></p>
+</div>
+<div class="stage"><div class="box" id="box">
+  <canvas id="cv"></canvas>
+  <div class="tools"><div class="seg" id="dim"><button data-d="2" class="on">2D</button><button data-d="3">3D</button></div></div>
+  <div class="legend" id="legend"></div>
+</div></div>
+
+<script>
+/* 示例数据：一个人设，三个对象，下面挂分类、档案、日记、周记、待跟进和话题 */
+const rnd = (() => { let s = 20261111; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
+const N = [], E = [];
+const add = (type, label, parent, dist, size, g) => {
+  const a = rnd() * 6.283, b = Math.acos(2 * rnd() - 1), p = parent || {x: 0, y: 0, z: 0};
+  const n = {type, label, g: g ?? (parent ? parent.g : -1), size: size ?? 0.4 + rnd() * 0.6, x: p.x + dist * Math.sin(b) * Math.cos(a), y: p.y + dist * Math.sin(b) * Math.sin(a) * 0.8, z: p.z + dist * Math.cos(b), ph: rnd() * 6.283};
+  N.push(n); if (parent) E.push({a: parent, b: n, kind: type === 'tag' ? 'tag' : 'link', bend: (rnd() - 0.5) * 0.36}); return n;
+};
+const me = add('persona', '小柚', null, 0, 1, -1);
+const scopes = [];
+[['主人', 165], ['群 · 万象棋', 205], ['群友 A', 220]].forEach(([name, d], i) => {
+  const sc = add('scope', name, me, d, 0.9, i); scopes.push(sc);
+  ['称呼', '习惯', '计划'].slice(0, 3 - i).forEach(cn => { const cat = add('category', cn, sc, 70, 0.5); for (let k = 0; k < 3 - i; k++) add('fact', '', cat, 46); });
+  for (let k = 0; k < 4 - i; k++) add('diary', '', sc, 95);
+  if (i < 2) add('week', '', sc, 120, 0.8);
+  if (i === 0){ add('followup', '', sc, 110, 0.7); add('followup', '', sc, 125, 0.6); }
+});
+const tags = ['考试', '万象棋', '宿舍'].map(t => add('tag', t, me, 270, 0.5, -1));
+N.filter(n => n.type === 'fact' || n.type === 'diary').forEach((n, i) => { if (i % 3 === 0) E.push({a: tags[i % tags.length], b: n, kind: 'tag', bend: 0.2}); });
+
+const R = {persona: 15, scope: 10.5, category: 4.2, fact: 5.6, diary: 5.4, week: 7, followup: 6.6, tag: 4.6};
+const NAME = {fact: '档案', diary: '日记', week: '周记', followup: '待跟进', tag: '话题'};
+const SHAPE = {persona: 'core', scope: 'hub', category: 'dot', fact: 'dot', diary: 'ring', week: 'ringdot', followup: 'diamond', tag: 'sq'};
+/* C：颜色表示所属对象，形状表示记忆类型。D：沿用原有按类型配色，提高一点彩度，加入描边、投影和渐变连线。 */
+const HUES = {light: ['#5568e0', '#12998a', '#e0694a'], dark: ['#8496ff', '#3fc7b4', '#ff8f73']};
+const BASE = {light: {panel: '#ffffff', ink: '#18181b', text: '#18181b', muted: '#71717a', line: '#d6d6d1', warn: '#e08a1e', neutral: '#a1a1aa', grid: 'rgba(24,24,27,.045)'},
+              dark:  {panel: '#131315', ink: '#ededef', text: '#ededef', muted: '#8b8b93', line: '#34343a', warn: '#f0b35a', neutral: '#6b6b73', grid: 'rgba(255,255,255,.04)'}};
+const TYPEC = {light: {persona: '#18181b', scope: '#4f62d8', category: '#a1a1aa', fact: '#2c9c82', diary: '#5b8de8', week: '#7a63d6', followup: '#dc8a28', tag: '#b871c4'},
+               dark:  {persona: '#ededef', scope: '#8e9ff7', category: '#6b6b73', fact: '#55c6a8', diary: '#86acf8', week: '#a48df0', followup: '#f0b35a', tag: '#d29be4'}};
+const OLD = {light: {persona: '#18181b', scope: '#5b6fd0', category: '#a1a1aa', fact: '#3f9a84', diary: '#7c96e8', week: '#4c64c4', followup: '#d08a3a', tag: '#b07cc6'},
+             dark:  {persona: '#ededef', scope: '#8ea0f5', category: '#6b6b73', fact: '#5cc4a8', diary: '#8eaaf7', week: '#6f86e8', followup: '#f0b35a', tag: '#cf9be3'}};
+const DESC = {
+  zone: '颜色表示记忆属于哪个对象，形状表示类型（实心为档案，空心为日记，同心圆为周记，菱形为待跟进）。每个对象周围有一片很淡的色域，连线带弧度。画布跟随控制台的浅色或深色主题。',
+  fine: '保留按类型配色的做法，在原配色上提高一点彩度。节点加描边和投影，连线沿两端颜色渐变并带弧度，重要节点有外环；3D 下远处的节点变小变淡。不使用发光效果。',
+  now: '目前的画法：低饱和纯色圆点和灰色直线，作为对照。'};
+let style = 'zone', theme = 'light', dim = 2, rot = 0, t0 = performance.now();
+const cv = document.getElementById('cv'), c = cv.getContext('2d'), box = document.getElementById('box');
+let W = 0, H = 0, dpr = 1;
+const B = () => BASE[theme];
+function colorOf(n){
+  if (style === 'now') return OLD[theme][n.type];
+  if (style === 'fine') return TYPEC[theme][n.type];
+  if (n.type === 'persona') return B().ink;
+  if (n.type === 'followup') return B().warn;
+  return n.g >= 0 ? HUES[theme][n.g] : B().neutral;
+}
+/* 节点和色域都预先画成贴图，逐帧只做贴图绘制 */
+const sprites = {};
+function sprite(shape, col){
+  const key = [shape, col, theme, style].join('|'); if (sprites[key]) return sprites[key];
+  const s = document.createElement('canvas'); s.width = s.height = 128; const x = s.getContext('2d'), P = B().panel;
+  if (shape === 'wash'){ const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, col + (theme === 'dark' ? '3d' : '30')); g.addColorStop(0.55, col + '14'); g.addColorStop(1, col + '00'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return sprites[key] = s; }
+  const r = 40; x.translate(64, 64);
+  if (style !== 'now' && theme === 'light'){ x.shadowColor = 'rgba(24,24,27,.18)'; x.shadowBlur = 10; x.shadowOffsetY = 4; }
+  const disc = (rr) => { x.beginPath(); x.arc(0, 0, rr, 0, 6.283); };
+  if (shape === 'diamond'){ x.rotate(Math.PI / 4); x.fillStyle = col; x.beginPath(); x.roundRect(-r * 0.78, -r * 0.78, r * 1.56, r * 1.56, 9); x.fill(); x.shadowColor = 'transparent'; x.lineWidth = 6; x.strokeStyle = P; x.stroke(); }
+  else if (shape === 'sq'){ x.fillStyle = col; x.beginPath(); x.roundRect(-r * 0.8, -r * 0.8, r * 1.6, r * 1.6, 12); x.fill(); x.shadowColor = 'transparent'; x.lineWidth = 6; x.strokeStyle = P; x.stroke(); }
+  else if (shape === 'ring' || shape === 'ringdot'){ x.fillStyle = P; disc(r); x.fill(); x.shadowColor = 'transparent'; x.lineWidth = 11; x.strokeStyle = col; disc(r - 5.5); x.stroke(); if (shape === 'ringdot'){ x.fillStyle = col; disc(r * 0.36); x.fill(); } }
+  else { x.fillStyle = col; disc(r); x.fill(); x.shadowColor = 'transparent';
+    if (style === 'fine'){ const h = x.createLinearGradient(0, -r, 0, r); h.addColorStop(0, 'rgba(255,255,255,.28)'); h.addColorStop(0.6, 'rgba(255,255,255,0)'); h.addColorStop(1, 'rgba(0,0,0,.10)'); x.fillStyle = h; disc(r); x.fill(); }
+    x.lineWidth = shape === 'dot' ? 6 : 5; x.strokeStyle = P; disc(r - (shape === 'dot' ? 3 : 2.5)); x.stroke();
+    if (shape === 'hub' || shape === 'core'){ x.globalAlpha = 0.28; x.lineWidth = 3; x.strokeStyle = col; disc(r + 10); x.stroke(); } }
+  return sprites[key] = s;
+}
+function size(){ const r = box.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+function project(n, k){
+  if (dim === 2){ n.sx = W / 2 + n.x * k; n.sy = H / 2 + n.y * k; n.s = k; n.d = 1; n.zz = 0; return; }
+  const ca = Math.cos(rot), sa = Math.sin(rot), x1 = n.x * ca - n.z * sa, z1 = n.x * sa + n.z * ca, y1 = n.y * 0.94 - z1 * 0.34, z2 = n.y * 0.34 + z1 * 0.94;
+  const f = 620 / (620 + z2) * k; n.sx = W / 2 + x1 * f; n.sy = H / 2 + y1 * f; n.s = f; n.zz = z2; n.d = Math.max(0.3, Math.min(1, 0.74 - z2 / 620));
+}
+const byDepth = (p, q) => q.zz - p.zz, order = N.slice();
+function frame(now){
+  const t = (now - t0) / 1000, flat = style === 'now'; if (dim === 3) rot = t * 0.12;
+  c.setTransform(dpr, 0, 0, dpr, 0, 0); c.globalAlpha = 1; c.clearRect(0, 0, W, H);
+  const k = Math.min(W / 800, H / 580) * (dim === 3 ? 1.15 : 1);
+  if (!flat){ c.fillStyle = B().grid; for (let gx = 14; gx < W; gx += 24) for (let gy = 14; gy < H; gy += 24) c.fillRect(gx, gy, 1.2, 1.2); }
+  for (const n of N) project(n, k);
+  // 色域：每个对象周围一片很淡的颜色
+  if (!flat) for (const sc of scopes){ const r = (style === 'zone' ? 200 : 150) * sc.s, col = style === 'zone' ? HUES[theme][sc.g] : B().neutral, top = theme === 'dark' ? 0.2 : 0.17;
+    const g = c.createRadialGradient(sc.sx, sc.sy, 0, sc.sx, sc.sy, r); for (let i = 0; i <= 8; i++){ const u = i / 8; g.addColorStop(u, col + Math.round(255 * top * Math.pow(1 - u, 2.2)).toString(16).padStart(2, '0')); }
+    c.globalAlpha = sc.d; c.fillStyle = g; c.beginPath(); c.arc(sc.sx, sc.sy, r, 0, 6.283); c.fill(); }
+  // 连线
+  for (const e of E){ const a = e.a, b = e.b, tag = e.kind === 'tag';
+    c.globalAlpha = (flat ? 0.5 : tag ? 0.26 : 0.5) * Math.min(a.d, b.d); c.lineWidth = tag ? 0.9 : 1.2; c.setLineDash(tag ? [2, 4] : []);
+    if (flat || tag) c.strokeStyle = B().line === '#d6d6d1' && !flat ? '#b9b9b4' : flat ? B().line : B().neutral;
+    else if (style === 'zone') c.strokeStyle = b.g >= 0 ? HUES[theme][b.g] : B().neutral;
+    else { const g = c.createLinearGradient(a.sx, a.sy, b.sx, b.sy); g.addColorStop(0, colorOf(a)); g.addColorStop(1, colorOf(b)); c.strokeStyle = g; }
+    c.beginPath(); c.moveTo(a.sx, a.sy);
+    if (flat) c.lineTo(b.sx, b.sy); else { const mx = (a.sx + b.sx) / 2, my = (a.sy + b.sy) / 2; c.quadraticCurveTo(mx - (b.sy - a.sy) * e.bend, my + (b.sx - a.sx) * e.bend, b.sx, b.sy); }
+    c.stroke(); }
+  c.setLineDash([]);
+  // 节点
+  if (dim === 3) order.sort(byDepth);
+  for (const n of order){ const col = colorOf(n), r = R[n.type] * (0.62 + 0.55 * n.size) * n.s * (flat ? 1 : 1 + 0.03 * Math.sin(t * 1.2 + n.ph));
+    c.globalAlpha = n.d * (n.type === 'category' && !flat ? 0.75 : 1);
+    if (flat){ c.fillStyle = col; c.beginPath(); c.arc(n.sx, n.sy, r, 0, 6.283); c.fill(); continue; }
+    const d = r * 128 / 40; c.drawImage(sprite(style === 'zone' ? SHAPE[n.type] : (n.type === 'persona' ? 'core' : n.type === 'scope' ? 'hub' : 'dot'), col), n.sx - d / 2, n.sy - d / 2, d, d); }
+  // 文字
+  c.textAlign = 'center'; c.textBaseline = 'top';
+  for (const n of order){ if (!n.label) continue; const big = n.type === 'persona' || n.type === 'scope', r = R[n.type] * (0.62 + 0.55 * n.size) * n.s;
+    c.font = `${big ? 600 : 400} ${big ? 13 : 11.5}px "Segoe UI","Microsoft YaHei UI",sans-serif`; c.globalAlpha = Math.min(1, n.d + 0.2); c.fillStyle = big ? B().text : B().muted; c.fillText(n.label, n.sx, n.sy + r + (big ? 9 : 6)); }
+  c.globalAlpha = 1; requestAnimationFrame(frame);
+}
+function legend(){
+  const el = document.getElementById('legend'); el.innerHTML = '';
+  const item = (shape, col, text) => { const s = document.createElement('span'), m = document.createElement('canvas'); m.width = m.height = 28; const x = m.getContext('2d');
+    if (style === 'now'){ x.fillStyle = col; x.beginPath(); x.arc(14, 14, 8, 0, 6.283); x.fill(); } else x.drawImage(sprite(shape, col), 0, 0, 28, 28);
+    s.append(m, text); el.append(s); };
+  if (style === 'zone'){ ['主人', '群 · 万象棋', '群友 A'].forEach((n, i) => item('dot', HUES[theme][i], n)); Object.keys(NAME).forEach(k => item(SHAPE[k], k === 'followup' ? B().warn : B().neutral, NAME[k])); }
+  else Object.keys(NAME).forEach(k => item('dot', (style === 'now' ? OLD : TYPEC)[theme][k], NAME[k]));
+}
+function apply(){
+  document.body.classList.toggle('dark', theme === 'dark'); document.getElementById('desc').textContent = DESC[style];
+  document.querySelectorAll('#style button').forEach(b => b.classList.toggle('on', b.dataset.s === style));
+  document.querySelectorAll('#theme button').forEach(b => b.classList.toggle('on', b.dataset.t === theme));
+  legend();
+}
+document.querySelectorAll('#style button').forEach(b => b.onclick = () => { style = b.dataset.s; apply(); });
+document.querySelectorAll('#theme button').forEach(b => b.onclick = () => { theme = b.dataset.t; apply(); });
+document.querySelectorAll('#dim button').forEach(b => b.onclick = () => { dim = +b.dataset.d; document.querySelectorAll('#dim button').forEach(x => x.classList.toggle('on', x === b)); });
+new ResizeObserver(size).observe(box); size();
+const h = location.hash.slice(1).split(','); if (DESC[h[0]]) style = h[0]; if (h.includes('dark')) theme = 'dark'; apply(); if (h.includes('3')) document.querySelector('#dim [data-d="3"]').click();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
