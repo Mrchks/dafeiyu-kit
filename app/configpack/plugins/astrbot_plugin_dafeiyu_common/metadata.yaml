@@ -1,0 +1,8 @@
+name: astrbot_plugin_dafeiyu_common
+display_name: 大肥鱼通用能力
+desc: 不管用哪个人设都能用的本事：认得主人、帮主人往群里或给好友传话、群聊静音、主人对群的吩咐、翻群聊记录
+help: 装上就行，不用设置。主人就是「常用设置」里的主人/管理员 QQ
+version: v0.3.2
+author: DafeiyuKit
+support_platforms:
+  - aiocqhttp

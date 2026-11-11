@@ -1,0 +1,14 @@
+{
+  "group_quote_reply": {
+    "description": "群里回复时引用对方那句话（QQ 原生引用）",
+    "type": "bool",
+    "hint": "上下文多的时候能看清她在回谁。语音回复没法带引用",
+    "default": true
+  },
+  "group_quote_at": {
+    "description": "群里回复时顺便 @ 对方",
+    "type": "bool",
+    "hint": "对方会收到 @ 提醒。语音回复没法带 @",
+    "default": true
+  }
+}

@@ -1,0 +1,8 @@
+name: astrbot_plugin_dafeiyu_kb
+display_name: 大肥鱼自己记知识库
+desc: 主人告诉她的资料类内容，她自己记进知识库；聊到游戏时自动先查知识库；群里遇到不知道的问题，可以私聊问主人
+help: 装上就行。主人私聊说「记一下：……」，资料类内容她会记进知识库（群里也能查到），主人本人的信息交给大肥鱼记忆。设置里可以开关「不会时问主人」和每天次数
+version: v0.2.0
+author: DafeiyuKit
+support_platforms:
+  - aiocqhttp

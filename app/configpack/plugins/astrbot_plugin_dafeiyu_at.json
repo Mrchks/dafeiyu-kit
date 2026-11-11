@@ -1,0 +1,5 @@
+{
+  "name": "astrbot_plugin_dafeiyu_at",
+  "what": "群里回复时引用并 @ 对方；[at:QQ号] 换成真正的 @，主人叫她时 [at:all] 是 @全体成员（大肥鱼整合包自带）",
+  "always_reinstall": true
+}

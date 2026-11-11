@@ -1,0 +1,8 @@
+{
+  "name": "astrbot_plugin_dafeiyu_kb",
+  "what": "主人告诉她的事自己记进知识库；群里不会的问题私聊问主人（大肥鱼整合包自带）",
+  "always_reinstall": true,
+  "config": {
+    "owner_session": "{主人会话}"
+  }
+}

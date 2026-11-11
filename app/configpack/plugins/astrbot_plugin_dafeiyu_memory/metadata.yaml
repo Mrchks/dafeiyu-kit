@@ -1,0 +1,8 @@
+name: astrbot_plugin_dafeiyu_memory
+display_name: 大肥鱼记忆
+desc: 日记、档案、待跟进三层记忆，常驻上下文、后台整理、会遗忘；到了约定的日子主动关心
+help: 装上就行。每天凌晨自动整理前一天的聊天；控制台「记忆」页可以查看脑图、修改档案和日记、立即整理
+version: v1.0.1
+author: DafeiyuKit
+support_platforms:
+  - aiocqhttp

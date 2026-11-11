@@ -1,0 +1,6 @@
+name: astrbot_plugin_dafeiyu_fixes
+display_name: 大肥鱼兼容修复
+desc: 修几个第三方插件的小毛病。目前：让群聊插件、主动聊天插件、记忆插件也认「给某个群或私聊单独指定的人设」；群里没轮到她回话的图片也转成文字放进上下文
+help: 装上就行，不用设置
+version: v0.4.0
+author: DafeiyuKit

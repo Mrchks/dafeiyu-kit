@@ -1,0 +1,57 @@
+{
+  "owner_session": {
+    "description": "主人的私聊会话（问问题发到这里）",
+    "type": "string",
+    "hint": "形如 机器人名:FriendMessage:主人QQ号。导入工具和控制台会自动填",
+    "default": ""
+  },
+  "kb_root": {
+    "description": "知识库资料文件夹",
+    "type": "string",
+    "hint": "她记下的东西会写进 这里/知识库名/主人补充.md。控制台会自动填，空着就放在插件数据目录",
+    "default": ""
+  },
+  "default_kb": {
+    "description": "默认记到哪个知识库",
+    "type": "string",
+    "hint": "空着就用 AstrBot 里启用的第一个知识库",
+    "default": ""
+  },
+  "ask_owner_enable": {
+    "description": "群里遇到不知道的问题，私聊问主人",
+    "type": "bool",
+    "default": true
+  },
+  "ask_daily_limit": {
+    "description": "一天最多问主人几次（0 = 不限）",
+    "type": "int",
+    "default": 5
+  },
+  "pending_days": {
+    "description": "问过的问题几天内等主人回答",
+    "type": "int",
+    "default": 3
+  },
+  "auto_kb_enable": {
+    "description": "聊到游戏时自动先查知识库",
+    "type": "bool",
+    "hint": "消息里出现英雄名、黑话、阵容等词时，替她查一次知识库，把资料附在这条消息后面，不用等她自己想起来查",
+    "default": true
+  },
+  "auto_kb_scope": {
+    "description": "自动查资料的范围",
+    "type": "string",
+    "options": [
+      "all",
+      "group"
+    ],
+    "hint": "all = 群聊和私聊都查；group = 只在群里查",
+    "default": "all"
+  },
+  "auto_kb_words": {
+    "description": "触发自动查资料的通用词",
+    "type": "text",
+    "hint": "用逗号或空格隔开。资料文件夹里的英雄名、「- 叫法：」开头的词条会自动加进来，不用写在这里",
+    "default": "万象棋,阵容,上分,掉分,棋手,升本,几本,速六,觉醒,合成,999,满级,等级,临时等级,拍卖,竞拍,能量,刷新,装备,出装,神装,天赋,效果牌,战术牌,段位,王中王,血条,掉血,站位,古币,图腾,整备,登场,牺牲,复生,闪现,开团,主c,主坦,单核,单挂,轮椅,阵营,三分,大河,逐鹿,河洛,日落海,无阵营,版本,加强,削弱,t0,一图流,阵容码,吃鸡,前三"
+  }
+}

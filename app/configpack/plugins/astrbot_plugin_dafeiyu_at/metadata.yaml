@@ -1,0 +1,8 @@
+name: astrbot_plugin_dafeiyu_at
+display_name: 大肥鱼群里@人
+desc: 群聊回复里出现 [at:QQ号] 时换成真正的 @（[at:all] 是 @全体成员，只认主人）；群里回复时引用并 @ 对方
+help: 装上就行。人设里告诉她想 @ 谁就写 [at:对方QQ号]；主人叫她 @全体 时写 [at:all]，机器人要是群管理员才生效
+version: v0.3.0
+author: DafeiyuKit
+support_platforms:
+  - aiocqhttp

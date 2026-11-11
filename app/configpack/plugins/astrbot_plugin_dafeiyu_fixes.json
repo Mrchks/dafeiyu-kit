@@ -1,0 +1,5 @@
+{
+  "name": "astrbot_plugin_dafeiyu_fixes",
+  "what": "兼容修复：让群聊、主动聊天、记忆插件也认单独指定的人设；群里没轮到她回话的图片也转成文字（大肥鱼整合包自带）",
+  "always_reinstall": true
+}

@@ -1,0 +1,21 @@
+{
+  "enable_inject": {"description": "每次回复时带上记忆", "type": "bool", "default": true},
+  "principles_enable": {"description": "带上相处原则", "type": "bool", "hint": "情绪低落时的回应方式、健康边界、危机时的求助渠道", "default": true},
+  "profile_budget": {"description": "档案最多带多少字", "type": "int", "default": 800},
+  "timeline_budget": {"description": "日记和周记最多带多少字", "type": "int", "default": 1500},
+  "daily_hour": {"description": "每天几点整理前一天的聊天", "type": "int", "default": 4},
+  "idle_minutes": {"description": "今天的对话停下多少分钟后先写一版今天的日记", "type": "int", "default": 90},
+  "min_new_messages": {"description": "攒够多少条新消息才写今天的日记", "type": "int", "default": 8},
+  "lookback_days": {"description": "每天整理时往回补几天没整理的", "type": "int", "default": 3},
+  "keep_raw_days": {"description": "原文保留天数", "type": "int", "default": 30},
+  "record_groups": {"description": "记录群聊", "type": "bool", "default": true},
+  "halflife_long": {"description": "长期档案的半衰期（天）", "type": "int", "default": 180},
+  "halflife_normal": {"description": "一般档案的半衰期（天）", "type": "int", "default": 30},
+  "halflife_temp": {"description": "临时档案的半衰期（天）", "type": "int", "default": 3},
+  "followup_enable": {"description": "到了约定的日子主动私聊主人问一句", "type": "bool", "default": true},
+  "followup_time": {"description": "主动问的最早时间", "type": "string", "default": "19:30"},
+  "followup_end": {"description": "主动问的最晚时间", "type": "string", "default": "22:30"},
+  "followup_daily_limit": {"description": "每天最多主动问几次", "type": "int", "default": 2},
+  "daily_llm_limit": {"description": "整理每天最多调用模型几次", "type": "int", "default": 80},
+  "provider_id": {"description": "整理用的模型", "type": "string", "hint": "留空就用当前的对话模型", "default": ""}
+}

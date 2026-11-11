@@ -1,0 +1,5 @@
+{
+  "name": "astrbot_plugin_dafeiyu_common",
+  "what": "通用能力：认主人、帮主人传话、群聊静音、主人对群的吩咐、翻群聊记录（大肥鱼整合包自带）",
+  "always_reinstall": true
+}

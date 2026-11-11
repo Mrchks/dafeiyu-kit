@@ -1,0 +1,18 @@
+# 大肥鱼整合包：这些是本机的运行文件和个人数据，不进版本管理
+runtime/
+logs/
+edge-profile/
+app.old/
+state.json
+*.tmp
+*.bak
+__pycache__/
+*.pyc
+知识库/
+版本切换.bat
+
+# 作者本机信息与发版密钥，不进公开仓库
+AGENTS.local.md
+*.key
+*.pem
+release-secrets*

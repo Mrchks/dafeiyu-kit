@@ -1,0 +1,5 @@
+{
+  "name": "astrbot_plugin_dafeiyu_memory",
+  "what": "记忆：日记、档案、待跟进，常驻上下文、每天整理、会遗忘（大肥鱼整合包自带）",
+  "always_reinstall": true
+}
