@@ -115,7 +115,7 @@ def status(force: bool = False) -> dict:
     tags = []
     for line in tags_out.splitlines():
         p = line.split("\t")
-        if len(p) >= 3:
+        if len(p) >= 3 and re.fullmatch(r"v\d+(\.\d+)*", p[0]):     # 只列发布版本（v1.2.3），不列其他本地标签
             tags.append({"tag": p[0], "date": p[1], "msg": p[2]})
     commits = []
     for line in log_out.splitlines():

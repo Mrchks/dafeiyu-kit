@@ -79,14 +79,13 @@ class PickTests(unittest.TestCase):
         self.assertNotIn("README.md", upd)
         self.assertFalse(any(r.startswith("runtime/") for r in upd))
         self.assertTrue({"app/core.py", "app/ui/index.html", "START.vbs", "CHANGELOG.md", "版本切换.bat",
-                         "LICENSES/a.txt"} <= set(upd))
+                         "LICENSE", "LICENSES/a.txt"} <= set(upd))
 
-    def test_update_prefixes_match_update_from_zip(self):
-        src = (KIT / "app" / "server.py").read_text(encoding="utf-8")
-        start = src.index("def update_from_zip")
-        body = src[start:src.index("\ndef ", start + 10)]
-        for p in release.UPDATE_PREFIXES:
-            self.assertIn(f'"{p}"', body, f"update_from_zip 不会覆盖 {p}，更新包里放了也没用")
+    def test_update_prefixes_match_selfupdate(self):
+        sys.path.insert(0, str(KIT / "app"))
+        import selfupdate
+        self.assertEqual(release.UPDATE_PREFIXES, selfupdate.UPDATE_PREFIXES,
+                         "更新包里放的文件要和控制台安装时覆盖的文件一致")
 
 
 class ManifestTests(unittest.TestCase):

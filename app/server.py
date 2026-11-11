@@ -28,6 +28,7 @@ import logtools  # noqa: E402
 import manage  # noqa: E402
 import plugin_sync  # noqa: E402
 import services  # noqa: E402
+import selfupdate  # noqa: E402
 import updater  # noqa: E402
 import versions  # noqa: E402
 from core import (CONSOLE_PORTS, KIT, console_alive, console_port, LOG_DIR, UI_DIR, VERSION, load_state, log, log_exc, open_console_window,  # noqa: E402
@@ -53,13 +54,11 @@ def notice_info() -> dict:
     n = s.get("notice") or {}
     if not s["setup_done"] or not rel:
         return {"show": False}
-    if n.get("only_new"):
-        show = n.get("last_version") != rel["version"]
-    else:
-        show = n.get("last_date") != time.strftime("%Y-%m-%d")
+    # 换了新版本一定弹一次；没换版本时，没勾「只在版本更新后显示」的每天第一次打开弹
+    show = n.get("last_version") != rel["version"] or (not n.get("only_new") and n.get("last_date") != time.strftime("%Y-%m-%d"))
     c = s.get("update_check") or {}
     ups = []
-    for comp, name in (("astrbot", "AstrBot"), ("napcat", "NapCat")):
+    for comp, name in (("astrbot", "AstrBot"), ("napcat", "NapCat"), ("console", "控制台")):
         if comp in updater.has_updates():
             ups.append({"name": name, "version": (c.get(comp) or {}).get("version", "")})
     return {"show": show, "version": rel["version"], "date": rel["date"], "body": rel["body"],
@@ -93,48 +92,74 @@ def restart_self() -> None:
 
 
 def update_from_zip(path: str) -> str:
+    """「从压缩包更新」：手动拿到的新版整合包。先备份再覆盖，之后能在「版本与更新」一键退回。"""
     p = Path(path.strip().strip('"'))
     if not p.exists():
         raise RuntimeError("找不到这个文件")
-    with zipfile.ZipFile(p) as z:
-        infos = {}
-        for info in z.infolist():
-            n = info.filename
-            if not info.flag_bits & 0x800:   # 没标 UTF-8 的压缩包，中文文件名按 UTF-8 还原
-                try:
-                    n = n.encode("cp437").decode("utf-8")
-                except (UnicodeEncodeError, UnicodeDecodeError):
-                    pass
-            infos[n] = info
-        names = list(infos)
-        prefix = next((n[: -len("app/core.py")] for n in names if n.endswith("app/core.py")), None)
-        if prefix is None:
-            raise RuntimeError("这不是大肥鱼整合包的压缩包")
-        old = KIT / "app.old"
-        if old.exists():
-            shutil.rmtree(old, ignore_errors=True)
-        shutil.copytree(KIT / "app", old)
-        for n in names:
-            if not n.startswith(prefix) or n.endswith("/"):
-                continue
-            rel = n[len(prefix):]
-            if not rel.startswith(("app/", "START.vbs", "README.txt", "LICENSES/", "CHANGELOG.md", ".gitignore", "版本切换.bat")):
-                continue
-            tgt = KIT / rel
-            tgt.parent.mkdir(parents=True, exist_ok=True)
-            with z.open(infos[n]) as fs, open(tgt, "wb") as fd:
-                shutil.copyfileobj(fs, fd)
-    log(f"已从 {p.name} 更新控制台")
+    nv = selfupdate.package_version(p)
+    return _install_console(p, nv, p.name)
+
+
+def _install_console(p: Path, nv: str, src: str) -> str:
+    old = VERSION
+    services.job_line(f"备份当前控制台（v{old}）…")
+    bk, n = selfupdate.install_with_backup(p, updater._bk_dir())
+    prev = updater._records().get("console")
+    updater._save_record("console", {"from": old, "to": nv, "at": time.time(), "kind": "zip", "backup": str(bk)})
+    if prev and prev.get("backup") != str(bk):
+        updater._drop_backup(prev)
+    services.job_line(f"已覆盖 {n} 个文件")
+    log(f"已从 {src} 更新控制台：v{old} → v{nv}")
     try:
         if versions.is_repo() and versions.status(force=True).get("detached"):
             log("版本管理：现在停在旧版本上，这次更新不记版本")
         else:
-            nv = versions.version_in_tree()
-            versions.release(nv, f"v{nv}（从 {p.name} 更新）")
+            versions.release(versions.version_in_tree(), f"v{nv}（从 {src} 更新）")
     except Exception as e:
         log(f"版本管理：记版本失败 {e}")
     threading.Timer(1.0, restart_self).start()
-    return "更新完成，控制台马上重启（她不会掉线）"
+    return f"已更新到 v{nv}，控制台马上重启（她不会掉线）"
+
+
+def update_console() -> str:
+    """「版本与更新」里控制台卡片的「一键更新」。"""
+    if selfupdate.dev_mode():
+        raise RuntimeError("这是开发用的目录，不支持一键更新控制台（请用发版脚本或「从压缩包更新」）")
+    services.job_line("读取最新版本信息…")
+    services.job_progress(0.02)
+    m = selfupdate.fetch_manifest()
+    nv = m["version"]
+    if not selfupdate.newer(nv, VERSION):
+        return f"已经是最新版本（v{VERSION}）"
+    mf = m.get("update_min_from") or ""
+    if mf and selfupdate.vtuple(VERSION) < selfupdate.vtuple(mf):
+        raise RuntimeError(f"这次更新需要下载完整整合包：v{VERSION} 不能直接升级到 v{nv}")
+    services.job_line(f"下载 v{nv} 更新包（{max(1, int(m['update']['size']) // 1024)} KB）…")
+    zp = selfupdate.download_update(m, progress=lambda f: services.job_progress(0.05 + 0.75 * f))
+    services.job_line("校验通过，开始安装…")
+    services.job_progress(0.85)
+    msg = _install_console(zp, nv, f"自动更新 v{nv}")
+    services.job_progress(1.0)
+    return msg
+
+
+def rollback_console() -> str:
+    rec = updater._records().get("console")
+    if not rec or not Path(rec.get("backup", "")).exists():
+        raise RuntimeError("没有可以退回的备份")
+    cur = rec.get("to") or VERSION
+    services.job_line(f"退回 v{rec.get('from')}…")
+    selfupdate.install_zip(Path(rec["backup"]))
+    updater._drop_backup(rec)
+    updater._save_record("console", None)
+    log(f"控制台退回 v{rec.get('from')}（之前是 v{cur}）")
+    try:
+        if versions.is_repo() and not versions.status(force=True).get("detached"):
+            versions.snapshot(f"退回控制台 v{rec.get('from')}")
+    except Exception as e:
+        log(f"版本管理：记版本失败 {e}")
+    threading.Timer(1.0, restart_self).start()
+    return f"已退回 v{rec.get('from')}（之前是 v{cur}），控制台马上重启。备份用掉了，已删除。"
 
 
 def uninstall(full: bool) -> str:
@@ -402,13 +427,15 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": ok, "msg": "" if ok else "账号或密码不对（或者 AstrBot 没在运行）"})
             elif p == "/api/updates/run":
                 fn = {"astrbot": ("更新 AstrBot", updater.update_astrbot), "napcat": ("更新 NapCat", updater.update_napcat),
-                      "napcat_full": ("完整更新 NapCat（含 QQ 内核）", updater.update_napcat_full)}.get(b.get("comp"))
+                      "napcat_full": ("完整更新 NapCat（含 QQ 内核）", updater.update_napcat_full),
+                      "console": ("更新控制台", update_console)}.get(b.get("comp"))
                 if not fn:
                     return self._json({"error": "未知组件"}, 400)
                 self._ok(services.run_job(*fn))
             elif p == "/api/updates/rollback":
                 fn = {"astrbot": ("回退 AstrBot 版本", updater.rollback_astrbot),
-                      "napcat": ("回退 NapCat 版本", updater.rollback_napcat)}.get(b.get("comp"))
+                      "napcat": ("回退 NapCat 版本", updater.rollback_napcat),
+                      "console": ("回退控制台版本", rollback_console)}.get(b.get("comp"))
                 if not fn:
                     return self._json({"error": "未知组件"}, 400)
                 self._ok(services.run_job(*fn))

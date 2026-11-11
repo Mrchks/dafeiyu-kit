@@ -32,6 +32,7 @@ import time
 import zipfile
 from pathlib import Path
 
+import selfupdate
 import services
 from core import (LOG_DIR, backups_dir, download, github_latest_asset, http_json, load_state, log, log_exc, napcat_app,
                   napcat_dir, run_stream, update_state)
@@ -199,7 +200,7 @@ def check(force: bool = False) -> dict:
         return c
     with _check_lock:
         out = {"at": time.time(), "errors": {}}
-        for comp, fn in (("astrbot", ab_latest), ("napcat", nc_latest)):
+        for comp, fn in (("astrbot", ab_latest), ("napcat", nc_latest), ("console", selfupdate.latest)):
             try:
                 out[comp] = fn()
             except Exception as e:  # noqa: BLE001
@@ -226,6 +227,11 @@ def info(force: bool = False) -> dict:
                        if rec else None),
         }
     res["astrbot"]["mode"] = "source" if ab_source_root() else "pip"
+    rec = recs.get("console") or {}
+    bk = Path(rec["backup"]) if rec.get("backup") else None
+    res["console"] = {**selfupdate.describe(c.get("console") or {}),
+                      "backup": ({"from": rec.get("from"), "to": rec.get("to"), "at": rec.get("at"), "kind": "zip",
+                                  "size": _size(bk), "exists": bool(bk and bk.exists())} if bk and bk.exists() else None)}
     return res
 
 
@@ -237,6 +243,9 @@ def has_updates() -> list[str]:
         out.append("astrbot")
     if _newer((c.get("napcat") or {}).get("version", ""), nc_current()):
         out.append("napcat")
+    con = selfupdate.describe(c.get("console") or {})
+    if con["newer"] and con["enabled"] and not con["dev"]:
+        out.append("console")
     return out
 
 

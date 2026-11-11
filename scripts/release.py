@@ -51,8 +51,8 @@ UPDATE_MIN_FROM = "1.5.0"
 EXCLUDE = ("AGENTS.md", "AGENTS.local.md", "CLAUDE.md", "docs/", "tests/", "scripts/")
 # 不在 Git 里、但要进发布包的文件
 EXTRA_FILES = ("版本切换.bat",)
-# 「从压缩包更新」会覆盖的文件（与 app/server.py 的 update_from_zip 保持一致），更新包只放这些
-UPDATE_PREFIXES = ("app/", "START.vbs", "README.txt", "LICENSES/", "CHANGELOG.md", ".gitignore", "版本切换.bat")
+# 「从压缩包更新」会覆盖的文件（与 app/selfupdate.py 的 UPDATE_PREFIXES 保持一致，测试会核对），更新包只放这些
+UPDATE_PREFIXES = ("app/", "START.vbs", "README.txt", "LICENSE", "LICENSES/", "CHANGELOG.md", ".gitignore", "版本切换.bat")
 
 FULL_LOCAL = "大肥鱼整合包-v{v}.zip"
 UPDATE_LOCAL = "大肥鱼更新包-v{v}.zip"

@@ -17,6 +17,24 @@ import re
 
 RULES: list[dict] = [
     {
+        "code": "update_verify",
+        "patterns": [r"更新包校验失败", r"签名校验失败"],
+        "title": "更新包没有通过校验",
+        "cause": "下载到的更新和作者发布的不一致：可能是下载加速站缓存了旧文件、传输出错，也可能被人改过。为了安全没有安装，控制台没有任何改动。",
+        "steps": ["点「重试」：会换一个下载地址重新下载。",
+                  "多次失败的话，在「版本与更新」里点「下载完整包」，从发布页手动下载新版，再用「从压缩包更新」安装。"],
+        "actions": [("retry", "重试"), ("report", "生成问题报告")],
+    },
+    {
+        "code": "update_download",
+        "patterns": [r"下载更新失败", r"读取更新信息失败"],
+        "title": "连不上更新服务器",
+        "cause": "控制台的更新放在 GitHub 上，国内直连不稳定，这次直连和几个加速站都没连上。控制台没有任何改动。",
+        "steps": ["等几分钟后点「重试」，加速站时好时坏。",
+                  "换一个网络再试（比如用手机开热点），或者打开代理、加速器后再试。"],
+        "actions": [("retry", "重试")],
+    },
+    {
         "code": "download_incomplete",
         "strong": True,         # 过程输出里出现这类迹象就足以确定原因
         "patterns": [r"Unexpected end of archive", r"BadZipFile", r"File is not a zip file", r"Data Error", r"CRC Failed",

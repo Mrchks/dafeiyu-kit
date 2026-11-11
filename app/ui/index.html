@@ -582,6 +582,24 @@ dialog.closing::backdrop{animation:bout .16s ease-in forwards}
 .setcol>.section{display:none;flex:1;margin:0;overflow:auto}
 .setcol>.section.on{display:block;animation:pin .22s var(--ease)}
 
+/* 版本与更新：分页填满一屏，长列表只在自己的区域里滚动 */
+#p-about .atab:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column;animation:pin .22s var(--ease)}
+#p-about .atab>.section:last-child{margin-bottom:0}
+#at-upd .sh{height:auto;min-height:24px;margin-bottom:14px}
+.cards3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1100px){.cards3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}}
+#updCards .card{display:flex;flex-direction:column}
+#updCards .card .grow{flex:1}
+#updCards .card .row{flex-wrap:wrap}
+#at-ver>.section,#at-log>.section{flex:1;min-height:0;display:flex;flex-direction:column}
+#verBox{flex:1;min-height:0;display:flex;flex-direction:column}
+#verBox .vscroll{flex:1;min-height:0;overflow:auto}
+#verBox .vscroll thead th{position:sticky;top:0;background:var(--panel);z-index:1}
+#at-log #changelog{flex:1;min-height:0}
+#at-log .clog-wrap{height:100%}
+.upd-notes{max-height:min(46vh,360px);overflow:auto;margin:10px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2)}
+.upd-notes ul{margin:4px 0 8px}
+
 /* 知识库：左边列表、右边详情，两边等高 */
 #kt-docs:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
 .kbgrid{flex:1;min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px}
@@ -1152,38 +1170,40 @@ dialog .field{grid-template-columns:72px 1fr}
       <div class="section"><table><thead><tr><th>备份</th><th>时间</th><th>大小</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div>
     </section>
 
-    <!-- 更新与卸载 -->
-    <section class="page" id="p-about">
-      <div class="head"><div><h1>版本与更新</h1><p class="sub">一键更新 AstrBot 和 NapCat，查看控制台的版本和更新日志。</p></div></div>
-      <div class="section">
-        <div class="sh"><h2>组件更新</h2><div class="act"><span class="note" id="updChecked"></span><button id="updCheck">检查更新</button></div></div>
-        <p class="hint">在这里一键更新就行，不用进它们各自的后台（AstrBot 后台里那个「更新」按钮在这套环境用不了）。更新前会自动备份，新版起不来会自动退回旧版。人设、记忆、知识库、设置都不会动。</p>
-        <div class="cards" id="updCards">
-          <div class="card" id="updAstrbot"><h3>AstrBot<span class="pill">…</span></h3><div class="kv">检查中…</div></div>
-          <div class="card" id="updNapcat"><h3>NapCat<span class="pill">…</span></h3><div class="kv">检查中…</div></div>
+    <!-- 版本与更新：四个分页，每页一屏放得下 -->
+    <section class="page fit" id="p-about">
+      <div class="head"><div><h1>版本与更新</h1><p class="sub">一键更新 AstrBot、NapCat 和控制台，查看版本记录和更新日志。</p></div></div>
+      <div class="seg" id="aboutTabs" role="tablist" style="margin:0 0 16px"><button data-at="upd" class="on">组件更新</button><button data-at="ver">版本记录</button><button data-at="log">更新日志</button><button data-at="un">卸载与许可</button></div>
+      <div class="atab" id="at-upd">
+        <div class="section">
+          <div class="sh"><span class="note" id="updHint">更新前会自动备份，新版起不来会自动退回；人设、记忆、知识库、设置都不会动。</span><div class="act"><span class="note" id="updChecked"></span><button id="updCheck">检查更新</button></div></div>
+          <div class="cards cards3" id="updCards">
+            <div class="card" id="updAstrbot"><h3>AstrBot<span class="pill">…</span></h3><div class="kv">检查中…</div></div>
+            <div class="card" id="updNapcat"><h3>NapCat<span class="pill">…</span></h3><div class="kv">检查中…</div></div>
+            <div class="card" id="updConsole"><h3>控制台<span class="pill">…</span></h3><div class="kv">检查中…</div></div>
+          </div>
+          <p class="hint" style="margin:14px 0 0">AstrBot、NapCat 在这里更新就行，不用进它们各自的后台（AstrBot 后台里那个「更新」按钮在这套环境用不了）。</p>
         </div>
       </div>
-      <div class="section">
-        <h2>控制台版本</h2>
-        <p class="hint" id="verText"></p>
-        <div id="verBanner"></div>
-        <div id="verBox"></div>
+      <div class="atab" id="at-ver" hidden>
+        <div class="section">
+          <h2>控制台版本记录</h2>
+          <p class="hint" id="verText"></p>
+          <div id="verBanner"></div>
+          <div id="verBox"></div>
+        </div>
       </div>
-      <div class="section">
-        <h2>更新日志</h2>
-        <div id="changelog" class="md"></div>
+      <div class="atab" id="at-log" hidden>
+        <div class="section"><div id="changelog" class="md"></div></div>
       </div>
-      <div class="section">
-        <h2>更新控制台</h2>
-        <p class="hint">拿到新版整合包压缩包后，把它的完整路径填在下面（在文件上按住 Shift 右键 →「复制为路径」）。只更新控制台本身，她的人设、记忆、设置都不动。</p>
-        <div class="row" style="margin-top:0"><input id="updPath" style="flex:1" placeholder="例如 D:\下载\大肥鱼整合包-1.1.zip"><button class="primary" id="updBtn">更新</button></div>
+      <div class="atab" id="at-un" hidden>
+        <div class="section">
+          <h2>卸载</h2>
+          <p class="hint">「移除启动项」只停掉她、删掉桌面图标和开机自启。「完全卸载」还会删除 AstrBot、NapCat 和她的数据（会先自动备份一份）。</p>
+          <div class="row" style="margin-top:0"><button id="unLight">移除启动项</button><button class="danger" id="unFull">完全卸载</button></div>
+        </div>
+        <div class="section"><h2>开源组件</h2><p class="hint" style="margin:0">本整合包用到：AstrBot（AGPL-3.0）、NapCat、大肥鱼配置包（MIT，作者 zexuanw958-svg）、Python（PSF）、pystray（LGPL-3.0）、Pillow。AstrBot 和 NapCat 在安装时从官方地址下载，不随包分发。许可证原文在整合包的 LICENSES 文件夹。整合包源码以 MIT 许可公开在 GitHub（Mrchks/dafeiyu-kit）。</p></div>
       </div>
-      <div class="section">
-        <h2>卸载</h2>
-        <p class="hint">「移除启动项」只停掉她、删掉桌面图标和开机自启。「完全卸载」还会删除 AstrBot、NapCat 和她的数据（会先自动备份一份）。</p>
-        <div class="row" style="margin-top:0"><button id="unLight">移除启动项</button><button class="danger" id="unFull">完全卸载</button></div>
-      </div>
-      <div class="section"><h2>开源组件</h2><p class="hint">本整合包用到：AstrBot（AGPL-3.0）、NapCat、大肥鱼配置包（MIT，作者 zexuanw958-svg）、Python（PSF）、pystray（LGPL-3.0）、Pillow。AstrBot 和 NapCat 在安装时从官方地址下载，不随包分发。许可证原文在整合包的 LICENSES 文件夹。</p></div>
     </section>
 
     <section class="page frame" id="p-astrbot">
@@ -1830,6 +1850,7 @@ async function refresh(supplied){
       if (j.name === '同步知识库' && curPage === 'kb') loadKb().then(() => $('#kbUseNote').textContent = j.msg);
       if (curPage === 'astrbot') frame('ab');
       if (/更新|回退/.test(j.name) && curPage === 'about') loadUpdates();
+      if (j.ok && ['更新控制台', '回退控制台版本'].includes(j.name) && /重启/.test(j.msg || '')) waitRestart(CUR_VER || ($('#foot').textContent || '').replace(/^v/, ''));
     }
   }
   if (ST.stale){ connectionState('运行状态已过期，正在重新读取；请稍候'); $$('[data-act]').forEach(x => x.disabled = true); }
@@ -3103,44 +3124,99 @@ function mdLite(t){
   return out.join('');
 }
 /* AstrBot / NapCat 一键更新 */
+const COMP_NAME = {astrbot: 'AstrBot', napcat: 'NapCat', console: '控制台'};
 async function loadUpdates(force){
   const u = await api('/api/updates' + (force ? '?force=1' : '')).catch(() => ({error: '读不到'}));
   if (u.error){ $('#updChecked').textContent = '检查失败：' + u.error; return; }
   $('#updChecked').textContent = u.checked_at ? '上次检查 ' + new Date(u.checked_at * 1000).toLocaleString() : '';
   const fmt = n => n > 1048576 ? (n / 1048576).toFixed(0) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
-  const card = (el, name, comp, x, err) => {
-    const pillHtml = x.newer ? '<span class="pill w">有新版本</span>' : x.latest ? '<span class="pill g">已是最新</span>' : '<span class="pill">没查到</span>';
+  const card = (el, comp, x, err) => {
+    const con = comp === 'console', off = con && !x.enabled;
+    const pillHtml = off ? '<span class="pill">未启用</span>' : x.newer ? '<span class="pill w">有新版本</span>' : x.latest ? '<span class="pill g">已是最新</span>' : '<span class="pill">没查到</span>';
     const b = x.backup;
     const bk = !b ? '<div class="kv">上一版备份：没有</div>'
       : `<div class="kv">上一版备份：${esc(b.from || '?')}${b.kind === 'pip' ? '（只记了版本号，不占空间）' : `（${fmt(b.size)}${b.kind === 'dir' ? '，整套旧版' : ''}）`} · ${new Date(b.at * 1000).toLocaleDateString()}</div>
          <div class="row" style="margin-top:6px"><button data-urb="${comp}">回退到上一版本</button>${b.kind === 'pip' ? '' : `<button data-udb="${comp}" class="danger">删除备份</button>`}</div>`;
-    el.innerHTML = `<h3>${name}${pillHtml}</h3>
-      <div class="kv">现在 <b>${esc(x.current || '?')}</b> · 最新 <b>${esc(x.latest || '?')}</b>${x.date ? ` <span class="muted">（${esc(x.date)}）</span>` : ''}</div>
+    let state = '';
+    if (con && off) state = '这个版本还没有启用自动更新，拿到新版压缩包后用「从压缩包更新」。';
+    else if (con && x.dev) state = '这是开发用的目录：只显示版本，不支持一键更新。';
+    else if (con && x.newer && x.needs_full) state = `这次更新需要下载完整整合包${x.full_size ? `（约 ${fmt(x.full_size)}）` : ''}，下载后用「从压缩包更新」安装。`;
+    else if (con && x.newer && x.update_size) state = `更新包约 ${fmt(x.update_size)}，控制台会重启一下，她不会掉线。`;
+    let main;
+    if (con && x.newer && x.needs_full) main = '<button class="primary" data-cfull>下载完整包</button>';
+    else main = `<button class="primary" data-uup="${comp}" ${x.newer && !(con && (off || x.dev)) ? '' : 'disabled'}>${x.newer ? '一键更新' : '已是最新'}</button>`;
+    el.innerHTML = `<h3>${COMP_NAME[comp]}${pillHtml}</h3>
+      <div class="kv">现在 <b>${esc(x.current || '?')}</b> · 最新 <b>${esc(x.latest || (off ? '-' : '?'))}</b>${x.date ? ` <span class="muted">（${esc(x.date)}）</span>` : ''}</div>
       ${err ? `<div class="kv" style="color:var(--warn)">检查新版本没成功：${esc(err)}</div>` : ''}
-      <div class="row" style="margin-top:8px"><button class="primary" data-uup="${comp}" ${x.newer ? '' : 'disabled'}>${x.newer ? '一键更新' : '已是最新'}</button>
+      ${state ? `<div class="kv">${esc(state)}</div>` : ''}
+      <div class="grow"></div>
+      <div class="row" style="margin-top:8px">${main}
       ${x.notes ? `<button data-unotes="${comp}">更新说明</button>` : ''}
-      ${comp === 'napcat' ? '<button data-uup="napcat_full" title="新版 NapCat 要求更新的 QQ 时用">完整更新（含 QQ 内核）</button>' : ''}</div>
+      ${comp === 'napcat' ? '<button data-uup="napcat_full" title="新版 NapCat 要求更新的 QQ 时用">完整更新（含 QQ 内核）</button>' : ''}
+      ${con ? '<button data-czip>从压缩包更新</button>' : ''}</div>
       ${bk}`;
   };
-  card($('#updAstrbot'), 'AstrBot', 'astrbot', u.astrbot, (u.errors || {}).astrbot);
-  card($('#updNapcat'), 'NapCat', 'napcat', u.napcat, (u.errors || {}).napcat);
+  card($('#updAstrbot'), 'astrbot', u.astrbot, (u.errors || {}).astrbot);
+  card($('#updNapcat'), 'napcat', u.napcat, (u.errors || {}).napcat);
+  if (u.console) card($('#updConsole'), 'console', u.console, (u.errors || {}).console);
   const TIP = {astrbot: 'AstrBot 会停 2–3 分钟（她这段时间不回消息）', napcat: 'QQ 小号会掉线一两分钟', napcat_full: '要下载约 300MB 的新版 QQ 内核，QQ 小号会掉线几分钟。旧的整套会留作备份（比较大），确认没问题后可以删掉'};
   $$('#updCards [data-unotes]').forEach(b => b.onclick = () => {
     const x = u[b.dataset.unotes];
-    infoDlg(`${b.dataset.unotes === 'astrbot' ? 'AstrBot' : 'NapCat'} ${esc(x.latest)} 更新说明`, mdLite(x.notes)); });
+    infoDlg(`${COMP_NAME[b.dataset.unotes]} ${esc(x.latest)} 更新说明`, mdLite(x.notes)); });
+  const startJob = async (comp, name, btn) => {
+    const r = await api('/api/updates/run', {comp}); if (!r.ok) return alert(r.msg || r.error);
+    JC.retry = () => startJob(comp, name, null); JC.retryName = name;
+    if (btn) busy(btn); jobUI({running: true, name, at: Date.now()/1000});
+  };
   $$('#updCards [data-uup]').forEach(b => b.onclick = async () => {
-    if (!(await ask(`<b>${esc(b.textContent)}</b>？<br>${TIP[b.dataset.uup]}。<br>更新前会自动备份，新版起不来会自动退回。`, '开始更新'))) return;
-    const r = await api('/api/updates/run', {comp: b.dataset.uup}); if (!r.ok) return alert(r.msg || r.error);
-    busy(b); jobUI({running: true, name: b.textContent.trim(), at: Date.now()/1000}); });
+    const comp = b.dataset.uup;
+    if (comp === 'console'){
+      const x = u.console, todo = (x.todo || []).length ? `<div class="h" style="margin-top:12px;font-weight:600">更新后还要做的事</div><ul>${x.todo.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+      if (!(await ask(`<h3 style="margin:0 0 4px">更新控制台到 ${esc(x.latest)}</h3><p class="note" style="margin:0">下载约 ${fmt(x.update_size || 0)}，校验通过后安装，控制台会重启一下，她不会掉线。更新前会自动备份，可以一键退回。</p>
+        <div class="upd-notes md">${mdLite(x.notes || '（没有更新说明）')}${todo}</div>`, '开始更新'))) return;
+      return startJob('console', '更新控制台', b);
+    }
+    if (!(await ask(`<b>${esc(b.textContent)}</b>？<br>${TIP[comp]}。<br>更新前会自动备份，新版起不来会自动退回。`, '开始更新'))) return;
+    startJob(comp, b.textContent.trim(), b); });
   $$('#updCards [data-urb]').forEach(b => b.onclick = async () => {
-    if (!(await ask('退回上一版？会先停掉，换回旧版再启动。', '退回'))) return;
+    const con = b.dataset.urb === 'console';
+    if (!(await ask(con ? `退回控制台 ${esc((u.console.backup || {}).from || '')}？控制台会重启一下，她不会掉线。` : '退回上一版？会先停掉，换回旧版再启动。', '退回'))) return;
     const r = await api('/api/updates/rollback', {comp: b.dataset.urb}); if (!r.ok) return alert(r.msg || r.error);
-    busy(b); jobUI({running: true, name: '回退到上一版本', at: Date.now()/1000}); });
+    busy(b); jobUI({running: true, name: con ? '回退控制台版本' : '回退到上一版本', at: Date.now()/1000}); });
   $$('#updCards [data-udb]').forEach(b => b.onclick = async () => {
     if (!(await ask('删掉上一版的备份？删了就不能一键退回了。', '删除'))) return;
     const r = await api('/api/updates/delete-backup', {comp: b.dataset.udb}); if (!r.ok) return alert(r.error); toast(r.msg, 'ok'); loadUpdates(); });
+  const cf = $('#updCards [data-cfull]'); if (cf) cf.onclick = () => window.open(u.console.page, '_blank');
+  const cz = $('#updCards [data-czip]'); if (cz) cz.onclick = zipUpdateDlg;
 }
 $('#updCheck').onclick = async () => { const b = $('#updCheck'); b.disabled = true; b.textContent = '检查中…'; await loadUpdates(true); b.disabled = false; b.textContent = '检查更新'; };
+/* 从压缩包更新：手动下载的新版整合包 */
+async function zipUpdateDlg(){
+  if (!(await ask(`<h3 style="margin:0 0 4px">从压缩包更新</h3><p class="note" style="margin:0 0 12px">把新版整合包压缩包的完整路径填在下面（在文件上按住 Shift 右键 →「复制为路径」）。只更新控制台本身，她的人设、记忆、设置都不动；更新前会自动备份，可以一键退回。</p>
+    <input id="zipPathIn" style="width:100%" placeholder="例如 D:\\下载\\大肥鱼整合包-v1.5.1.zip">`, '更新'))) return;
+  const path = ($('#zipPathIn').value || '').trim(); if (!path) return;
+  const r = await api('/api/update-from-zip', {path}); if (!r.ok) return alert(r.msg || r.error);
+  JC.retry = null; JC.retryName = ''; jobUI({running: true, name: '更新控制台', at: Date.now()/1000});
+}
+/* 控制台更新或退回后会自己重启：等新进程起来再刷新页面 */
+let RESTART_WAIT = false;
+async function waitRestart(oldVer){
+  if (RESTART_WAIT) return; RESTART_WAIT = true;
+  toast('控制台正在重启，几秒后自动刷新', 'ok');
+  const t0 = Date.now(), sleep = ms => new Promise(r => setTimeout(r, ms));
+  await sleep(2500);
+  while (Date.now() - t0 < 60000){
+    const p = await api('/api/ping').catch(() => null);
+    if (p && p.version && p.version !== oldVer) break;
+    await sleep(1500);
+  }
+  location.reload();
+}
+function atab(name){
+  $$('#aboutTabs button').forEach(b => b.classList.toggle('on', b.dataset.at === name));
+  $$('#p-about .atab').forEach(t => t.hidden = t.id !== 'at-' + name);
+}
+$$('#aboutTabs button').forEach(b => b.onclick = () => atab(b.dataset.at));
 
 /* 更新日志：最新版本展开，更早的每个版本折叠成一行；「未发布」有内容才显示 */
 /* 更新日志：左边版本列表，右边固定高度的内容区；点哪个版本看哪个，页面高度不变 */
@@ -3161,9 +3237,10 @@ function renderChangelog(secs){
   show(latest >= 0 ? latest : 0);
 }
 
+let CUR_VER = '';
 async function loadAbout(){
   loadUpdates();
-  const p = await api('/api/ping'); $('#verText').textContent = '控制台版本 ' + p.version; $('#foot').textContent = 'v' + p.version;
+  const p = await api('/api/ping'); CUR_VER = p.version; $('#verText').textContent = '当前版本 ' + p.version; $('#foot').textContent = 'v' + p.version;
   const v = await api('/api/versions');
   renderChangelog(v.sections || []);
   const box = $('#verBox'), ban = $('#verBanner');
@@ -3173,7 +3250,7 @@ async function loadAbout(){
   if (v.detached) ban.innerHTML = `<div class="risk" style="margin:8px 0"><b>现在用的是旧版本 ${esc(v.head)}</b>。新功能暂时不在。<div class="row"><button class="primary" id="verLatest">返回最新版本</button></div></div>`;
   const cur = v.head.split('-')[0];
   box.innerHTML = `<p class="hint">每个版本都留了一份，可以随时切回去试，再切回来。切换只换控制台程序和配置包模板，她的人设、记忆、知识库、设置都不动（那些去「备份与还原」页回滚）。${v.dirty ? '<br>当前有还没记下来的改动，切换前会自动保存。' : ''}</p>
-    <table><thead><tr><th>版本</th><th>时间</th><th>说明</th><th></th></tr></thead><tbody>${v.tags.map(t => `<tr><td><b>${esc(t.tag)}</b>${t.tag===cur?' <span class="pill g">在用</span>':''}</td><td class="muted">${esc(t.date)}</td><td>${esc(t.msg)}</td><td>${t.tag===cur?'':`<button data-ver="${esc(t.tag)}">切换到此版本</button>`}</td></tr>`).join('')}</tbody></table>
+    <div class="vscroll"><table><thead><tr><th>版本</th><th>时间</th><th>说明</th><th></th></tr></thead><tbody>${v.tags.map(t => `<tr><td><b>${esc(t.tag)}</b>${t.tag===cur?' <span class="pill g">在用</span>':''}</td><td class="muted">${esc(t.date)}</td><td>${esc(t.msg)}</td><td>${t.tag===cur?'':`<button data-ver="${esc(t.tag)}">切换到此版本</button>`}</td></tr>`).join('')}</tbody></table></div>
     <div class="row"><button id="verCommits">全部改动记录（${v.commits.length} 条）</button></div>`;
   $('#verCommits').onclick = () => infoDlg('全部改动记录', `<table><tbody>${v.commits.map(c => `<tr><td class="muted" style="white-space:nowrap">${esc(c.date)}</td><td><code>${esc(c.id)}</code></td><td>${esc(c.msg)}</td></tr>`).join('')}</tbody></table>`);
   box.querySelectorAll('button[data-ver]').forEach(b => b.onclick = async () => {
@@ -3183,8 +3260,6 @@ async function loadAbout(){
   const lb = $('#verLatest'); if (lb) lb.onclick = async () => { const r = await api('/api/versions/latest', {}); if (!r.ok) return alert(r.msg || r.error);
     page('home'); setTimeout(() => location.reload(), 8000); };
 }
-$('#updBtn').onclick = async () => { const path = $('#updPath').value.trim(); if (!path) return; const r = await api('/api/update-from-zip', {path}); if (!r.ok) return alert(r.msg || r.error);
-  page('home'); setTimeout(() => location.reload(), 8000); };
 $('#unLight').onclick = async () => { if (!(await ask('停掉她，并删掉桌面图标和开机自启？文件都留着。'))) return; await api('/api/uninstall', {full:false}); page('home'); };
 $('#unFull').onclick = async () => { if (!(await ask('<b>完全卸载</b>会删除 AstrBot、NapCat 和她的人设、记忆、聊天记录（会先自动备份一份到 Backups）。确定吗？', '完全卸载'))) return;
   await api('/api/uninstall', {full:true}); page('home'); setTimeout(() => location.reload(), 15000); };
@@ -3208,7 +3283,7 @@ async function showNotice(){
   const d = $('#noticeDlg');
   let done = false;
   const seen = () => { if (done) return; done = true; api('/api/notice/seen', {only_new: $('#ntOnlyNew').checked}).catch(() => {}); };
-  const go = () => { seen(); d.close(); page('about'); };
+  const go = () => { seen(); d.close(); page('about'); atab('upd'); };
   $('#ntOk').onclick = () => { seen(); d.close(); };
   $('#ntAll').onclick = go;
   if ($('#ntGoUpd')) $('#ntGoUpd').onclick = go;
