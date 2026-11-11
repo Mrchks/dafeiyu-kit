@@ -556,7 +556,7 @@ def deepseek_balance(force=False) -> dict:
     if res.get("balance") is not None:
         try:
             if float(res["balance"]) < 1:
-                services.notify("DeepSeek 余额不多了", f"只剩 ¥{res['balance']}，用完她就不回话了。")
+                services.notify("DeepSeek 余额不足", f"余额仅剩 ¥{res['balance']}，用尽后 bot 将无法回复消息。")
         except ValueError:
             pass
     return res
@@ -571,24 +571,24 @@ def diagnose() -> list[dict]:
     st = services.status()
     nc, ab = st["napcat"], st["astrbot"]
     out.append({"ok": ab["running"], "title": "AstrBot 在运行",
-                "detail": f"端口 {ab['port']}" if ab["running"] else "AstrBot 没在跑，她不会回任何消息。",
-                "fix": "" if ab["running"] else "点下面的「启动 AstrBot」，等一两分钟再诊断一次。",
+                "detail": f"端口 {ab['port']}" if ab["running"] else "AstrBot 未运行，bot 不会回复任何消息。",
+                "fix": "" if ab["running"] else "点击下方的「启动 AstrBot」，一至两分钟后重新诊断。",
                 "actions": [] if ab["running"] else A(("start_astrbot", "启动 AstrBot"))})
     lb = load_state().get("last_boot") or {}
     if lb.get("load", 0) > 40:
         out.append({"ok": False, "warn": True, "title": "AstrBot 启动偏慢",
-                    "detail": f"上次启动一共 {lb.get('total', 0):.0f} 秒，其中光加载程序就 {lb.get('load', 0):.0f} 秒（正常十几秒）。不影响她回消息，只是开得慢。",
-                    "fix": "点「启动耗时分析」，会告诉你是哪里慢、怎么办。",
+                    "detail": f"上次启动共用时 {lb.get('total', 0):.0f} 秒，其中加载程序用时 {lb.get('load', 0):.0f} 秒（正常为十余秒）。不影响 bot 回复消息，只是启动较慢。",
+                    "fix": "点击「启动耗时分析」，查看耗时较长的环节和处理方法。",
                     "actions": A(("profile_astrbot", "启动耗时分析"))})
     procs = services.astrbot_procs()
     if len(procs) > 1:
-        out.append({"ok": False, "title": "只有一个 AstrBot 在跑", "detail": f"现在有 {len(procs)} 个，可能会重复回复。",
-                    "fix": "点「重启 AstrBot」，会把多余的都关掉再启动一个。",
+        out.append({"ok": False, "title": "只有一个 AstrBot 在运行", "detail": f"当前有 {len(procs)} 个 AstrBot 进程，可能导致重复回复。",
+                    "fix": "点击「重启 AstrBot」，控制台会关闭多余的进程后重新启动一个。",
                     "actions": A(("restart_astrbot", "重启 AstrBot"))})
     if services.astrbot_needs_restart(load_state(), ab):
-        out.append({"ok": False, "warn": True, "title": "AstrBot 用的是更新前的设置",
-                    "detail": "整合包更新后，有些改动要重启一次 AstrBot 才生效（比如插件页面能在控制台里打开）。",
-                    "fix": "点「重启 AstrBot」。重启时她大约一分钟不回消息。",
+        out.append({"ok": False, "warn": True, "title": "AstrBot 仍在使用更新前的设置",
+                    "detail": "整合包更新后，部分改动需要重启一次 AstrBot 才能生效（例如在控制台中打开插件页面）。",
+                    "fix": "点击「重启 AstrBot」。重启期间 bot 约一分钟不回复消息。",
                     "actions": A(("restart_astrbot", "重启 AstrBot"))})
     nc_ok = nc["state"] == "online"
     state_txt = {"online": "在线", "need_qr": "登录过期了，需要用手机 QQ 重新扫码", "connecting": "启动了但没连上 AstrBot",
@@ -596,12 +596,12 @@ def diagnose() -> list[dict]:
     if nc_ok:
         nc_fix, nc_act = "", []
     elif nc["state"] == "need_qr":
-        nc_fix, nc_act = "点「扫码登录」，用小号的手机 QQ 扫二维码。", A(("qr", "扫码登录"))
+        nc_fix, nc_act = "点击「扫码登录」，使用小号所在手机的 QQ 扫描二维码。", A(("qr", "扫码登录"))
     elif nc["state"] == "connecting" and not ab["running"]:
-        nc_fix, nc_act = "AstrBot 没在跑，NapCat 连不上它。先启动 AstrBot。", A(("start_astrbot", "启动 AstrBot"))
+        nc_fix, nc_act = "AstrBot 未运行，NapCat 无法与其连接。请先启动 AstrBot。", A(("start_astrbot", "启动 AstrBot"))
     else:
-        nc_fix, nc_act = "点「重启 NapCat」；还不行就重新扫码登录。", A(("restart_napcat", "重启 NapCat"), ("qr", "扫码登录"))
-    out.append({"ok": nc_ok, "title": "QQ 小号在线并连上 AstrBot", "detail": state_txt.get(nc["state"], nc["state"]),
+        nc_fix, nc_act = "点击「重启 NapCat」；仍未解决时，重新扫码登录。", A(("restart_napcat", "重启 NapCat"), ("qr", "扫码登录"))
+    out.append({"ok": nc_ok, "title": "QQ 小号在线并已连接 AstrBot", "detail": state_txt.get(nc["state"], nc["state"]),
                 "fix": nc_fix, "actions": nc_act})
     evs = [e for e in (load_state().get("offline_events") or []) if time.time() - (e.get("at") or 0) < 86400]
     if evs:
@@ -610,9 +610,9 @@ def diagnose() -> list[dict]:
         when = time.strftime("%H:%M", time.localtime(last.get("at") or 0))
         out.append({"ok": False, "warn": True, "title": "最近 24 小时没有掉线",
                     "detail": f"掉线 {len(evs)} 次，最近一次在 {when}：{str(last.get('reason', '')).split('（')[0]}。",
-                    "fix": ("机器人号同时在别处登录会把她挤下线：不要在任何电脑版 QQ 上登录这个号（手机可以），"
-                            "任务管理器里只留 NapCat 带起来的那一个 QQ，然后重新扫码。" if kicked else
-                            "点「查看日志」看掉线前后的记录；反复掉线就生成问题报告，发给会的人。"),
+                    "fix": ("bot 使用的账号在其他设备登录时会被挤下线：请不要在任何电脑版 QQ 上登录该账号（手机可以），"
+                            "并在任务管理器中只保留由 NapCat 启动的 QQ 进程，然后重新扫码。" if kicked else
+                            "点击「查看日志」查看掉线前后的记录；反复掉线时，可生成问题报告并反馈给作者。"),
                     "actions": A(("qr", "扫码登录"), ("report", "生成问题报告")) if kicked else A(("logs", "查看日志"), ("report", "生成问题报告"))})
     config = read_json(cmd_config_path())
     model_id = config.get("agent_runner", {}).get("config", {}).get("model", {}).get("provider_id", "")
@@ -624,11 +624,11 @@ def diagnose() -> list[dict]:
         if bal_ok:
             b_fix, b_act = "", []
         elif bal.get("ok"):
-            b_fix, b_act = "余额用完了，她会一直不回消息。点「去充值」，充值后几分钟内恢复。", A(("topup", "去充值"))
+            b_fix, b_act = "余额已用尽，bot 将无法回复消息。请点击「前往充值」，充值后几分钟内恢复。", A(("topup", "前往充值"))
         else:
-            b_fix, b_act = ("查不到余额，多半是密钥填错了或者被删了。去 DeepSeek 密钥页复制一个新的，到「常用设置」里换上。",
+            b_fix, b_act = ("无法查询余额，通常是密钥填写有误或已被删除。请在 DeepSeek 密钥页新建并复制密钥，再到「常用设置」中更换。",
                             A(("deepseek_key", "打开密钥页"), ("settings", "常用设置")))
-        out.append({"ok": bal_ok, "title": "DeepSeek 能用、有余额",
+        out.append({"ok": bal_ok, "title": "DeepSeek 可用且余额充足",
                     "detail": f"余额 ¥{bal.get('balance')}" if bal.get("balance") is not None else bal.get("error", ""),
                     "fix": b_fix, "actions": b_act})
     else:
@@ -641,9 +641,9 @@ def diagnose() -> list[dict]:
     if blocked:
         import re
         ids = sorted({m.group(1) for l in blocked[-30:] for m in [re.search(r"Session ID (\S+) is not", l)] if m})
-        out.append({"ok": False, "warn": True, "title": "有消息被白名单挡住了",
-                    "detail": "这些会话不在白名单：" + "、".join(ids[-6:]),
-                    "fix": "要她理这些群或人，去「常用设置」把群号/QQ 号加进白名单。不想理就不用管。",
+        out.append({"ok": False, "warn": True, "title": "有消息被白名单拦截",
+                    "detail": "以下会话不在白名单中：" + "、".join(ids[-6:]),
+                    "fix": "需要 bot 回复这些群或用户时，请在「常用设置」中将群号或 QQ 号加入白名单；无需回复时可忽略。",
                     "actions": A(("settings", "常用设置"))})
     errs = [l for l in lines[-200:] if "[ERRO" in l or "Traceback" in l or "[ERROR" in l]
     if errs:
@@ -651,9 +651,9 @@ def diagnose() -> list[dict]:
         t = troubles.explain(errs[-1], errs[-20:], "运行中")
         known = t.get("code") != "unknown"
         out.append({"ok": False, "title": "最近没有报错",
-                    "detail": (t["title"] + "。" + t["cause"]) if known else "日志里最近有报错：" + errs[-1][-160:],
-                    "fix": "；".join(t["steps"][:2]) if known else "点「查看日志」看完整报错；看不懂就生成问题报告，发给会的人。",
+                    "detail": (t["title"] + "。" + t["cause"]) if known else "日志中近期有报错：" + errs[-1][-160:],
+                    "fix": "；".join(t["steps"][:2]) if known else "点击「查看日志」查看完整报错；需要协助时，可生成问题报告并反馈给作者。",
                     "actions": ([a for a in t["actions"] if a["key"] not in ("retry", "env", "report", "logs")][:2] if known else []) + A(("logs", "查看日志"), ("report", "生成问题报告"))})
     else:
-        out.append({"ok": True, "title": "最近没有报错", "detail": "日志里最近 200 行没有报错。", "fix": "", "actions": []})
+        out.append({"ok": True, "title": "最近没有报错", "detail": "日志最近 200 行中没有报错。", "fix": "", "actions": []})
     return out

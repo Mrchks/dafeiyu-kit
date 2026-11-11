@@ -72,9 +72,9 @@ def _report_ok(path: str | None) -> Path | None:
     p = Path(path).resolve()
     exp = Path(logtools.EXPORT).resolve()
     if p.parent != exp or not p.name.startswith("问题报告-") or p.suffix != ".zip" or not p.exists():
-        raise ValueError("问题报告找不到了，请重新勾选一次")
+        raise ValueError("未找到问题报告，请重新勾选「附带问题报告」")
     if p.stat().st_size > MAX_REPORT:
-        raise ValueError("问题报告太大（超过 5MB），请取消附带后再发，或把报告文件手动发给作者")
+        raise ValueError("问题报告超过 5MB，请取消附带后发送，或将报告文件手动发送给作者")
     return p
 
 
@@ -112,7 +112,7 @@ def send(kind: str, desc: str, contact: str = "", report_path: str | None = None
     desc = str(desc or "").strip()[:MAX_DESC]
     contact = str(contact or "").strip()[:100]
     if len(desc) < 2:
-        return {"ok": False, "error": "请写一下遇到的问题或建议"}
+        return {"ok": False, "error": "请填写描述"}
     try:
         rep = _report_ok(report_path)
     except ValueError as e:
@@ -134,8 +134,8 @@ def send(kind: str, desc: str, contact: str = "", report_path: str | None = None
         if r.get("ok"):
             update_state(feedback_sent=(recent + [time.time()])[-HOURLY:])
             log(f"问题反馈已发送（{fields['kind']}，{'附带' if rep else '未附带'}问题报告）")
-            return {"ok": True, "msg": "已发送，作者会通过邮件收到。"}
-        err = str(r.get("error") or "反馈没发出去")
+            return {"ok": True, "msg": "反馈已发送给作者。"}
+        err = str(r.get("error") or "反馈发送失败")
     saved = save_local(fields, rep)
     log(f"问题反馈没发出去：{err}；已保存到 {saved.name}")
     return {"ok": False, "error": err, "saved": str(saved), "name": saved.name}

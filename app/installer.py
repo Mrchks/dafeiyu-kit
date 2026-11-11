@@ -97,10 +97,10 @@ def check_env(home: str) -> list[dict]:
                 "fix": "等几分钟再点「检查」，加速站时好时坏；或者换个网络（比如手机热点）、打开代理后再检查。"})
     out.append({"ok": res["qq"][0], "warn_only": True, "title": "能连上腾讯下载地址（下载 QQ 内核）",
                 "detail": "通" if res["qq"][0] else "连不上 qqdl.gtimg.cn",
-                "fix": "安装 NapCat 时要从这里下载约 300MB 的 QQ 内核。连不上的话换个网络再试。"})
-    out.append({"ok": res["deepseek"][0], "warn_only": True, "title": "能连上 DeepSeek（她说话要用）",
+                "fix": "安装 NapCat 时需要从此地址下载约 300MB 的 QQ 内核。无法连接时，请更换网络后重试。"})
+    out.append({"ok": res["deepseek"][0], "warn_only": True, "title": "可以连接 DeepSeek（bot 回复时需要）",
                 "detail": "通" if res["deepseek"][0] else "连不上 api.deepseek.com",
-                "fix": "她回每一句话都要连 DeepSeek。连不上的话检查网络，或者关掉代理再试。"})
+                "fix": "bot 每次回复都需要连接 DeepSeek。无法连接时，请检查网络，或关闭代理后重试。"})
     return out
 
 
@@ -452,11 +452,11 @@ def wait_test(timeout: int = 300) -> str:
                 seen_in = True
         if seen_in and any("Prepare to send" in l for l in recent[-40:]):
             step_done("test")
-            return "她回你了，测试通过！"
+            return "已收到 bot 的回复，测试通过。"
         time.sleep(3)
     if seen_in:
-        raise RuntimeError("收到你的消息了，但她没回。点「诊断」看看原因。")
-    raise RuntimeError("5 分钟内没收到你的消息。确认是用主人号私聊小号，再点重试。")
+        raise RuntimeError("已收到测试消息，但 bot 没有回复。请点击「故障诊断」查看原因。")
+    raise RuntimeError("5 分钟内未收到测试消息。请确认是使用主人的 QQ 号私聊小号，再点击「重试」。")
 
 
 # ---------------------------------------------------------------- 8 完成：快捷方式、开机自启

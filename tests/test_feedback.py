@@ -63,10 +63,10 @@ class FeedbackTests(unittest.TestCase):
             self.assertFalse(feedback.send("问题", " ")["ok"])
             outside = self.tmp / "问题报告-x.zip"
             outside.write_bytes(b"PK")
-            self.assertIn("找不到", feedback.send("问题", "描述内容", report_path=str(outside))["error"])
+            self.assertIn("未找到", feedback.send("问题", "描述内容", report_path=str(outside))["error"])
             other = self.export / "别的文件.zip"
             other.write_bytes(b"PK")
-            self.assertIn("找不到", feedback.send("问题", "描述内容", report_path=str(other))["error"])
+            self.assertIn("未找到", feedback.send("问题", "描述内容", report_path=str(other))["error"])
             self.assertEqual(feedback.send("乱写", "描述内容")["ok"], True)
         self.assertEqual(self.sent[-1]["kind"], "其他")
 

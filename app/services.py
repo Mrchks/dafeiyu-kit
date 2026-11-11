@@ -297,7 +297,7 @@ def profile_astrbot() -> str:
     py = Path(s["astrbot_python"])
     py = py.with_name("python.exe") if py.with_name("python.exe").exists() else py
     env, cwd = astrbot_env(s), Path(s["astrbot_root"])
-    job_line("第 1 遍：加载 AstrBot 的程序部分（不会影响正在运行的她）…")
+    job_line("第 1 遍：加载 AstrBot 的程序部分（不影响正在运行的 bot）…")
     job_progress(0.1)
     w1, top1 = _profile_once(py, cwd, env)
     job_line(f"第 1 遍 {w1:.0f} 秒。第 2 遍…")
@@ -311,7 +311,7 @@ def profile_astrbot() -> str:
     if w2 > 30:
         lines.append("两遍都慢：多半是 Windows 安全中心每次都在扫描这几千个 Python 文件。可以把 AstrBot 所在文件夹"
                      f"（{Path(s['astrbot_root']).parent}）加进「Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项」，"
-                     "这是安全设置，要你自己决定、自己点。")
+                     "此项属于安全设置，请自行决定是否修改。")
     if w1 <= 30 and w2 <= 30:
         lines.append("加载程序本身不慢。上次慢可能是刚开机电脑还在忙，或者插件多。")
     msg = "\n".join(lines)
@@ -715,11 +715,11 @@ def watchdog() -> None:
             if online and _last["online"] is False:
                 log("看门狗：重新上线")
                 _offline_event(back=True)
-                notify(f"{bot_name()}上线了", "她又能聊天了。")
+                notify(f"{bot_name()}上线了", "bot 已恢复在线。")
             _last["online"] = online
             if st["napcat"]["state"] == "need_qr" and time.time() - _last["qr_notified"] > 600:
                 _last["qr_notified"] = time.time()
-                notify("需要扫码登录", "小号的登录过期了，打开控制台用手机 QQ 扫码。")
+                notify("需要扫码登录", "小号的登录已过期，请打开控制台，用手机 QQ 扫码登录。")
             if not s.get("watchdog") or job["running"] or _busy.locked():
                 continue
             now = time.time()

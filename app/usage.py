@@ -34,7 +34,7 @@ def _db_path() -> Path | None:
 def _connect() -> sqlite3.Connection:
     p = _db_path()
     if not p or not p.exists():
-        raise UsageError("还没有用量数据：AstrBot 装好、她回过消息之后这里才有记录。")
+        raise UsageError("暂无用量数据：AstrBot 安装完成且 bot 回复过消息后，此处才会有记录。")
     # AstrBot 的库是 WAL 模式，只读模式（mode=ro）在 AstrBot 停着时可能打不开；普通方式打开 + query_only 一样不会写
     con = sqlite3.connect(str(p), timeout=5)
     con.row_factory = sqlite3.Row

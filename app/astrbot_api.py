@@ -414,4 +414,4 @@ def test_chat(session_id: str, text: str, timeout: int = 120) -> str:
                 break
     out = "\n".join(p.strip() for p in parts if p.strip()).strip()
     log(f"测试聊天：{text[:30]} -> {out[:60]}")
-    return out or "（她没有回复，去日志里看看）"
+    return out or "（bot 没有回复，请查看日志）"

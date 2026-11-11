@@ -74,7 +74,7 @@ def after_update_todo(s: dict | None = None) -> list[dict]:
         ab = services.status()["astrbot"]
         need = services.astrbot_needs_restart(s, ab)
         out.append({"key": "restart_astrbot", "done": not need, "title": "重启一次 AstrBot",
-                    "detail": "让这次更新里 AstrBot 相关的改动生效。重启时她大约一分钟不回消息。" if need
+                    "detail": "使本次更新中与 AstrBot 相关的改动生效。重启期间 bot 约一分钟不回复消息。" if need
                     else "已经是用新设置启动的。",
                     "actions": [{"key": "restart_astrbot", "label": "重启 AstrBot"}] if need else []})
     except Exception:
@@ -96,7 +96,7 @@ def update_from_zip(path: str) -> str:
     """「从压缩包更新」：手动拿到的新版整合包。先备份再覆盖，之后能在「版本与更新」一键退回。"""
     p = Path(path.strip().strip('"'))
     if not p.exists():
-        raise RuntimeError("找不到这个文件")
+        raise RuntimeError("找不到该文件")
     nv = selfupdate.package_version(p)
     return _install_console(p, nv, p.name)
 
@@ -119,13 +119,13 @@ def _install_console(p: Path, nv: str, src: str) -> str:
     except Exception as e:
         log(f"版本管理：记版本失败 {e}")
     threading.Timer(1.0, restart_self).start()
-    return f"已更新到 v{nv}，控制台马上重启（她不会掉线）"
+    return f"已更新到 v{nv}，控制台即将重启（bot 不会掉线）"
 
 
 def update_console() -> str:
     """「版本与更新」里控制台卡片的「一键更新」。"""
     if selfupdate.dev_mode():
-        raise RuntimeError("这是开发用的目录，不支持一键更新控制台（请用发版脚本或「从压缩包更新」）")
+        raise RuntimeError("当前为开发目录，不支持一键更新控制台（请使用发版脚本或「从压缩包更新」）")
     services.job_line("读取最新版本信息…")
     services.job_progress(0.02)
     m = selfupdate.fetch_manifest()
@@ -147,7 +147,7 @@ def update_console() -> str:
 def rollback_console() -> str:
     rec = updater._records().get("console")
     if not rec or not Path(rec.get("backup", "")).exists():
-        raise RuntimeError("没有可以退回的备份")
+        raise RuntimeError("没有可用于回退的备份")
     cur = rec.get("to") or VERSION
     services.job_line(f"退回 v{rec.get('from')}…")
     selfupdate.install_zip(Path(rec["backup"]))
@@ -160,7 +160,7 @@ def rollback_console() -> str:
     except Exception as e:
         log(f"版本管理：记版本失败 {e}")
     threading.Timer(1.0, restart_self).start()
-    return f"已退回 v{rec.get('from')}（之前是 v{cur}），控制台马上重启。备份用掉了，已删除。"
+    return f"已回退到 v{rec.get('from')}（此前为 v{cur}），控制台即将重启。所用备份已删除。"
 
 
 def uninstall(full: bool) -> str:
@@ -168,7 +168,7 @@ def uninstall(full: bool) -> str:
     installer.remove_shortcuts()
     update_state(autostart=False)
     if not full:
-        return "已停止，并删掉了桌面图标和开机自启。整合包文件夹你可以自己删。"
+        return "已停止运行，并删除了桌面图标和开机自启项。整合包文件夹可自行删除。"
     manage.do_backup(False, "before-uninstall")
     s = load_state()
     home = Path(s["home"]) if s["home"] else None

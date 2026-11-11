@@ -410,13 +410,13 @@ def update_astrbot() -> str:
                 services.start_astrbot()
         except Exception as e2:  # noqa: BLE001
             log_exc()
-            raise RuntimeError(f"更新没成功（{e}），退回旧版也出错了（{e2}）。备份在 {new_rec.get('backup') or '无'}，"
-                               "把这段话发给帮你装的人。")
+            raise RuntimeError(f"更新失败（{e}），回退旧版本时也出现错误（{e2}）。备份位于 {new_rec.get('backup') or '无'}，"
+                               "请将此信息连同问题报告反馈给作者。")
         # 退回成功：备份内容就是现在在用的，留着也没意义
         if new_rec.get("backup"):
             _drop_backup(new_rec)
         _save_record("astrbot", None)
-        raise RuntimeError(f"更新到 {lat['version']} 没成功（{e}），已经自动退回 {cur}，她照常能用。")
+        raise RuntimeError(f"更新到 {lat['version']} 失败（{e}），已自动回退到 {cur}，bot 可正常使用。")
     _save_record("astrbot", new_rec)
     if not was_running:
         services.stop_astrbot()
@@ -566,7 +566,7 @@ def update_napcat() -> str:
         if not (new_dir / "napcat.mjs").exists():          # 有的包外面还套了一层文件夹
             hits = list(new_dir.glob("*/napcat.mjs"))
             if not hits:
-                raise RuntimeError("下载的 NapCat 包不对（里面没有 napcat.mjs），没动你现在的 NapCat")
+                raise RuntimeError("下载的 NapCat 安装包不正确（缺少 napcat.mjs），当前的 NapCat 未做改动")
             new_dir = hits[0].parent
         job_line("停掉 NapCat，备份当前版本（登录信息和配置都在里面）…")
         job_progress(0.4)

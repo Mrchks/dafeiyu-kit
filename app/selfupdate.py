@@ -106,7 +106,7 @@ def fetch_manifest() -> dict:
     """依次试直连和各加速站，返回第一份签名正确的 payload。全部失败抛 RuntimeError。"""
     key = pubkey()
     if not key:
-        raise RuntimeError("这个版本还没有启用自动更新")
+        raise RuntimeError("当前版本尚未启用自动更新")
     reasons = []
     for u in _manifest_urls():
         try:
