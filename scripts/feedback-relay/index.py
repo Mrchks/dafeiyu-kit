@@ -68,9 +68,9 @@ def _rate_ok(ip: str, now: float | None = None) -> str:
         hits = [t for t in _ip_hits.get(ip, []) if now - t < 3600]
         if len(hits) >= per_ip:
             _ip_hits[ip] = hits
-            return "发送太频繁了，请一小时后再试"
+            return "发送过于频繁，请一小时后再试"
         if _day["count"] >= per_day:
-            return "今天的反馈已经很多了，请明天再试"
+            return "今日反馈数量已达上限，请明天再试"
         hits.append(now)
         _ip_hits[ip] = hits
         _day["count"] += 1
@@ -93,25 +93,25 @@ def _clean(s, limit: int) -> str:
 def validate(data: dict) -> tuple[dict, bytes | None, str]:
     """返回 (整理后的字段, 问题报告字节或 None, 错误原因)。"""
     if not isinstance(data, dict) or data.get("app") != APP_ID:
-        return {}, None, "不是大肥鱼控制台发来的反馈"
+        return {}, None, "请求不是由大肥鱼控制台发出"
     f = {"kind": data.get("kind") if data.get("kind") in KINDS else "其他",
          "desc": _clean(data.get("desc"), MAX_DESC), "contact": _clean(data.get("contact"), 100),
          "version": _clean(data.get("version"), 20), "system": _clean(data.get("system"), 200),
          "device": re.sub(r"[^0-9a-f]", "", str(data.get("device") or "").lower())[:16]}
     if len(f["desc"]) < 2:
-        return {}, None, "请写一下遇到的问题或建议"
+        return {}, None, "请填写描述"
     rep = data.get("report")
     blob = None
     if rep:
         name = _clean((rep or {}).get("name"), 120)
         if not re.fullmatch(r"[\w\-. （）()一-鿿]+\.zip", name or ""):
-            return {}, None, "问题报告的文件名不对"
+            return {}, None, "问题报告的文件名不符合要求"
         try:
             blob = base64.b64decode(str(rep.get("data") or ""), validate=True)
         except Exception:  # noqa: BLE001
-            return {}, None, "问题报告的内容不对"
+            return {}, None, "问题报告的内容无法解析"
         if len(blob) > MAX_REPORT or not blob.startswith(b"PK"):
-            return {}, None, "问题报告太大或不是压缩包"
+            return {}, None, "问题报告超过大小限制，或不是压缩包"
         f["report_name"] = name
     return f, blob, ""
 
@@ -149,16 +149,16 @@ def handler(event, context):
         ready = all(os.environ.get(k) for k in ("SMTP_HOST", "SMTP_USER", "SMTP_PASS", "MAIL_TO"))
         return _resp(200, {"ok": True, "service": "dafeiyu-feedback", "ready": ready})
     if method != "POST":
-        return _resp(405, {"ok": False, "error": "只接受 POST"})
+        return _resp(405, {"ok": False, "error": "仅支持 POST 请求"})
     body = ev.get("body") or ""
     if len(body) > MAX_BODY * 4 // 3 + 16:
-        return _resp(413, {"ok": False, "error": "内容太大"})
+        return _resp(413, {"ok": False, "error": "内容超过大小限制"})
     try:
         if ev.get("isBase64Encoded"):
             body = base64.b64decode(body).decode("utf-8")
         data = json.loads(body)
     except Exception:  # noqa: BLE001
-        return _resp(400, {"ok": False, "error": "内容格式不对"})
+        return _resp(400, {"ok": False, "error": "内容格式不正确"})
     f, blob, err = validate(data)
     if err:
         return _resp(400, {"ok": False, "error": err})
@@ -171,9 +171,9 @@ def handler(event, context):
         send(build_mail(f, blob, ip, req_id))
     except KeyError:
         _refund(ip)
-        return _resp(500, {"ok": False, "error": "中转服务还没配置好发件邮箱"})
+        return _resp(500, {"ok": False, "error": "反馈服务尚未完成发件邮箱配置"})
     except Exception as e:  # noqa: BLE001
         print(f"发送失败：{type(e).__name__}: {e}")
         _refund(ip)
-        return _resp(502, {"ok": False, "error": "邮件没发出去，请稍后再试"})
+        return _resp(502, {"ok": False, "error": "邮件发送失败，请稍后重试"})
     return _resp(200, {"ok": True, "id": req_id})

@@ -281,7 +281,7 @@ def _zip_tree(src: Path, dest: Path, skip_top: set[str]) -> None:
         bad = z.testzip()
     if bad:
         tmp.unlink()
-        raise RuntimeError(f"备份文件有损坏（{bad}），没敢继续更新")
+        raise RuntimeError(f"备份文件已损坏（{bad}），更新已中止")
     tmp.replace(dest)
 
 
@@ -325,7 +325,7 @@ def _run_astrbot_updater(root: Path, tag: str) -> None:
             done["last"] = line[-300:]
     code = run_stream([str(py), "-c", _UPDATE_SCRIPT, tag], on, cwd=str(root), env=env, timeout=1800)
     if code != 0 or not done["ok"]:
-        raise RuntimeError(f"下载/换新代码没成功：{done['last'] or ('退出码 ' + str(code))}")
+        raise RuntimeError(f"下载或替换新代码失败：{done['last'] or ('退出码 ' + str(code))}")
 
 
 def _pip(args: list[str]) -> None:
@@ -336,10 +336,10 @@ def _pip(args: list[str]) -> None:
 def _restore_tree(root: Path, zip_path: Path) -> None:
     """把源码文件夹换回备份：除了 data 以外的东西先删掉，再解压备份。"""
     if not zip_path.exists():
-        raise RuntimeError("找不到备份文件，没法退回")
+        raise RuntimeError("找不到备份文件，无法回退")
     with zipfile.ZipFile(zip_path) as z:
         if z.testzip():
-            raise RuntimeError("备份文件损坏，没法退回")
+            raise RuntimeError("备份文件已损坏，无法回退")
         for item in root.iterdir():
             if item.name in ("data", "venv", ".venv"):
                 continue
@@ -354,7 +354,7 @@ def _restore_tree(root: Path, zip_path: Path) -> None:
 
 
 def _start_and_check() -> None:
-    job_line("启动 AstrBot，检查能不能正常跑起来（要一两分钟）…")
+    job_line("正在启动 AstrBot 并检查能否正常运行（需要一至两分钟）…")
     res = services.start_astrbot()
     if "已启动" not in res:
         raise RuntimeError(res)
@@ -365,20 +365,20 @@ def update_astrbot() -> str:
     lat = c.get("astrbot") or {}
     cur = ab_current()
     if not lat.get("version"):
-        raise RuntimeError("查不到 AstrBot 最新版本（网络不通？）。过会儿再试。")
+        raise RuntimeError("无法查询 AstrBot 最新版本（可能是网络不通），请稍后重试。")
     if not _newer(lat["version"], cur):
-        return f"已经是最新版 {cur}"
+        return f"已是最新版本 {cur}"
     root = ab_source_root()
     # 更新完要不要让它接着跑：本来在跑，或者用户希望她在线（总览点过启动）
     was_running = services.astrbot_info()["running"] or bool(load_state()["wanted"].get("astrbot"))
     old_rec = _records().get("astrbot")
-    job_line(f"准备从 {cur} 更新到 {lat['version']}，先停掉 AstrBot…")
+    job_line(f"准备从 {cur} 更新到 {lat['version']}，正在停止 AstrBot…")
     job_progress(0.03)
     services.stop_astrbot()
     new_rec = {"from": cur, "to": lat["version"], "at": time.time()}
     try:
         if root:
-            job_line("备份当前程序代码（不含 data，人设和记忆不动）…")
+            job_line("正在备份当前程序代码（不含 data，人设和记忆不受影响）…")
             bk = _bk_dir() / f"astrbot-{cur}.zip"
             if old_rec and old_rec.get("backup") == str(bk):
                 old_rec = None          # 同名，下面覆盖掉就行
@@ -388,18 +388,18 @@ def update_astrbot() -> str:
             job_progress(0.12)
             _run_astrbot_updater(root, lat["tag"])
             job_progress(0.62)
-            job_line("从国内镜像装新版需要的组件…")
+            job_line("正在从国内镜像安装新版本所需的组件…")
             _pip(["-r", str(root / "requirements.txt")])
         else:
             new_rec.update(kind="pip", backup=None)
             _drop_backup(old_rec)
-            job_line("从国内镜像下载新版 AstrBot…")
+            job_line("正在从国内镜像下载新版 AstrBot…")
             _pip([f"astrbot=={lat['version']}"])
         job_progress(0.8)
         _start_and_check()
     except Exception as e:  # noqa: BLE001
         log_exc()
-        job_line(f"更新没成功：{e}。正在退回 {cur}…")
+        job_line(f"更新失败：{e}。正在回退到 {cur}…")
         try:
             services.stop_astrbot()
             if root and new_rec.get("backup"):
@@ -421,30 +421,30 @@ def update_astrbot() -> str:
     if not was_running:
         services.stop_astrbot()
     job_progress(1.0)
-    return f"AstrBot 已经更新到 {lat['version']}。旧版留了一份备份，在「版本与更新」页可以退回或删除。"
+    return f"AstrBot 已更新到 {lat['version']}。旧版本已保留一份备份，可在「版本与更新」页回退或删除。"
 
 
 def rollback_astrbot() -> str:
     rec = _records().get("astrbot")
     if not rec:
-        raise RuntimeError("没有可以退回的备份")
+        raise RuntimeError("没有可用于回退的备份")
     cur = ab_current()
     root = ab_source_root()
     # 更新完要不要让它接着跑：本来在跑，或者用户希望她在线（总览点过启动）
     was_running = services.astrbot_info()["running"] or bool(load_state()["wanted"].get("astrbot"))
-    job_line(f"退回 {rec['from']}，先停掉 AstrBot…")
+    job_line(f"回退到 {rec['from']}，正在停止 AstrBot…")
     services.stop_astrbot()
     if rec.get("kind") == "zip" and root:
-        job_line("把程序代码换回备份…")
+        job_line("正在将程序代码恢复为备份版本…")
         _restore_tree(root, Path(rec["backup"]))
         job_progress(0.4)
-        job_line("检查旧版需要的组件…")
+        job_line("正在检查旧版本所需的组件…")
         try:
             _pip(["-r", str(root / "requirements.txt")])
         except Exception:
             log_exc()
     else:
-        job_line(f"从国内镜像装回 {rec['from']}…")
+        job_line(f"正在从国内镜像重新安装 {rec['from']}…")
         _pip([f"astrbot=={rec['from']}"])
     job_progress(0.7)
     _start_and_check()
@@ -453,7 +453,7 @@ def rollback_astrbot() -> str:
     _drop_backup(rec)
     _save_record("astrbot", None)
     job_progress(1.0)
-    return f"已经退回 {rec['from']}（之前是 {cur}）。备份用掉了，已删除。"
+    return f"已回退到 {rec['from']}（此前为 {cur}）。所用备份已删除。"
 
 
 # ---------------------------------------------------------------- NapCat：更新
@@ -467,14 +467,14 @@ def _napcat_ok(timeout: int = 120) -> str:
         time.sleep(2)
         rows = services.netstat()
         if services.napcat_connected(rows, services.onebot_port()):
-            return "已连上 AstrBot"
+            return "已连接 AstrBot"
         st = services.napcat_login_state(True, False)
         if st == "need_qr":
-            return "已启动，要扫码登录"
+            return "已启动，需要扫码登录"
         if not ab and services.port_open(services.napcat_webui()["port"]):
             return "已启动"
-        job_line(f"等 NapCat 起来（{int(time.time() - t0)} 秒）…", quiet=True)
-    raise RuntimeError("新版 NapCat 起不来或连不上 AstrBot")
+        job_line(f"等待 NapCat 启动（{int(time.time() - t0)} 秒）…", quiet=True)
+    raise RuntimeError("新版 NapCat 无法启动，或无法连接 AstrBot")
 
 
 def _napcat_log_since(f: Path, pos: int) -> str:
@@ -490,7 +490,7 @@ def _napcat_log_since(f: Path, pos: int) -> str:
     lines = [re.sub(r"\x1b\[[0-9;]*m", "", ln).strip() for ln in txt.splitlines()]
     lines = [ln for ln in lines if ln and "重新连接" not in ln and "TCPConnectWrap" not in ln]
     if not lines:
-        return "（一行输出都没有：QQ 没有把 NapCat 带起来）"
+        return "（没有任何输出：QQ 未能启动 NapCat）"
     return " / ".join(lines[-4:])[:600]
 
 
@@ -509,7 +509,7 @@ def _backup_napcat(app: Path, shell: Path, dest: Path) -> None:
     with zipfile.ZipFile(tmp) as z:
         if z.testzip():
             tmp.unlink()
-            raise RuntimeError("备份文件有损坏，没敢继续更新")
+            raise RuntimeError("备份文件已损坏，更新已中止")
     tmp.replace(dest)
 
 
@@ -549,16 +549,16 @@ def update_napcat() -> str:
     lat = c.get("napcat") or {}
     cur = nc_current()
     if not lat.get("version"):
-        raise RuntimeError("查不到 NapCat 最新版本（GitHub 连不上？）。过会儿再试。")
+        raise RuntimeError("无法查询 NapCat 最新版本（可能无法连接 GitHub），请稍后重试。")
     if not _newer(lat["version"], cur):
-        return f"已经是最新版 {cur}"
+        return f"已是最新版本 {cur}"
     app, shell = napcat_app(), napcat_dir()
     if not app or not shell:
         raise RuntimeError("找不到 NapCat 的安装位置")
     old_rec = _records().get("napcat")
     with tempfile.TemporaryDirectory(dir=str(_bk_dir())) as td:
         zp = Path(td) / "NapCat.Shell.zip"
-        job_line(f"下载 NapCat {lat['version']}…")
+        job_line(f"正在下载 NapCat {lat['version']}…")
         download(lat["url"], zp, progress=lambda g, t: job_progress(0.05 + 0.3 * g / t if t else None), github=True)
         new_dir = Path(td) / "new"
         with zipfile.ZipFile(zp) as z:
@@ -568,7 +568,7 @@ def update_napcat() -> str:
             if not hits:
                 raise RuntimeError("下载的 NapCat 安装包不正确（缺少 napcat.mjs），当前的 NapCat 未做改动")
             new_dir = hits[0].parent
-        job_line("停掉 NapCat，备份当前版本（登录信息和配置都在里面）…")
+        job_line("正在停止 NapCat 并备份当前版本（包含登录信息和配置）…")
         job_progress(0.4)
         services.stop_napcat()
         time.sleep(2)
@@ -580,7 +580,7 @@ def update_napcat() -> str:
         rec = {"from": cur, "to": lat["version"], "at": time.time(), "kind": "zip", "backup": str(bk)}
         pos = None
         try:
-            job_line("换上新版程序文件（配置文件夹原样保留）…")
+            job_line("正在替换为新版程序文件（配置文件夹保持不变）…")
             job_progress(0.55)
             _copy_over(new_dir, app, {"config"})
             # 注意：外层 Shell 文件夹里的 NapCatWinBootMain.exe / Hook.dll 是一键包自己的启动器，
@@ -595,7 +595,7 @@ def update_napcat() -> str:
             why = _napcat_log_since(LOG_DIR / "napcat.log", pos) if pos is not None else ""
             if why:
                 log(f"新版 NapCat 的输出：{why}")
-            job_line(f"新版没跑起来（{e}），换回 {cur}…")
+            job_line(f"新版本未能运行（{e}），正在恢复 {cur}…")
             try:
                 services.stop_napcat()
                 time.sleep(2)
@@ -603,14 +603,14 @@ def update_napcat() -> str:
                 services.start_napcat(wait=False)
             except Exception as e2:  # noqa: BLE001
                 log_exc()
-                raise RuntimeError(f"更新没成功（{e}），换回旧版也出错了（{e2}）。备份在 {bk}")
+                raise RuntimeError(f"更新失败（{e}），恢复旧版本时也出现错误（{e2}）。备份位于 {bk}")
             _drop_backup(rec)
             _save_record("napcat", None)
-            raise RuntimeError(f"NapCat {lat['version']} 没跑起来，已经换回 {cur}。可能新版要求更新的 QQ 内核，"
-                               "可以试试「完整更新（含 QQ 内核）」。")
+            raise RuntimeError(f"NapCat {lat['version']} 未能运行，已恢复为 {cur}。新版本可能要求更新版本的 QQ 内核，"
+                               "可尝试「完整更新（含 QQ 内核）」。")
     _save_record("napcat", rec)
     job_progress(1.0)
-    return f"NapCat 已经更新到 {lat['version']}（{how}）。旧版留了一份备份，可以退回或删除。"
+    return f"NapCat 已更新到 {lat['version']}（{how}）。旧版本已保留一份备份，可以回退或删除。"
 
 
 def update_napcat_full() -> str:
@@ -624,7 +624,7 @@ def update_napcat_full() -> str:
     home = Path(s["home"]) if s.get("home") else old_shell.parent.parent
     tag, url = github_latest_asset(NAPCAT_REPO, lambda n: n == "NapCat.Shell.Windows.OneKey.zip")
     if not tag:
-        raise RuntimeError("查不到 NapCat 最新版本（GitHub 连不上？）。过会儿再试。")
+        raise RuntimeError("无法查询 NapCat 最新版本（可能无法连接 GitHub），请稍后重试。")
     url = url or f"https://github.com/{NAPCAT_REPO}/releases/download/{tag}/NapCat.Shell.Windows.OneKey.zip"
     ndir = home / f"napcat-{tag}"
     if ndir.exists():
@@ -632,15 +632,15 @@ def update_napcat_full() -> str:
     ndir.mkdir(parents=True)
     old_rec = _records().get("napcat")
     try:
-        job_line(f"下载 NapCat {tag} 一键包…")
+        job_line(f"正在下载 NapCat {tag} 一键包…")
         zp = ndir / "NapCat.OneKey.zip"
         download(url, zp, progress=lambda g, t: job_progress(0.1 * g / t if t else None), github=True)
         with zipfile.ZipFile(zp) as z:
             z.extractall(ndir)
         inst = next(iter(ndir.glob("**/NapCatInstaller.exe")), None)
         if not inst:
-            raise RuntimeError("一键包里没找到 NapCatInstaller.exe")
-        job_line("运行 NapCat 安装器：下载新版 QQ 内核（约 300MB），要几分钟…")
+            raise RuntimeError("一键包中未找到 NapCatInstaller.exe")
+        job_line("正在运行 NapCat 安装器：下载新版 QQ 内核（约 300MB），需要几分钟…")
         t0 = time.time()
 
         def on(line):
@@ -649,9 +649,9 @@ def update_napcat_full() -> str:
         run_stream([str(inst)], on, cwd=str(inst.parent), timeout=1800)
         new_shell = installer._find_shell(ndir)
         if not new_shell:
-            raise RuntimeError("新的 QQ 内核没装好")
+            raise RuntimeError("新版 QQ 内核安装未完成")
         new_cfg = installer._napcat_cfg_dir_for(new_shell)
-        job_line("把登录信息和连接设置搬到新版…")
+        job_line("正在将登录信息和连接设置迁移到新版本…")
         shutil.copytree(old_app / "config", new_cfg, dirs_exist_ok=True)
         job_progress(0.8)
         services.stop_napcat()
@@ -660,7 +660,7 @@ def update_napcat_full() -> str:
         how = _napcat_ok(180)
     except Exception as e:  # noqa: BLE001
         log_exc()
-        job_line(f"没成功（{e}），换回原来的…")
+        job_line(f"未成功（{e}），正在恢复原版本…")
         try:
             services.stop_napcat()
             time.sleep(2)
@@ -669,26 +669,26 @@ def update_napcat_full() -> str:
         update_state(napcat_dir=str(old_shell))
         services.start_napcat(wait=False)
         shutil.rmtree(ndir, ignore_errors=True)
-        raise RuntimeError(f"完整更新（含 QQ 内核）没成功（{e}），已经换回原来的 NapCat {cur}。")
+        raise RuntimeError(f"完整更新（含 QQ 内核）失败（{e}），已恢复为原来的 NapCat {cur}。")
     _drop_backup(old_rec)
     _save_record("napcat", {"from": cur, "to": tag.lstrip("v"), "at": time.time(), "kind": "dir",
                             "backup": str(old_shell), "full": True})
     job_progress(1.0)
-    return f"NapCat 和 QQ 内核都更新到 {tag} 了（{how}）。旧的整套留作备份（比较大），确认没问题可以在「版本与更新」页删掉。"
+    return f"NapCat 和 QQ 内核均已更新到 {tag}（{how}）。旧版本已完整保留作为备份（占用空间较大），确认运行正常后可在「版本与更新」页删除。"
 
 
 def rollback_napcat() -> str:
     rec = _records().get("napcat")
     if not rec:
-        raise RuntimeError("没有可以退回的备份")
+        raise RuntimeError("没有可用于回退的备份")
     cur = nc_current()
-    job_line(f"退回 NapCat {rec.get('from')}…")
+    job_line(f"回退到 NapCat {rec.get('from')}…")
     services.stop_napcat()
     time.sleep(2)
     if rec.get("kind") == "dir":
         old = Path(rec["backup"])
         if not (old / "NapCatWinBootMain.exe").exists():
-            raise RuntimeError("备份的旧 NapCat 文件夹不在了，没法退回")
+            raise RuntimeError("备份的旧版 NapCat 文件夹已不存在，无法回退")
         now_shell = napcat_dir()
         update_state(napcat_dir=str(old))
         how = _napcat_ok()
@@ -704,7 +704,7 @@ def rollback_napcat() -> str:
         how = _napcat_ok()
         _drop_backup(rec)
     _save_record("napcat", None)
-    return f"已经退回 NapCat {rec.get('from')}（之前是 {cur}，{how}）。"
+    return f"已回退到 NapCat {rec.get('from')}（此前为 {cur}，{how}）。"
 
 
 def delete_backup(comp: str) -> str:
@@ -712,7 +712,7 @@ def delete_backup(comp: str) -> str:
     if not rec:
         return "没有备份"
     if rec.get("kind") == "dir" and Path(rec["backup"]) == napcat_dir():
-        raise RuntimeError("这份正在用，不能删")
+        raise RuntimeError("该备份正在使用，无法删除")
     _drop_backup(rec)
     _save_record(comp, None)
-    return "备份删掉了"
+    return "备份已删除"

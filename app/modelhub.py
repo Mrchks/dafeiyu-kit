@@ -36,7 +36,7 @@ def _items(value, name):
 def _url(value: str) -> str:
     url = urllib.parse.urlsplit(value.strip())
     if url.scheme not in ("http", "https") or not url.hostname or url.username or url.password or url.query or url.fragment:
-        raise ValueError("请填写不带密钥、查询参数或账号密码的API基础地址")
+        raise ValueError("请填写不含密钥、查询参数或账号密码的 API 基础地址")
     return urllib.parse.urlunsplit((url.scheme, url.netloc, url.path.rstrip("/"), "", ""))
 
 
@@ -97,30 +97,30 @@ def connection(body: dict, source_id: str, provider_id: str = "", old_source=Non
     """Build the same validated configuration for setup and subsequent edits."""
     preset = next((p for p in catalog()["presets"] if p["id"] == body.get("preset")), None)
     if preset is None:
-        raise ValueError("请选择API预设")
+        raise ValueError("请选择 API 预设")
     protocol = body.get("protocol") or preset["protocol"]
     if protocol not in PROTOCOLS:
         raise ValueError("请选择受支持的接口协议")
     base = _url(str(body.get("base_url") or preset["base_url"]))
     model = str(body.get("model") or preset["model"]).strip()
     if not model or len(model) > 240:
-        raise ValueError("请填写有效的模型ID")
+        raise ValueError("请填写有效的模型 ID")
     key = str(body.get("key") or "").strip()
     if key and ("\n" in key or "\r" in key):
-        raise ValueError("API Key不能包含换行")
+        raise ValueError("API Key 不能包含换行")
     extra = body.get("extra_body", preset.get("extra_body", {}))
     headers = body.get("headers")
     if not isinstance(extra, dict) or (headers is not None and not isinstance(headers, dict)):
-        raise ValueError("额外参数和请求头需要是JSON对象")
+        raise ValueError("额外参数和请求头必须是 JSON 对象")
     if "[已隐藏]" in json.dumps(extra, ensure_ascii=False):
         raise ValueError("隐藏的额外参数需重新填写，或清空额外参数")
     if headers and any(not isinstance(k, str) or not isinstance(v, str) or "\n" in k + v or "\r" in k + v
                        for k, v in headers.items()):
         raise ValueError("请求头名称和值需要是单行文字")
     if not key and not old_source:
-        raise ValueError("请填写API Key")
+        raise ValueError("请填写 API Key")
     if old_source and not key and base != str(old_source.get("api_base", "")).rstrip("/"):
-        raise ValueError("更换API地址时，请重新填写该地址的密钥")
+        raise ValueError("更换 API 地址时，请重新填写该地址对应的密钥")
     provider_name, provider_type = PROTOCOLS[protocol]
     source = copy.deepcopy(old_source) if old_source else {}
     source.update({"id": source_id, "provider": provider_name, "type": provider_type,
@@ -150,7 +150,7 @@ def save(body: dict) -> dict:
             old_model = ab.call("GET", "/api/v1/providers/by-id?merged=false&provider_id=" +
                                 urllib.parse.quote(provider_id, safe="")).get("provider", {})
             if not old_model.get("provider_source_id"):
-                raise ValueError("这个模型连接需在原版后台编辑")
+                raise ValueError("该模型连接需要在 AstrBot 原版后台中编辑")
             source_id = old_model["provider_source_id"]
             old_source = ab.call("GET", "/api/v1/provider-sources/by-id?source_id=" +
                                  urllib.parse.quote(source_id, safe=""))["provider_source"]
@@ -175,7 +175,7 @@ def save(body: dict) -> dict:
                 else:
                     ab.call("DELETE", "/api/v1/provider-sources/by-id?source_id=" +
                             urllib.parse.quote(source_id, safe=""))
-            raise ValueError("模型连接未保存成功，已尝试恢复原配置；请检查接口协议、地址和模型ID")
+            raise ValueError("模型连接未保存成功，已尝试恢复原配置；请检查接口协议、地址和模型 ID")
     return {"ok": True, "id": provider_id, "message": "已保存，尚未验证；原有会话的模型分配未改变"}
 
 
@@ -189,7 +189,7 @@ def assign(body: dict) -> dict:
         if role == "session":
             umo = body.get("umo")
             if not any(s["umo"] == umo for s in view["sessions"]):
-                raise ValueError("这个会话不在当前白名单中")
+                raise ValueError("该会话不在当前白名单中")
             result = ab.call("PATCH", "/api/v1/sessions/provider",
                              {"umos": [umo], "provider_type": "chat_completion", "provider_id": model["id"]})
             if result.get("failed_count"):
@@ -204,7 +204,7 @@ def assign(body: dict) -> dict:
             if role == "image":
                 group = ab.call("GET", "/api/v1/plugins/config?plugin_id=astrbot_plugin_group_chat_plus").get("config")
                 if not isinstance(group, dict):
-                    raise ValueError("读不到群聊识图设置，本次没有修改")
+                    raise ValueError("无法读取群聊识图设置，本次未做修改")
                 original_group = copy.deepcopy(group)
             if role == "chat":
                 conf.setdefault("agent_runner", {}).setdefault("config", {}).setdefault("model", {})["provider_id"] = model["id"]
@@ -231,7 +231,7 @@ def apply_image_rules() -> dict:
     with _lock:
         group = ab.call("GET", "/api/v1/plugins/config?plugin_id=astrbot_plugin_group_chat_plus").get("config")
         if not isinstance(group, dict):
-            raise ValueError("读不到群聊插件设置")
+            raise ValueError("无法读取群聊插件设置")
         if group.get("image_to_text_prompt") != VISION_PROMPT:
             group["image_to_text_prompt"] = VISION_PROMPT
             ab.call("PUT", "/api/v1/plugins/config",

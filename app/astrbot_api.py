@@ -34,7 +34,7 @@ def _raw(method: str, path: str, body=None, token=None, timeout: int = 60, strea
         txt = e.read().decode("utf-8", "replace")
         raise ApiError(f"HTTP {e.code}: {txt[:200]}")
     except Exception as e:
-        raise ApiError(f"连不上 AstrBot 后台：{e}")
+        raise ApiError(f"无法连接 AstrBot 后台：{e}")
     if stream:
         return r
     with r:
@@ -114,7 +114,7 @@ def upload_plugin(zip_bytes: bytes, filename: str, timeout: int = 300):
                 continue
             raise ApiError(f"HTTP {e.code}: {e.read().decode('utf-8', 'replace')[:200]}")
         except Exception as e:
-            raise ApiError(f"连不上 AstrBot 后台：{e}")
+            raise ApiError(f"无法连接 AstrBot 后台：{e}")
         try:
             d = json.loads(txt) if txt else {}
         except ValueError:
@@ -265,7 +265,7 @@ def meme_set_persona(persona: str, pack_ids: list[str]) -> None:
     pack_ids = [p for p in dict.fromkeys(str(x) for x in pack_ids) if p]
     if persona == "default":
         if not pack_ids:
-            raise ApiError("默认至少要选一个表情包")
+            raise ApiError("默认表情包至少需要选择一个")
         for r in rules:
             if r.get("scope") == "default":
                 r.update(pack_id=pack_ids[0], pack_ids=pack_ids)

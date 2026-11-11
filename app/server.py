@@ -103,7 +103,7 @@ def update_from_zip(path: str) -> str:
 
 def _install_console(p: Path, nv: str, src: str) -> str:
     old = VERSION
-    services.job_line(f"备份当前控制台（v{old}）…")
+    services.job_line(f"正在备份当前控制台（v{old}）…")
     bk, n = selfupdate.install_with_backup(p, updater._bk_dir())
     prev = updater._records().get("console")
     updater._save_record("console", {"from": old, "to": nv, "at": time.time(), "kind": "zip", "backup": str(bk)})
@@ -126,7 +126,7 @@ def update_console() -> str:
     """「版本与更新」里控制台卡片的「一键更新」。"""
     if selfupdate.dev_mode():
         raise RuntimeError("当前为开发目录，不支持一键更新控制台（请使用发版脚本或「从压缩包更新」）")
-    services.job_line("读取最新版本信息…")
+    services.job_line("正在读取最新版本信息…")
     services.job_progress(0.02)
     m = selfupdate.fetch_manifest()
     nv = m["version"]
@@ -134,8 +134,8 @@ def update_console() -> str:
         return f"已经是最新版本（v{VERSION}）"
     mf = m.get("update_min_from") or ""
     if mf and selfupdate.vtuple(VERSION) < selfupdate.vtuple(mf):
-        raise RuntimeError(f"这次更新需要下载完整整合包：v{VERSION} 不能直接升级到 v{nv}")
-    services.job_line(f"下载 v{nv} 更新包（{max(1, int(m['update']['size']) // 1024)} KB）…")
+        raise RuntimeError(f"本次更新需要下载完整整合包：v{VERSION} 不能直接升级到 v{nv}")
+    services.job_line(f"正在下载 v{nv} 更新包（{max(1, int(m['update']['size']) // 1024)} KB）…")
     zp = selfupdate.download_update(m, progress=lambda f: services.job_progress(0.05 + 0.75 * f))
     services.job_line("校验通过，开始安装…")
     services.job_progress(0.85)
@@ -149,7 +149,7 @@ def rollback_console() -> str:
     if not rec or not Path(rec.get("backup", "")).exists():
         raise RuntimeError("没有可用于回退的备份")
     cur = rec.get("to") or VERSION
-    services.job_line(f"退回 v{rec.get('from')}…")
+    services.job_line(f"正在回退到 v{rec.get('from')}…")
     selfupdate.install_zip(Path(rec["backup"]))
     updater._drop_backup(rec)
     updater._save_record("console", None)
@@ -181,7 +181,7 @@ def uninstall(full: bool) -> str:
                 removed.append(sub)
     update_state(setup_done=False, setup_step="welcome", wizard={})
     return ("已卸载：" + "、".join(removed) + "。备份留在 Backups 文件夹里。最后把整合包文件夹删掉就干净了。") if removed \
-        else "已停止并移除快捷方式。"
+        else "已停止运行，并移除了快捷方式。"
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -202,7 +202,7 @@ class Handler(BaseHTTPRequestHandler):
         self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
     def _ok(self, started, msg=""):
-        self._json({"ok": started, "msg": msg if started else "上一个操作还没做完，稍等"})
+        self._json({"ok": started, "msg": msg if started else "上一个操作尚未完成，请稍候"})
 
     def _guard(self) -> bool:
         host = (self.headers.get("Host") or "").split(":")[0]
@@ -431,7 +431,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._ok(services.run_job("卸载", lambda: uninstall(full)))
             elif p == "/api/dashboard-login":
                 ok = astrbot_api.save_login(b.get("user", ""), b.get("password", ""))
-                self._json({"ok": ok, "msg": "" if ok else "账号或密码不对（或者 AstrBot 没在运行）"})
+                self._json({"ok": ok, "msg": "" if ok else "账号或密码不正确（或 AstrBot 未运行）"})
             elif p == "/api/updates/run":
                 fn = {"astrbot": ("更新 AstrBot", updater.update_astrbot), "napcat": ("更新 NapCat", updater.update_napcat),
                       "napcat_full": ("完整更新 NapCat（含 QQ 内核）", updater.update_napcat_full),
@@ -489,7 +489,7 @@ class Handler(BaseHTTPRequestHandler):
                 kb = astrbot_api.kb_create(b["name"].strip(), b["embedding_provider_id"],
                                            b.get("description", ""), b.get("emoji") or "📚")
                 if not (isinstance(kb, dict) and kb.get("kb_id")):
-                    raise RuntimeError(f"知识库没建成：{str(kb)[:200]}")
+                    raise RuntimeError(f"知识库创建失败：{str(kb)[:200]}")
                 self._json({"ok": True, "kb": kb})
             elif p == "/api/kb/delete":
                 astrbot_api.kb_delete(b["kb_id"])
@@ -506,7 +506,7 @@ class Handler(BaseHTTPRequestHandler):
                 f = _P(b["path"]).resolve()
                 root = KIT.parent.resolve()
                 if root not in f.parents or not f.is_file():
-                    raise ValueError("只能上传整合包所在文件夹里的文件")
+                    raise ValueError("只能上传整合包所在文件夹中的文件")
                 self._json({"ok": True, "task_id": astrbot_api.kb_upload(b["kb_id"], f.name, f.read_bytes())})
             elif p == "/api/versions/switch":
                 ref = str(b.get("ref", ""))
@@ -610,7 +610,7 @@ def _bind() -> ThreadingHTTPServer:
         if port != last or "console_port" not in load_state():
             update_state(console_port=port)
         return srv
-    raise RuntimeError("控制台找不到能用的端口：" + "、".join(errs))
+    raise RuntimeError("控制台找不到可用的端口：" + "、".join(errs))
 
 
 def _fatal(msg: str) -> None:
@@ -636,7 +636,7 @@ def main():
     try:
         srv = _bind()
     except RuntimeError as e:
-        return _fatal(f"{e}\n\n可以重启电脑后再打开；还不行就把整合包 logs 文件夹里的 console.log 发给作者。")
+        return _fatal(f"{e}\n\n可重启电脑后再打开；仍未解决时，请将整合包 logs 文件夹中的 console.log 发送给作者。")
     log(f"控制台 {VERSION} 启动（端口 {srv.server_address[1]}）")
     try:                # 控制台进程意外崩溃时（不是普通报错），把现场写进 logs/console.crash.log
         import faulthandler
@@ -669,6 +669,6 @@ if __name__ == "__main__":
         main()
     except Exception:
         log(traceback.format_exc())
-        _fatal("控制台没能启动，原因已经记在整合包 logs 文件夹的 console.log 里。\n\n"
-               "可以先重启电脑再打开；还不行就把 console.log 发给作者。")
+        _fatal("控制台未能启动，原因已记录在整合包 logs 文件夹的 console.log 中。\n\n"
+               "可先重启电脑再打开；仍未解决时，请将 console.log 发送给作者。")
         raise

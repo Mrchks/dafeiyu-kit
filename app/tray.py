@@ -88,7 +88,7 @@ def notify(title: str, text: str) -> None:
 
 
 def _quit(icon, item):
-    log("从托盘退出控制台（机器人保持在线）")
+    log("从托盘退出控制台（bot 保持在线）")
     icon.stop()
     os._exit(0)
 
@@ -190,7 +190,7 @@ def run() -> None:
             Item("系统通知", _toggle("notify"), checked=_checked("notify")),
         )),
         M.SEPARATOR,
-        Item("退出控制台（机器人保持在线）", _quit),
+        Item("退出控制台（bot 保持在线）", _quit),
     )
     try:
         import trayui
@@ -203,7 +203,7 @@ def run() -> None:
         log_exc()
         _flyout = None
     _dark_menus()
-    _icon = _tray_class()("dafeiyu", _img(GRAY), "机器人控制台", menu)
+    _icon = _tray_class()("dafeiyu", _img(GRAY), "bot 控制台", menu)
     services.notify_hook = notify
 
     def updater():

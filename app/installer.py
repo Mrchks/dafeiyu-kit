@@ -57,17 +57,17 @@ def check_env(home: str) -> list[dict]:
     build = int(ver.split(".")[-1]) if ver.split(".")[-1].isdigit() else 0
     out.append({"ok": WIN and build >= 17763, "title": "Windows 10 / 11", "detail": f"{platform.system()} {platform.release()}（{ver}）",
                 "fix": "需要 Windows 10 1809 以上或 Windows 11。"})
-    out.append({"ok": is_ascii_path(home), "title": "安装位置是英文路径、不带空格", "detail": home,
-                "fix": "换一个像 D:\\Dafeiyu 这样的路径。"})
+    out.append({"ok": is_ascii_path(home), "title": "安装位置为英文路径且不含空格", "detail": home,
+                "fix": "请更换为 D:\\Dafeiyu 这样的路径。"})
     drive = os.path.splitdrive(home)[0] + "\\" if os.path.splitdrive(home)[0] else home
     free = disk_free_gb(drive)
-    out.append({"ok": free >= 6, "title": "硬盘空间 6GB 以上", "detail": f"{drive} 剩 {free:.1f} GB",
-                "fix": "清理一下硬盘，或换一个盘。"})
+    out.append({"ok": free >= 6, "title": "磁盘可用空间不少于 6GB", "detail": f"{drive} 剩余 {free:.1f} GB",
+                "fix": "请清理磁盘，或更换其他磁盘。"})
     mem = mem_gb()
     out.append({"ok": mem < 0 or mem >= 7.5, "warn_only": True, "title": "内存 8GB 以上（推荐 16GB）",
-                "detail": f"{mem:.1f} GB" if mem > 0 else "未知", "fix": "内存小也能跑，就是可能卡一点。"})
-    out.append({"ok": bool(edge_path()), "warn_only": True, "title": "装了 Edge 浏览器", "detail": edge_path() or "没找到",
-                "fix": "控制台窗口用 Edge 打开；没有的话会用默认浏览器。"})
+                "detail": f"{mem:.1f} GB" if mem > 0 else "未知", "fix": "内存较小时仍可运行，但可能不够流畅。"})
+    out.append({"ok": bool(edge_path()), "warn_only": True, "title": "已安装 Edge 浏览器", "detail": edge_path() or "没找到",
+                "fix": "控制台窗口使用 Edge 打开；未安装时使用默认浏览器。"})
     # 网络：分别测安装要用到的几个地方，同时测，最多等十来秒
     import urllib.request
     from concurrent.futures import ThreadPoolExecutor
@@ -88,18 +88,18 @@ def check_env(home: str) -> list[dict]:
     with ThreadPoolExecutor(max_workers=12) as ex:
         res = {k: list(ex.map(reach, v)) for k, v in checks.items()}
     gh_ok = [GH_PROXIES[i] for i, ok in enumerate(res["gh"]) if ok]
-    out.append({"ok": any(res["pypi"]), "title": "能连上国内软件源（下载 AstrBot 的组件）",
-                "detail": "通" if any(res["pypi"]) else "阿里云、清华的软件源都连不上",
-                "fix": "检查网络是否正常；开着代理的话先关掉再点「检查」（有的代理会挡住国内软件源）。"})
-    out.append({"ok": bool(gh_ok), "title": "能下载 NapCat（GitHub 或加速站）",
-                "detail": ("GitHub 直连可用" if "" in gh_ok else f"GitHub 直连不通，可用加速站 {len(gh_ok)} 个") if gh_ok
+    out.append({"ok": any(res["pypi"]), "title": "可以连接国内软件源（用于下载 AstrBot 的组件）",
+                "detail": "通" if any(res["pypi"]) else "阿里云、清华的软件源均无法连接",
+                "fix": "请检查网络是否正常；已开启代理时，请关闭后再点击「检查」（部分代理会阻断国内软件源）。"})
+    out.append({"ok": bool(gh_ok), "title": "可以下载 NapCat（GitHub 或加速站）",
+                "detail": ("GitHub 直连可用" if "" in gh_ok else f"GitHub 无法直连，可用加速站 {len(gh_ok)} 个") if gh_ok
                 else "GitHub 和加速站都连不上",
-                "fix": "等几分钟再点「检查」，加速站时好时坏；或者换个网络（比如手机热点）、打开代理后再检查。"})
-    out.append({"ok": res["qq"][0], "warn_only": True, "title": "能连上腾讯下载地址（下载 QQ 内核）",
-                "detail": "通" if res["qq"][0] else "连不上 qqdl.gtimg.cn",
+                "fix": "请在几分钟后再点击「检查」，加速站的可用性会有波动；也可以更换网络（例如手机热点），或开启代理后重新检查。"})
+    out.append({"ok": res["qq"][0], "warn_only": True, "title": "可以连接腾讯下载地址（用于下载 QQ 内核）",
+                "detail": "通" if res["qq"][0] else "无法连接 qqdl.gtimg.cn",
                 "fix": "安装 NapCat 时需要从此地址下载约 300MB 的 QQ 内核。无法连接时，请更换网络后重试。"})
     out.append({"ok": res["deepseek"][0], "warn_only": True, "title": "可以连接 DeepSeek（bot 回复时需要）",
-                "detail": "通" if res["deepseek"][0] else "连不上 api.deepseek.com",
+                "detail": "通" if res["deepseek"][0] else "无法连接 api.deepseek.com",
                 "fix": "bot 每次回复都需要连接 DeepSeek。无法连接时，请检查网络，或关闭代理后重试。"})
     return out
 
@@ -114,7 +114,7 @@ def _pip_install(py: Path, pkgs: list[str]) -> None:
     last = None
     for mirror in PYPI_MIRRORS:
         host = mirror.split("/")[2]
-        job_line(f"从 {host} 下载 {' '.join(pkgs)}（第一次要几分钟）…")
+        job_line(f"从 {host} 下载 {' '.join(pkgs)}（首次需要几分钟）…")
         code = run_stream([str(py), "-m", "pip", "install", "--disable-pip-version-check", "--no-warn-script-location",
                            "--timeout", "60", "-i", mirror, "--trusted-host", host] + pkgs,
                           lambda l: job_line(l[-200:]) if any(k in l for k in ("Collecting", "Successfully", "ERROR", "error"))
@@ -122,8 +122,8 @@ def _pip_install(py: Path, pkgs: list[str]) -> None:
         if code == 0:
             return
         last = code
-        job_line(f"这个源没装成（{code}），换下一个…")
-    raise RuntimeError(f"装 AstrBot 失败（pip 退出码 {last}）。检查网络后点重试。")
+        job_line(f"从该软件源安装失败（{code}），正在更换下一个…")
+    raise RuntimeError(f"AstrBot 安装失败（pip 退出码 {last}）。请检查网络后点击「重试」。")
 
 
 def install_astrbot(home: str, user: str = "", password: str = "") -> str:
@@ -133,16 +133,16 @@ def install_astrbot(home: str, user: str = "", password: str = "") -> str:
     password = password or dashlogin.gen_password()
     from_check = re.fullmatch(r"(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}", password or "")
     if not from_check:
-        raise RuntimeError("后台密码至少 8 位，要有大写字母、小写字母和数字。")
+        raise RuntimeError("后台密码至少 8 位，并包含大写字母、小写字母和数字。")
     if not re.fullmatch(r"[A-Za-z0-9_\-]{3,32}", user or ""):
-        raise RuntimeError("后台账号只能用 3–32 位英文、数字、下划线。")
+        raise RuntimeError("后台账号只能使用 3–32 位英文字母、数字或下划线。")
     homep = Path(home)
     homep.mkdir(parents=True, exist_ok=True)
     update_state(home=str(homep))
     venv_py = _venv_python(homep)
     base_py = RUNTIME_PY / "python.exe"
     if not venv_py.exists():
-        job_line("创建 Python 环境…")
+        job_line("正在创建 Python 环境…")
         job_progress(0.05)
         code, out = run([str(base_py), "-m", "venv", str(homep / "astrbot-venv")], timeout=300)
         if code != 0:
@@ -156,7 +156,7 @@ def install_astrbot(home: str, user: str = "", password: str = "") -> str:
     root.mkdir(exist_ok=True)
     cfg = root / "data" / "cmd_config.json"
     if not cfg.exists():
-        job_line("初始化 AstrBot…")
+        job_line("正在初始化 AstrBot…")
         env = os.environ.copy()
         env.update({"ASTRBOT_DASHBOARD_INITIAL_PASSWORD": password, "PYTHONUTF8": "1"})
         code, out = run([str(venv_py), "-m", "astrbot.cli", "init", "-y"], cwd=str(root), env=env, timeout=300)
@@ -171,7 +171,7 @@ def install_astrbot(home: str, user: str = "", password: str = "") -> str:
                  dashboard_pass=protect(password))
     job_progress(1.0)
     step_done("astrbot")
-    return "AstrBot 装好了"
+    return "AstrBot 安装完成"
 
 
 # ---------------------------------------------------------------- 3 安装 NapCat
@@ -190,19 +190,19 @@ def install_napcat() -> str:
     if not shell:
         installer = next(iter(ndir.glob("**/NapCatInstaller.exe")), None)
         if not installer:
-            job_line("查 NapCat 最新版本…")
+            job_line("正在查询 NapCat 最新版本…")
             tag, url = github_latest_asset("NapNeko/NapCatQQ", lambda n: n == "NapCat.Shell.Windows.OneKey.zip")
             if not url:
                 tag = tag or NAPCAT_FALLBACK_TAG
                 url = f"https://github.com/NapNeko/NapCatQQ/releases/download/{tag}/NapCat.Shell.Windows.OneKey.zip"
-            job_line(f"下载 NapCat 安装器 {tag}…")
+            job_line(f"正在下载 NapCat 安装器 {tag}…")
             zp = ndir / "NapCat.OneKey.zip"
             download(url, zp, progress=lambda g, t: job_progress(0.1 * g / t if t else None), github=True)
             with zipfile.ZipFile(zp) as z:
                 z.extractall(ndir)
             installer = next(iter(ndir.glob("**/NapCatInstaller.exe")), None)
             if not installer:
-                raise RuntimeError("NapCat 安装器解压后没找到 NapCatInstaller.exe")
+                raise RuntimeError("解压 NapCat 安装器后未找到 NapCatInstaller.exe")
         zp_shell = installer.parent / "NapCat.Shell.zip"
 
         def shell_zip_bad() -> bool:
@@ -213,14 +213,14 @@ def install_napcat() -> str:
             if shell_zip_bad():
                 try:
                     zp_shell.unlink()
-                    job_line("上次下载的 NapCat 本体不完整，已删掉，重新下载")
+                    job_line("上次下载的 NapCat 本体不完整，已删除并重新下载")
                 except OSError:
                     pass
 
         code = None
         for attempt in range(1, 4):
             drop_bad_zip()
-            job_line(f"运行 NapCat 安装器（第 {attempt} 次）：会下载 QQ 内核（约 300MB）和 NapCat，要几分钟…")
+            job_line(f"运行 NapCat 安装器（第 {attempt} 次）：将下载 QQ 内核（约 300MB）和 NapCat，需要几分钟…")
             job_progress(0.15)
             t0 = time.time()
 
@@ -234,10 +234,10 @@ def install_napcat() -> str:
                 break
             if not shell_zip_bad():
                 break               # 不是下载不完整，换下面的方式再试
-            job_line("NapCat 本体下载到一半断开了（文件不完整），换一个下载地址再试…")
+            job_line("NapCat 本体下载中断（文件不完整），正在更换下载地址重试…")
         if not shell and not shell_zip_bad():
-            job_line("后台安装没成功，换成在单独的窗口里安装。请看着弹出的黑色窗口：装完它会停住，"
-                     "出现「Press any key」时按任意键关掉就行，控制台会接着处理。")
+            job_line("后台安装失败，改为在单独的窗口中安装。请留意弹出的黑色窗口：安装完成后窗口会暂停，"
+                     "出现「Press any key」时按任意键关闭即可，控制台会继续处理。")
             p = subprocess.Popen([str(installer)], cwd=str(installer.parent),
                                  creationflags=subprocess.CREATE_NEW_CONSOLE if WIN else 0)
             for _ in range(900):
@@ -254,13 +254,13 @@ def install_napcat() -> str:
         if not shell:
             if shell_zip_bad():
                 drop_bad_zip()
-                raise RuntimeError("NapCat 本体连续几次都没下载完整（文件不完整，解压失败）。一般是网络不稳定，"
-                                   "换个网络或打开代理后点重试。")
-            raise RuntimeError(f"NapCat 没装好（安装器退出码 {code}）。点重试；还不行就生成问题报告发给作者。")
+                raise RuntimeError("NapCat 本体连续多次未能完整下载（文件不完整，解压失败）。通常是网络不稳定所致，"
+                                   "请更换网络或开启代理后点击「重试」。")
+            raise RuntimeError(f"NapCat 安装未完成（安装器退出码 {code}）。请点击「重试」；仍未解决时，可生成问题报告并反馈给作者。")
     update_state(napcat_dir=str(shell))
     job_progress(1.0)
     step_done("napcat")
-    return "NapCat 装好了"
+    return "NapCat 安装完成"
 
 
 # ---------------------------------------------------------------- 4 配置（小号、主人、DeepSeek、连接）
@@ -268,7 +268,7 @@ def install_napcat() -> str:
 def _napcat_cfg_dir_for(shell: Path) -> Path:
     hits = sorted(shell.glob("versions/*/resources/app/napcat"))
     if not hits:
-        raise RuntimeError("NapCat 目录不完整，重新安装 NapCat。")
+        raise RuntimeError("NapCat 目录不完整，请重新安装 NapCat。")
     d = hits[-1] / "config"
     d.mkdir(parents=True, exist_ok=True)
     return d
@@ -276,17 +276,17 @@ def _napcat_cfg_dir_for(shell: Path) -> Path:
 
 def configure(bot_qq: str, owners: list[str], groups: list[str], deepseek_key: str = "", model_connection: dict | None = None) -> str:
     if not re.fullmatch(r"\d{5,12}", bot_qq or ""):
-        raise RuntimeError("小号 QQ 号不对")
+        raise RuntimeError("小号的 QQ 号格式不正确")
     owners = [o for o in owners if re.fullmatch(r"\d{5,12}", o)]
     if not owners:
-        raise RuntimeError("至少填一个主人 QQ 号")
+        raise RuntimeError("请至少填写一个主人的 QQ 号")
     if bot_qq in owners:
-        raise RuntimeError("主人号不能和小号是同一个")
+        raise RuntimeError("主人的 QQ 号不能与小号相同")
     groups = [g for g in groups if re.fullmatch(r"\d{5,12}", g)]
     connection_body = model_connection or ({"preset": "deepseek", "key": deepseek_key} if deepseek_key else None)
     connection_config = modelhub.connection(connection_body, "dafeiyu-setup") if connection_body else None
     if not connection_config and not is_done("configure"):
-        raise ValueError("请先填写模型API Key")
+        raise ValueError("请先填写模型 API Key")
     services.stop_astrbot()
     s = load_state()
     token = secrets.token_hex(20)
@@ -359,7 +359,7 @@ def start_for_login() -> str:
     services.start_napcat(wait=False)
     set_wanted("napcat", True)
     set_wanted("astrbot", True)
-    return "已启动，等扫码"
+    return "已启动，等待扫码"
 
 
 # ---------------------------------------------------------------- 6 导入大肥鱼配置包
@@ -386,7 +386,7 @@ def import_pack(voice: str, memory: str, keys: dict) -> str:
     from core import unprotect
     owners = s["owners"]
     if not owners:
-        raise RuntimeError("还没设主人 QQ")
+        raise RuntimeError("尚未设置主人的 QQ 号")
     if not services.astrbot_info()["running"]:
         services.start_astrbot()
     work = _render_pack(owners)
@@ -428,11 +428,11 @@ def import_pack(voice: str, memory: str, keys: dict) -> str:
     w.update(voice=voice, memory=memory, import_results=results)
     update_state(wizard=w)
     if code != 0 and not results:
-        raise RuntimeError("导入工具没跑完，看上面的输出。点重试会跳过已经装好的部分。")
+        raise RuntimeError("导入工具未运行完成，请查看上方的输出。点击「重试」会跳过已安装的部分。")
     step_done("import")
     job_progress(1.0)
     if bad:
-        return "导入完成，但有几项没装上：" + "；".join(b[1:].strip() for b in bad) + "。可以点「重试」再跑一次。"
+        return "导入完成，但有部分项目未安装成功：" + "；".join(b[1:].strip() for b in bad) + "。可点击「重试」重新导入。"
     return "大肥鱼导入完成"
 
 
@@ -484,7 +484,7 @@ def finish() -> str:
     set_wanted("napcat", True)
     set_wanted("astrbot", True)
     step_done("finish")
-    return "全部完成！桌面上有「大肥鱼控制台」，开机会自动上线。"
+    return "安装全部完成。桌面已创建「大肥鱼控制台」图标，开机后 bot 会自动上线。"
 
 
 def remove_shortcuts() -> None:

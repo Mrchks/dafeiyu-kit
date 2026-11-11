@@ -479,7 +479,7 @@ def download(url: str, dest: Path, progress=None, github: bool = False, min_size
                     if time.time() - t0 > 20 and got < 200_000:
                         raise TimeoutError("太慢")
             if tmp.stat().st_size < min_size:
-                raise IOError("文件太小，可能下到的是错误页面")
+                raise IOError("文件过小，下载到的可能是错误页面")
             # 加速站有时传到一半就断开，但连接是「正常结束」的，不核对就会把半截文件当成下好了
             if total and got != total:
                 raise IOError(f"文件不完整：应有 {total} 字节，只收到 {got} 字节")
@@ -495,7 +495,7 @@ def download(url: str, dest: Path, progress=None, github: bool = False, min_size
                 tmp.unlink()
             except Exception:
                 pass
-    raise RuntimeError(f"下载失败（换了 {len(tries)} 个下载地址都没成功）：{last}")
+    raise RuntimeError(f"下载失败（已尝试 {len(tries)} 个下载地址）：{last}")
 
 
 def zip_ok(path: Path) -> bool:

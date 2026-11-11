@@ -125,7 +125,7 @@ def render(st: dict, theme: str = "light", scale: float = 1.0, hover: str | None
     for kind, key, text, y, h in rows:
         Y, Hh = y * k, h * k
         if kind == "head":
-            name, word, color = st.get("name", "机器人"), st.get("word", ""), st.get("color", "gray")
+            name, word, color = st.get("name", "bot"), st.get("word", ""), st.get("color", "gray")
             mx, my, ms = 14 * k, Y + 14 * k, 34 * k
             lg = logo(round(ms))
             if lg is not None:
@@ -161,7 +161,7 @@ def render(st: dict, theme: str = "light", scale: float = 1.0, hover: str | None
             tx += 28 * k
             d.text((tx, Y + Hh / 2), text, font=font("regular", 13.5 * k), fill=col if kind == "row" else T["text2"], anchor="lm")
             if kind == "row" and key == "quit":
-                d.text((pw - 16 * k, Y + Hh / 2), "机器人保持在线", font=font("regular", 11.5 * k), fill=T["faint"], anchor="rm")
+                d.text((pw - 16 * k, Y + Hh / 2), "bot 保持在线", font=font("regular", 11.5 * k), fill=T["faint"], anchor="rm")
             if kind == "toggle":
                 on = bool(st.get(key))
                 prog = st.get("_anim", {}).get(key, 1.0)          # 开关动画进度 0→1

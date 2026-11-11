@@ -65,7 +65,7 @@ def group_list() -> list[dict]:
     try:
         rows = onebot("get_group_list") or []
     except Exception as e:
-        raise RuntimeError(f"读不到群列表（{e}）。去总览点一下 NapCat 的「重启」再试。")
+        raise RuntimeError(f"无法读取群列表（{e}）。请在总览页点击 NapCat 的「重启」后重试。")
     return [{"id": str(g.get("group_id")), "name": g.get("group_name", ""), "count": g.get("member_count")}
             for g in rows]
 
@@ -76,7 +76,7 @@ def group_list() -> list[dict]:
 def _group_rules_file() -> Path:
     d = astrbot_data()
     if not d:
-        raise RuntimeError("还没装好 AstrBot")
+        raise RuntimeError("AstrBot 尚未安装完成")
     p = d / "plugin_data" / "astrbot_plugin_dafeiyu_common" / "group_rules.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
@@ -339,7 +339,7 @@ def kb_sync(kb_id: str, kb_name: str) -> str:
         changed += 1
     for name in list(tracked):
         if name not in files:
-            services.job_line(f"文件夹里没有了，从知识库删掉 {name}")
+            services.job_line(f"文件夹中已不存在，从知识库中删除 {name}")
             for did in by_name.get(name, []):
                 astrbot_api.kb_doc_delete(kb_id, did)
             kb_record(kb_id, name, None)
@@ -499,7 +499,7 @@ def list_backups() -> list[dict]:
 def do_restore(name: str) -> str:
     src = backups_dir() / Path(name).name
     if not src.exists():
-        raise RuntimeError("找不到这个备份")
+        raise RuntimeError("找不到该备份")
     do_backup(False, "before-restore")
     data = astrbot_data()
     with zipfile.ZipFile(src) as z:
@@ -515,7 +515,7 @@ def do_restore(name: str) -> str:
             with z.open(m) as fsrc, open(target, "wb") as fdst:
                 shutil.copyfileobj(fsrc, fdst)
     log(f"已还原 {src.name}")
-    return f"已还原到 {src.name}（还原前的状态另存了一份 before-restore 备份）"
+    return f"已还原到 {src.name}（还原前的状态已另存为 before-restore 备份）"
 
 
 # ---------------------------------------------------------------- DeepSeek 余额
@@ -606,7 +606,7 @@ def diagnose() -> list[dict]:
     evs = [e for e in (load_state().get("offline_events") or []) if time.time() - (e.get("at") or 0) < 86400]
     if evs:
         last = evs[-1]
-        kicked = any(str(e.get("reason", "")).startswith(services.KICK_REASON) for e in evs)
+        kicked = any("挤下线" in str(e.get("reason", "")) for e in evs)
         when = time.strftime("%H:%M", time.localtime(last.get("at") or 0))
         out.append({"ok": False, "warn": True, "title": "最近 24 小时没有掉线",
                     "detail": f"掉线 {len(evs)} 次，最近一次在 {when}：{str(last.get('reason', '')).split('（')[0]}。",

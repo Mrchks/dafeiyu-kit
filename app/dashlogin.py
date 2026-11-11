@@ -79,7 +79,7 @@ def write_login(user: str, password: str, py: Path | None = None, cfg: Path | No
     py = py or _python()
     cfg = cfg or cmd_config_path()
     if not py or not cfg or not Path(cfg).exists():
-        raise RuntimeError("找不到 AstrBot 的配置文件，先在安装向导里装好 AstrBot。")
+        raise RuntimeError("找不到 AstrBot 的配置文件，请先在安装向导中完成 AstrBot 的安装。")
     env = os.environ.copy()
     if not fresh_install:
         env.update({k: str(v) for k, v in (load_state().get("astrbot_env") or {}).items() if not k.startswith("_")})
@@ -87,7 +87,7 @@ def write_login(user: str, password: str, py: Path | None = None, cfg: Path | No
     root = Path(cfg).parent.parent
     code, out = run([str(py), "-c", HELPER, str(cfg), user, password, "1" if fresh_install else "0"], cwd=str(root), env=env, timeout=120)
     if code != 0:
-        raise RuntimeError(f"改后台密码失败：{out[-300:]}")
+        raise RuntimeError(f"修改后台密码失败：{out[-300:]}")
 
 
 def reset() -> str:
@@ -99,7 +99,7 @@ def reset() -> str:
     update_state(dashboard_user=user, dashboard_pass=protect(pw))
     astrbot_api._tok.update(token=None, at=0.0)
     log("AstrBot 后台密码已重设")
-    return f"后台密码重设好了，账号 {user}，控制台已经记住，会自动登录"
+    return f"后台密码已重置，账号为 {user}；控制台已保存新密码，会自动登录"
 
 
 def credentials() -> dict:

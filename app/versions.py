@@ -48,7 +48,7 @@ def git_exe() -> str | None:
 def G(*args: str, timeout: int = 60) -> tuple[int, str]:
     exe = git_exe()
     if not exe:
-        return -1, "没装 Git"
+        return -1, "未安装 Git"
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", LC_ALL="C.UTF-8")
     return run([exe, "-C", str(KIT), "-c", "core.quotepath=false", "-c", "safe.directory=*", *args],
                timeout=timeout, env=env)
@@ -61,7 +61,7 @@ def is_repo() -> bool:
 def ensure_repo() -> str:
     """没有仓库就建一个，把当前版本记成第一个版本。控制台启动时在后台调用。"""
     if not git_exe():
-        return "没装 Git，跳过版本管理"
+        return "未安装 Git，跳过版本管理"
     gi = KIT / ".gitignore"
     if not gi.exists():
         gi.write_text(GITIGNORE, encoding="utf-8")
@@ -137,7 +137,7 @@ def snapshot(message: str) -> str:
     if not is_repo() or not _dirty():
         return ""
     if not _branch():
-        raise RuntimeError("现在停在旧版本上，先回到最新版再保存改动")
+        raise RuntimeError("当前停留在旧版本，请先返回最新版本再保存改动")
     G("add", "-A")
     code, out = G("commit", "-m", message)
     if code != 0:
@@ -163,7 +163,7 @@ def release(version: str, message: str) -> str:
 def switch(ref: str) -> str:
     """切到某个版本（标签或提交）。当前有没保存的改动时，先自动保存。"""
     if not re.fullmatch(r"[\w.\-/]+", ref or ""):
-        raise RuntimeError("版本号不对")
+        raise RuntimeError("版本号格式不正确")
     if _dirty():
         if _branch():
             snapshot(f"切换版本前自动保存（{time.strftime('%Y-%m-%d %H:%M')}）")

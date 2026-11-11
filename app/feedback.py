@@ -121,7 +121,7 @@ def send(kind: str, desc: str, contact: str = "", report_path: str | None = None
               "version": VERSION, "system": system_info(), "device": device_id()}
     recent = _recent()
     if len(recent) >= HOURLY:
-        err = "发送太频繁了，请一小时后再试"
+        err = "发送过于频繁，请一小时后再试"
     else:
         payload = {"app": APP_ID, **fields}
         if rep:

@@ -181,11 +181,11 @@ class _BootWatch:
 def start_astrbot(wait: bool = True) -> str:
     s = load_state()
     if not s["astrbot_python"] or not s["astrbot_root"]:
-        return "还没装好 AstrBot"
+        return "AstrBot 尚未安装完成"
     info = astrbot_info(procs=True)
     if info["running"]:
         if info["managed"]:
-            return "AstrBot 已经在运行"
+            return "AstrBot 已在运行"
         stop_astrbot()
     elif info.get("starting"):
         # 上一次启动还没开好端口（刚开机时可能要两三分钟），等它，别再起一个
@@ -199,7 +199,7 @@ def start_astrbot(wait: bool = True) -> str:
                 gone = True  # 那个进程自己退出了，下面重新启动
                 break
         if not gone:
-            return "AstrBot 启动很慢，还在启动中"
+            return "AstrBot 启动较慢，仍在启动中"
     _enable_file_log()
     py = Path(s["astrbot_python"])
     env = astrbot_env(s)
@@ -222,13 +222,13 @@ def start_astrbot(wait: bool = True) -> str:
         if i == 5 and proc.poll() is not None and not port_open(s["astrbot_port"]):
             log(f"AstrBot 进程马上退出了，退出码 {proc.returncode}")
             _stage_set("astrbot", "启动失败", None)
-            return f"AstrBot 启动失败（退出码 {proc.returncode}），去日志里看看"
+            return f"AstrBot 启动失败（退出码 {proc.returncode}），请查看日志"
         if port_open(s["astrbot_port"]) and port_open(onebot_port()):
             watch.done()
             _stage_set("astrbot", "已启动", 1.0)
             return "AstrBot 已启动"
     _stage_set("astrbot", "启动超时", None)
-    return "AstrBot 启动超时，去日志里看看"
+    return "AstrBot 启动超时，请查看日志"
 
 
 # 启动 AstrBot 时的环境变量有变化、需要重启 AstrBot 才生效时加 1（总览/后台页会提示重启）
@@ -293,7 +293,7 @@ def profile_astrbot() -> str:
     """测 AstrBot「加载程序」那一段到底慢在哪：连测两遍，看是哪个组件慢、第二遍是不是快很多。"""
     s = load_state()
     if not s["astrbot_python"] or not s["astrbot_root"]:
-        return "还没装好 AstrBot"
+        return "AstrBot 尚未安装完成"
     py = Path(s["astrbot_python"])
     py = py.with_name("python.exe") if py.with_name("python.exe").exists() else py
     env, cwd = astrbot_env(s), Path(s["astrbot_root"])
@@ -324,7 +324,7 @@ def stop_astrbot() -> str:
     info = astrbot_info()
     pids = astrbot_procs()
     if not info["running"] and not pids:
-        return "AstrBot 本来就没在运行"
+        return "AstrBot 原本未在运行"
     if info["running"]:
         kill_tree(info["pid"])
     for p in pids:
@@ -396,9 +396,9 @@ def napcat_running() -> bool:
 def start_napcat(wait: bool = True) -> str:
     d = napcat_dir()
     if not d or not (d / "NapCatWinBootMain.exe").exists():
-        return "还没装好 NapCat"
+        return "NapCat 尚未安装完成"
     if napcat_running():
-        return "NapCat 已经在运行"
+        return "NapCat 已在运行"
     qq = napcat_webui()["qq"] or load_state()["bot_qq"]
     logtools.rotate("napcat.log")
     popen_detached([str(d / "NapCatWinBootMain.exe")] + ([qq] if qq else []), d, None, LOG_DIR / "napcat.log",
@@ -415,7 +415,7 @@ def start_napcat(wait: bool = True) -> str:
         rows = netstat()
         if napcat_connected(rows, onebot_port()):
             _stage_set("napcat", "已连上", 1.0)
-            return "NapCat 已启动，已连上 AstrBot"
+            return "NapCat 已启动，并已连接 AstrBot"
         up = port_open(napcat_webui()["port"])
         st = napcat_login_state(True, False)
         if st == "need_qr":
@@ -428,7 +428,7 @@ def start_napcat(wait: bool = True) -> str:
                 return "NapCat 已启动"
         else:
             _stage_set("napcat", f"正在启动 QQ（{int(time.time() - t0)} 秒）", min(0.5, (time.time() - t0) / 40))
-    return "NapCat 启动中，稍等再看状态（要扫码的话会弹出二维码）"
+    return "NapCat 正在启动，请稍后查看状态（需要扫码时会弹出二维码）"
 
 
 def stop_napcat() -> str:
@@ -550,7 +550,7 @@ def start_all() -> str:
             res["n"] = "NapCat 已连上"
             break
         time.sleep(1)
-    return f"{res.get('a', '')}；{res.get('n', 'NapCat 还在启动')}"
+    return f"{res.get('a', '')}；{res.get('n', 'NapCat 仍在启动')}"
 
 
 def stop_all() -> str:
@@ -665,15 +665,15 @@ def status_refresher() -> None:
 
 _last = {"online": None, "qr_notified": 0.0}
 _KICK = re.compile(r"KickedOffLine|下线通知|其他设备|另一台|别的设备|被踢|强制下线|在别处登录|异地登录")
-KICK_REASON = "机器人号在别的地方登录，被挤下线了"
+KICK_REASON = "bot 使用的账号在其他设备登录，已被挤下线"
 
 
 def napcat_offline_reason(st: dict) -> str:
     """掉线时判断原因：AstrBot 停了、NapCat 退出了、被别处登录挤下线、登录过期要扫码，还是只是连接断了。"""
     if not st["astrbot"]["running"]:
-        return "AstrBot 没在运行"
+        return "AstrBot 未运行"
     if not st["napcat"]["running"]:
-        return "NapCat（QQ）程序退出了"
+        return "NapCat（QQ）进程已退出"
     try:
         tail = logtools.meaningful_tail(LOG_DIR / "napcat.log", 300, scan_bytes=1_000_000)
     except Exception:
@@ -682,8 +682,8 @@ def napcat_offline_reason(st: dict) -> str:
         if _KICK.search(ln):
             return f"{KICK_REASON}（QQ 提示：{ln.strip()[-80:]}）"
     if st["napcat"]["state"] == "need_qr":
-        return "QQ 登录状态失效了，需要重新扫码"
-    return "QQ 和 AstrBot 之间的连接断开了"
+        return "QQ 登录状态已失效，需要重新扫码"
+    return "QQ 与 AstrBot 之间的连接已断开"
 
 
 def _offline_event(reason: str | None = None, back: bool = False) -> None:
@@ -709,13 +709,13 @@ def watchdog() -> None:
                 reason = napcat_offline_reason(st)
                 log(f"看门狗：掉线了，原因：{reason}")
                 _offline_event(reason)
-                tip = ("机器人号不要在电脑版 QQ 上登录（手机可以），打开控制台扫码重新登录。" if reason.startswith(KICK_REASON)
-                       else "控制台正在尝试恢复，没好的话打开控制台看看。")
-                notify(f"{bot_name()}掉线了", f"{reason.split('（')[0]}。{tip}")
+                tip = ("请不要在电脑版 QQ 上登录 bot 使用的账号（手机可以），并打开控制台重新扫码登录。" if "挤下线" in reason
+                       else "控制台正在尝试恢复；未能恢复时，请打开控制台查看。")
+                notify(f"{bot_name()} 已掉线", f"{reason.split('（')[0]}。{tip}")
             if online and _last["online"] is False:
                 log("看门狗：重新上线")
                 _offline_event(back=True)
-                notify(f"{bot_name()}上线了", "bot 已恢复在线。")
+                notify(f"{bot_name()} 已上线", "bot 已恢复在线。")
             _last["online"] = online
             if st["napcat"]["state"] == "need_qr" and time.time() - _last["qr_notified"] > 600:
                 _last["qr_notified"] = time.time()

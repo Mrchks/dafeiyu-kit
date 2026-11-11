@@ -82,10 +82,10 @@ class FeedbackTests(unittest.TestCase):
 
     def test_failure_saves_package_with_report(self):
         rep = self.make_report()
-        with self.fake_post({"ok": False, "error": "邮件没发出去，请稍后再试"}):
+        with self.fake_post({"ok": False, "error": "邮件发送失败，请稍后重试"}):
             r = feedback.send("问题", "掉线了\n第二行", "", str(rep))
         self.assertFalse(r["ok"])
-        self.assertEqual(r["error"], "邮件没发出去，请稍后再试")
+        self.assertEqual(r["error"], "邮件发送失败，请稍后重试")
         with zipfile.ZipFile(r["saved"]) as z:
             names = z.namelist()
             text = z.read("反馈.txt").decode("utf-8-sig")

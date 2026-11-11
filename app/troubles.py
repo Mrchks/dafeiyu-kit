@@ -87,7 +87,7 @@ RULES: list[dict] = [
     },
     {
         "code": "pip_failed",
-        "patterns": [r"pip 退出码", r"No matching distribution", r"Could not find a version", r"pip install", r"装 AstrBot 失败"],
+        "patterns": [r"pip 退出码", r"No matching distribution", r"Could not find a version", r"pip install", r"装 AstrBot 失败", r"AstrBot 安装失败"],
         "title": "AstrBot 所需组件未安装成功",
         "cause": "AstrBot 运行需要一批 Python 组件，这些组件从国内镜像源下载。本次下载未完成，通常是网络不稳定所致。",
         "steps": ["点击「重试」，已安装的部分会自动跳过，不会重新开始。",
@@ -98,7 +98,7 @@ RULES: list[dict] = [
         "code": "network",
         "patterns": [r"urlopen error", r"timed out", r"TimeoutError", r"ConnectionReset", r"ConnectionRefused(?!.*6185)",
                      r"getaddrinfo", r"Name or service not known", r"远程主机强迫关闭", r"WinError 1005\d", r"WinError 10060",
-                     r"SSL", r"CERTIFICATE", r"所有加速站", r"下载失败", r"连不上 GitHub", r"Max retries exceeded"],
+                     r"SSL", r"CERTIFICATE", r"所有加速站", r"下载失败", r"连不上 GitHub", r"无法连接 GitHub", r"Max retries exceeded"],
         "title": "无法连接下载地址",
         "cause": "所需文件存放在 GitHub 等境外网站，国内直连不稳定。整合包已自动尝试多个加速站，本次均未连接成功。",
         "steps": ["几分钟后点击「重试」，加速站的可用性会有波动。",
@@ -135,7 +135,7 @@ RULES: list[dict] = [
     },
     {
         "code": "qq_login",
-        "patterns": [r"二维码", r"扫码", r"need_qr", r"登录(超时|过期)", r"没登录"],
+        "patterns": [r"二维码", r"扫码", r"need_qr", r"登录(超时|过期)", r"没登录", r"未登录"],
         "title": "QQ 小号尚未登录",
         "cause": "需要使用已登录小号的手机 QQ 扫码，确认登录后 bot 才能收发消息。",
         "steps": ["点击「扫码登录」，使用已登录小号的手机 QQ，通过右上角的「扫一扫」扫描电脑上的二维码，并在手机上确认。",
@@ -162,7 +162,7 @@ RULES: list[dict] = [
     },
     {
         "code": "astrbot_down",
-        "patterns": [r"NEED_LOGIN", r"AstrBot 没在(运行|跑)", r"6185.{0,40}(refused|拒绝)", r"连不上 AstrBot"],
+        "patterns": [r"NEED_LOGIN", r"AstrBot 没在(运行|跑)", r"AstrBot 未运行", r"6185.{0,40}(refused|拒绝)", r"连不上 AstrBot", r"无法连接 AstrBot"],
         "title": "AstrBot 未运行",
         "cause": "AstrBot 负责生成回复；它未运行时，bot 不会回复任何消息，管理后台也无法打开。",
         "steps": ["点击「启动 AstrBot」，等待约半分钟至一分钟。", "启动后仍未解决时，点击「故障诊断」。"],
@@ -170,7 +170,7 @@ RULES: list[dict] = [
     },
     {
         "code": "napcat_install",
-        "patterns": [r"NapCat 没装好", r"NapCatInstaller", r"NapCat 目录不完整"],
+        "patterns": [r"NapCat 没装好", r"NapCat 安装未完成", r"NapCatInstaller", r"NapCat 目录不完整"],
         "title": "NapCat 安装未完成",
         "cause": "NapCat 安装器需要下载 QQ 内核（约 300MB）和 NapCat 本体。最常见的原因是下载中途中断，其次是被杀毒软件拦截。",
         "steps": ["点击「重试」，控制台会检查并删除未下载完成的文件，然后重新下载。",

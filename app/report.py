@@ -54,7 +54,7 @@ def mask(s: str, backend_names: tuple[str, ...] = ()) -> str:
     return logtools.QQ.sub(r"\1****\2", _mask_identity(s, backend_names))
 
 
-NC_STATE = {"online": "在线", "need_qr": "登录过期，要扫码", "connecting": "启动了但没连上 AstrBot", "stopped": "没在跑"}
+NC_STATE = {"online": "在线", "need_qr": "登录过期，需要扫码", "connecting": "已启动但未连接 AstrBot", "stopped": "未运行"}
 TIMEY = re.compile(r"time|_at$|^at$|date|port|size|bytes|limit|budget|seconds|ms$", re.I)
 
 
@@ -82,7 +82,7 @@ def _checks(s: dict) -> tuple[str, list[dict]]:
         return "环境检查", installer.check_env(s.get("home") or str(LOG_DIR.parent))
     except Exception as e:  # noqa: BLE001
         log_exc()
-        return "检查", [{"ok": False, "title": "检查本身出错了", "detail": str(e), "fix": ""}]
+        return "检查", [{"ok": False, "title": "检查过程出错", "detail": str(e), "fix": ""}]
 
 
 def _versions(s: dict) -> list[str]:

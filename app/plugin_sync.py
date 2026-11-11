@@ -140,7 +140,7 @@ def _plugin_settings(plugin: str, label: str, changes: dict) -> str:
     r = astrbot_api.call("GET", f"/api/v1/plugins/config?plugin_id={plugin}")
     conf = r.get("config") if isinstance(r, dict) else None
     if not isinstance(conf, dict):
-        raise RuntimeError(f"读不到{label}的设置")
+        raise RuntimeError(f"无法读取{label}的设置")
     diff = False
     for path, v in changes.items():
         cur = conf
@@ -191,7 +191,7 @@ def _step3() -> None:
         "image_to_text_prompt": "请用中文简要描述这张图片；图里有文字（题目、选项、聊天记录等）就把文字原样写出来。",
         "enable_image_description_cache": True,
     })
-    log(f"一次性调整：群聊里的图片转成文字给她看（{m}）")
+    log(f"一次性调整：群聊中的图片转为文字后提供给 bot（{m}）")
 
 
 def _step4() -> None:
@@ -199,7 +199,7 @@ def _step4() -> None:
     data = astrbot_api.call("GET", "/api/v1/config-profiles/default")
     conf = data.get("config") if isinstance(data, dict) else None
     if not isinstance(conf, dict):
-        raise RuntimeError("读不到默认对话配置，未调整历史截断")
+        raise RuntimeError("无法读取默认对话配置，未调整历史截断")
     compression = conf.get("agent_runner", {}).get("config", {}).get("compression", {})
     if compression.get("max_turns") == 30 and compression.get("trim_turns", 1) == 1:
         compression["trim_turns"] = 10
@@ -207,7 +207,7 @@ def _step4() -> None:
         saved = astrbot_api.call("GET", "/api/v1/config-profiles/default")
         actual = saved.get("config", {}).get("agent_runner", {}).get("config", {}).get("compression", {})
         if actual.get("trim_turns") != 10:
-            raise RuntimeError("历史截断设置未保存，下次启动重试")
+            raise RuntimeError("历史截断设置未保存，将在下次启动时重试")
         log("一次性调整：历史上限保留 30 轮，达到上限后每次截断 10 轮")
     else:
         log("一次性调整：历史截断已调整或使用自定义值，保留当前设置")
