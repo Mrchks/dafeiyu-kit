@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import astrbot_api  # noqa: E402
 import modelhub  # noqa: E402
 import dashlogin  # noqa: E402
+import feedback  # noqa: E402
 import usage  # noqa: E402
 import memory  # noqa: E402
 import report  # noqa: E402
@@ -373,6 +374,12 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/logs/export":
                 self._json(logtools.export(str(b.get("src", "astrbot")), str(b.get("start", "")), str(b.get("end", "")),
                                            bool(b.get("problems")), bool(b.get("mask"))))
+            elif p == "/api/feedback/preview":
+                ctx = b.get("context") if isinstance(b.get("context"), dict) else None
+                self._json(feedback.preview(bool(b.get("report")), ctx))
+            elif p == "/api/feedback/send":
+                self._json(feedback.send(str(b.get("kind", "")), str(b.get("desc", "")), str(b.get("contact", "")),
+                                         b.get("report_path") or None))
             elif p == "/api/report":
                 self._json(report.build(b.get("context") if isinstance(b.get("context"), dict) else None))
             elif p == "/api/explain":

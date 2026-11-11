@@ -600,6 +600,30 @@ dialog.closing::backdrop{animation:bout .16s ease-in forwards}
 .upd-notes{max-height:min(46vh,360px);overflow:auto;margin:10px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2)}
 .upd-notes ul{margin:4px 0 8px}
 
+/* 问题反馈 */
+nav a.navfb{margin-top:auto}
+nav a.navfb+.foot{margin-top:6px}
+#fbDlg .field{grid-template-columns:120px 1fr}
+#fbDlg .fb-desc{align-items:start}
+#fbDlg .fb-desc label{padding-top:8px}
+#fbDesc{font-family:inherit;font-size:13.5px;line-height:1.7;min-height:96px}
+.fb-switch{display:flex;align-items:center;gap:10px}
+.linkbtn{border:0;background:none;padding:6px 0;color:var(--muted);font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.linkbtn:hover{color:var(--text)}
+.linkbtn .chev{width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .2s var(--ease)}
+.linkbtn.on .chev{transform:rotate(45deg)}
+.fb-what{margin:4px 0 0;padding:4px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2);max-height:min(24vh,200px);overflow:auto;animation:pin .2s var(--ease)}
+.fb-what table td,.fb-what table th{padding:7px 6px;font-size:12.5px;vertical-align:top}
+.fb-what th{width:84px;white-space:nowrap}
+.fb-what small{display:block;color:var(--faint);margin-top:2px}
+.fb-what ul{margin:4px 0 0;padding-left:18px;color:var(--muted)}
+.fb-err{margin-right:auto;color:var(--bad);font-size:12.5px}
+.fb-res{display:flex;gap:14px;align-items:flex-start;padding:4px 0 18px}
+.fb-res h3{margin:4px 0 4px}
+.fb-res .res-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none;background:var(--good-soft);color:var(--good)}
+.fb-res.err .res-ic{background:var(--warn-soft);color:var(--warn)}
+.fb-res .res-ic svg{width:18px;height:18px}
+
 /* 知识库：左边列表、右边详情，两边等高 */
 #kt-docs:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
 .kbgrid{flex:1;min-height:0;display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px}
@@ -832,6 +856,7 @@ dialog .field{grid-template-columns:72px 1fr}
     <div class="grp">原版后台</div>
     <a data-page="astrbot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg><span>AstrBot 管理后台</span></a>
     <a data-page="napcat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg><span>NapCat 管理后台</span></a>
+    <a id="navFb" class="navfb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg><span>问题反馈</span></a>
     <div class="foot"><span class="dot" id="navDot"></span><span id="navState">读取中</span><span id="foot"></span></div>
   </nav>
   <main>
@@ -1202,6 +1227,7 @@ dialog .field{grid-template-columns:72px 1fr}
           <p class="hint">「移除启动项」只停掉她、删掉桌面图标和开机自启。「完全卸载」还会删除 AstrBot、NapCat 和她的数据（会先自动备份一份）。</p>
           <div class="row" style="margin-top:0"><button id="unLight">移除启动项</button><button class="danger" id="unFull">完全卸载</button></div>
         </div>
+        <div class="section"><div class="sh"><h2>问题反馈</h2><div class="act"><button id="unFb">问题反馈</button></div></div><p class="hint" style="margin:0">遇到问题或有建议，直接发给作者，作者会通过邮件收到。也可以点左侧导航最下方的「问题反馈」。</p></div>
         <div class="section"><h2>开源组件</h2><p class="hint" style="margin:0">本整合包用到：AstrBot（AGPL-3.0）、NapCat、大肥鱼配置包（MIT，作者 zexuanw958-svg）、Python（PSF）、pystray（LGPL-3.0）、Pillow。AstrBot 和 NapCat 在安装时从官方地址下载，不随包分发。许可证原文在整合包的 LICENSES 文件夹。整合包源码以 MIT 许可公开在 GitHub（Mrchks/dafeiyu-kit）。</p></div>
       </div>
     </section>
@@ -1245,6 +1271,19 @@ dialog .field{grid-template-columns:72px 1fr}
   <div class="field"><label>时间段</label><div><button class="rbtn" id="expRange"></button></div></div>
   <div class="field"><label>内容</label><div style="display:flex;flex-direction:column;gap:10px"><label><input type="checkbox" id="expProblems"> 仅导出异常（报错、警告、掉线）</label><label><input type="checkbox" id="expMask"> 隐去 QQ 号和群号（发给别人看时用）</label></div></div>
   <div class="row" style="justify-content:flex-end"><button id="expCancel">取消</button><button class="primary" id="expGo">导出</button></div></dialog>
+<dialog id="fbDlg" style="width:min(580px,92vw)">
+  <div id="fbForm">
+    <h3 style="margin:0 0 4px">问题反馈</h3><p class="note" style="margin:0 0 10px">直接发给作者，作者会通过邮件收到。想得到回复，记得留下联系方式。</p>
+    <div class="field" style="border:0;padding-top:4px"><label>类型</label><div><div class="seg" id="fbKind"><button data-k="问题" class="on">问题</button><button data-k="建议">建议</button><button data-k="其他">其他</button></div></div></div>
+    <div class="field fb-desc"><label>描述</label><textarea id="fbDesc" rows="4" maxlength="5000" placeholder="遇到了什么问题、在哪一步、希望怎样改进……"></textarea></div>
+    <div class="field"><label>联系方式（选填）</label><input id="fbContact" maxlength="100" placeholder="QQ 号或邮箱，方便作者回复你"></div>
+    <div class="field"><label>附带问题报告</label><div class="fb-switch"><label class="switch"><input type="checkbox" id="fbRep"><span></span></label><span class="note">帮助作者定位问题；QQ 号、群号、密钥、用户名都已隐去</span></div></div>
+    <button class="linkbtn" id="fbWhat"><span class="chev"></span>查看将发送的内容</button>
+    <div id="fbWhatBox" class="fb-what" hidden></div>
+    <div class="row" style="justify-content:flex-end;align-items:center"><span class="fb-err" id="fbErr"></span><button id="fbCancel">取消</button><button class="primary" id="fbSend">发送</button></div>
+  </div>
+  <div id="fbDone" hidden></div>
+</dialog>
 <dialog id="trDlg" style="width:min(560px,92vw)"><div id="trBody"></div></dialog>
 <dialog id="rawDlg" style="width:min(760px,94vw)"><h3 style="margin:0 0 4px">详细记录</h3><p class="note" style="margin:0 0 10px" id="rawNote">出错时的原始输出。看不懂没关系，生成问题报告发给会的人就行。</p><pre id="rawPre"></pre>
   <div class="row" style="justify-content:flex-end"><button id="rawCopy">复制</button><button class="primary" id="rawOk">关闭</button></div></dialog>
@@ -1967,7 +2006,8 @@ function trHTML(t, opt = {}){
   return `<div class="tcard${t.warn ? ' warn' : ''}"><div class="tc-h"><span class="tc-ic">${SVG.bang}</span><div><b>${esc(t.title)}</b>${t.cause ? `<p>${esc(t.cause)}</p>` : ''}</div></div>`
     + (steps.length ? `<div class="tc-sub">怎么办</div><ol class="tc-steps">${steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : '')
     + `<div class="tc-act">${acts.map((a, i) => `<button data-ta="${esc(a.key)}"${i === 0 ? ' class="primary"' : ''}>${esc(a.label)}</button>`).join('')}<span class="grow"></span>`
-    + (t.raw ? '<button class="ghost" data-ta="raw">查看详细记录</button>' : '') + (hasRep ? '' : '<button class="ghost" data-ta="report">生成问题报告</button>') + '</div></div>';
+    + (t.raw ? '<button class="ghost" data-ta="raw">查看详细记录</button>' : '') + (hasRep ? '' : '<button class="ghost" data-ta="report">生成问题报告</button>')
+    + (opt.noFeedback ? '' : '<button class="ghost" data-ta="feedback">反馈给作者</button>') + '</div></div>';
 }
 function trBind(root, t, ctx = {}){ root.querySelectorAll('[data-ta]').forEach(b => b.onclick = () => trAct(b.dataset.ta, t, ctx, b)); }
 async function trAct(key, t, ctx = {}, btn){
@@ -1985,6 +2025,7 @@ async function trAct(key, t, ctx = {}, btn){
     settings: () => { close(); if (inWiz) go('deepseek'); else page('settings'); },
     diagnose: () => { close(); if (inWiz) return; page('home'); setTimeout(() => $('#diagBtn').click(), 150); },
     folder: () => api('/api/open-folder', {which: 'kit'}),
+    feedback: () => { close(); fbOpen({kind: '问题', desc: `遇到问题：${t.title || ''}\n`, context: {code: t.code, title: t.title, cause: t.cause, steps: t.steps}}); },
   };
   if (F[key]) return F[key]();
   // 其余是启动、重启之类：交给后台任务，右下角任务卡显示进度
@@ -3268,6 +3309,69 @@ function infoDlg(title, html){
   $('#infoTitle').textContent = title; $('#infoBody').innerHTML = html; $('#infoBody').scrollTop = 0;
   $('#infoOk').onclick = () => $('#infoDlg').close(); $('#infoDlg').showModal();
 }
+
+/* 问题反馈：发给作者的邮箱（经阿里云函数中转）。发不出去时存到 logs\导出，提示手动发送 */
+const FB = {kind: '问题', ctx: null, prev: null};
+function fbOpen(opt = {}){
+  FB.ctx = opt.context || null; FB.prev = null;
+  $('#fbForm').hidden = false; $('#fbDone').hidden = true; $('#fbErr').textContent = '';
+  fbKind(opt.kind || '问题'); $('#fbDesc').value = opt.desc || '';
+  $('#fbWhatBox').hidden = true; $('#fbWhat').classList.remove('on');
+  $('#fbDlg').showModal();
+  setTimeout(() => { const t = $('#fbDesc'); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }, 60);
+}
+function fbKind(k){ FB.kind = k; $$('#fbKind button').forEach(b => b.classList.toggle('on', b.dataset.k === k)); $('#fbRep').checked = k === '问题'; FB.prev = null; }
+$$('#fbKind button').forEach(b => b.onclick = () => { fbKind(b.dataset.k); if (!$('#fbWhatBox').hidden) fbShowWhat(); });
+$('#fbRep').onchange = () => { if (!$('#fbWhatBox').hidden) fbShowWhat(); };
+$('#fbContact').oninput = () => { if (!$('#fbWhatBox').hidden) fbShowWhat(true); };
+async function fbPreview(){
+  const want = $('#fbRep').checked;
+  if (FB.prev && !FB.prev.error && !!FB.prev.report === want) return FB.prev;
+  FB.prev = await api('/api/feedback/preview', {report: want, context: FB.ctx}).catch(e => ({error: String(e)}));
+  return FB.prev;
+}
+async function fbShowWhat(quick){
+  const box = $('#fbWhatBox'); box.hidden = false; $('#fbWhat').classList.add('on');
+  if (!quick) box.innerHTML = '<p class="note" style="margin:8px 0">读取中…</p>';
+  const p = await fbPreview();
+  if (p.error){ box.innerHTML = `<p class="note" style="margin:8px 0">${esc(p.error)}</p>`; return; }
+  const kb = n => Math.max(1, Math.round(n / 1024)) + ' KB', ct = $('#fbContact').value.trim();
+  box.innerHTML = `<table><tbody>
+    <tr><th>类型</th><td>${esc(FB.kind)}</td></tr>
+    <tr><th>描述</th><td>上面填写的内容</td></tr>
+    <tr><th>联系方式</th><td>${ct ? esc(ct) : '未填写'}</td></tr>
+    <tr><th>控制台版本</th><td>${esc(p.version)}</td></tr>
+    <tr><th>系统</th><td>${esc(p.system)}</td></tr>
+    <tr><th>设备码</th><td><code>${esc(p.device)}</code><small>随机生成，不含个人或硬件信息；作者给采纳了建议的用户发奖励时用</small></td></tr>
+    <tr><th>问题报告</th><td>${p.report ? `${esc(p.report.name)}（${kb(p.report.size)}）<ul>${p.report.files.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : '不附带'}</td></tr>
+  </tbody></table>`;
+}
+$('#fbWhat').onclick = () => { if ($('#fbWhatBox').hidden) fbShowWhat(); else { $('#fbWhatBox').hidden = true; $('#fbWhat').classList.remove('on'); } };
+$('#fbCancel').onclick = () => $('#fbDlg').close();
+$('#fbSend').onclick = async () => {
+  const desc = $('#fbDesc').value.trim();
+  if (desc.length < 2){ $('#fbErr').textContent = '请写一下遇到的问题或建议'; $('#fbDesc').focus(); return; }
+  const b = $('#fbSend'); if (b.disabled) return;
+  b.disabled = true; b.dataset.label = '发送'; b.style.minWidth = b.offsetWidth + 'px'; b.innerHTML = '<span class="spin"></span>发送中…'; $('#fbErr').textContent = '';
+  let r;
+  try {
+    const p = $('#fbRep').checked ? await fbPreview() : null;
+    if (p && p.error) throw new Error(p.error);
+    r = await api('/api/feedback/send', {kind: FB.kind, desc, contact: $('#fbContact').value.trim(), report_path: p && p.report ? p.report.path : ''});
+  } catch (e){ r = {ok: false, error: '控制台没有回应：' + (e.message || e)}; }
+  b.disabled = false; b.textContent = '发送'; b.style.minWidth = '';
+  if (!r.ok && !r.saved){ $('#fbErr').textContent = r.error || '没发出去'; return; }
+  const d = $('#fbDone'); $('#fbForm').hidden = true; d.hidden = false;
+  d.innerHTML = r.ok
+    ? `<div class="fb-res"><span class="res-ic">${SVG.check}</span><div><h3>已发送</h3><p class="note" style="margin:0">作者会通过邮件收到${$('#fbContact').value.trim() ? '，需要时会按你留的联系方式回复' : ''}。谢谢你的反馈。</p></div></div>
+       <div class="row" style="justify-content:flex-end"><button class="primary" id="fbOk">知道了</button></div>`
+    : `<div class="fb-res err"><span class="res-ic">${SVG.bang}</span><div><h3>没有发出去</h3><p class="note" style="margin:0">${esc(r.error)}。反馈已保存为「${esc(r.name)}」，可以打开文件夹，把这个文件通过 QQ 或邮件发给作者。</p></div></div>
+       <div class="row" style="justify-content:flex-end"><button id="fbOpenDir">打开文件夹</button><button id="fbRetry">返回修改</button><button class="primary" id="fbOk">知道了</button></div>`;
+  $('#fbOk').onclick = () => $('#fbDlg').close();
+  if (!r.ok){ $('#fbOpenDir').onclick = () => api('/api/reveal', {path: r.saved}); $('#fbRetry').onclick = () => { d.hidden = true; $('#fbForm').hidden = false; }; }
+};
+$('#navFb').onclick = () => fbOpen();
+$('#unFb').onclick = () => fbOpen();
 
 /* 每天第一次打开时弹出最新版本的更新内容 */
 async function showNotice(){

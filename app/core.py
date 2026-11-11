@@ -27,6 +27,8 @@ ASTRBOT_VERSION = "4.29.3"
 # 控制台自动更新：从这个 GitHub 仓库的 Release 读取 latest.json；签名公钥由 scripts/release.py 首次正式发版时写入
 UPDATE_REPO = "Mrchks/dafeiyu-kit"
 UPDATE_PUBKEY = ""
+# 问题反馈的中转地址（阿里云函数计算，代码在 scripts/feedback-relay）；要换地址时随自动更新下发
+FEEDBACK_URL = "https://dafeiyufeedback-xhqjjdjhgd.cn-hangzhou.fcapp.run/"
 
 APP = Path(__file__).resolve().parent          # <整合包>\app
 KIT = APP.parent                                 # <整合包>

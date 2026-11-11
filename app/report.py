@@ -137,8 +137,8 @@ def _summary(s: dict, title: str, checks: list[dict], job: dict, backend_names: 
     return "\n".join(head) + "\n" + mask("\n".join(L), backend_names) + "\n"
 
 
-def build(context: dict | None = None) -> dict:
-    """context：界面上正在看的问题卡（可选），一并写进报告。"""
+def build(context: dict | None = None, reveal: bool = True) -> dict:
+    """context：界面上正在看的问题卡（可选），一并写进报告。reveal：生成后在资源管理器里选中（问题反馈里不弹）。"""
     s = load_state()
     # 先读取两处后台登录名，保证纯数字账号也在号码打码之前被识别。
     names = [s.get("dashboard_user")]
@@ -200,5 +200,6 @@ def build(context: dict | None = None) -> dict:
             z.writestr(n, ("﻿" + _mask_identity(t, backend_names)).encode("utf-8"))
     size = path.stat().st_size
     log(f"生成问题报告：{path.name}（{size // 1024} KB）")
-    logtools.reveal(path)
+    if reveal:
+        logtools.reveal(path)
     return {"ok": True, "path": str(path), "name": path.name, "size": size}
