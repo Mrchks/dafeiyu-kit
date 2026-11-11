@@ -24,6 +24,9 @@ CONSOLE_PORT = 6190
 # 落在保留段里的端口没有人在用，却绑不上（WinError 10013）。换端口后记进 state.json 的 console_port。
 CONSOLE_PORTS = [6190, 6290, 8190, 16190, 26190, 36190, 41190]
 ASTRBOT_VERSION = "4.29.3"
+# 控制台自动更新：从这个 GitHub 仓库的 Release 读取 latest.json；签名公钥由 scripts/release.py 首次正式发版时写入
+UPDATE_REPO = "Mrchks/dafeiyu-kit"
+UPDATE_PUBKEY = ""
 
 APP = Path(__file__).resolve().parent          # <整合包>\app
 KIT = APP.parent                                 # <整合包>
