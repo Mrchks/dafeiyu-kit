@@ -857,6 +857,8 @@ dialog .field{grid-template-columns:72px 1fr}
 .skfail b{display:block;font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)}
 .skfail p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.7;word-break:break-word}
 .skfail .row{justify-content:center;margin:0}
+.pvbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;padding:6px 8px 6px 14px;border:1px solid var(--line2);border-radius:999px;background:var(--panel);box-shadow:var(--shadow-2);font-size:12.5px;color:var(--text2);white-space:nowrap}
+.pvbar b{color:var(--warn);font-weight:600}.pvbar button{padding:3px 10px}
 /* 按钮加载：宽度锁定，文字隐去，中间转圈；期间不响应点击 */
 button.busy{position:relative;color:transparent!important;pointer-events:none;opacity:1!important}
 button.busy>*{visibility:hidden}
@@ -1447,6 +1449,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
           <div class="row" style="margin-top:0"><button id="unLight">移除启动项</button><button class="danger" id="unFull">完全卸载</button></div>
         </div>
         <div class="section"><div class="sh"><div class="sh-t"><h2>问题反馈</h2><p class="hint">遇到问题或有改进建议时，可在此直接发送给作者。也可以点击左侧导航底部的「问题反馈」。</p></div><div class="act"><button id="unFb">问题反馈</button></div></div></div>
+        <div class="section"><div class="sh"><div class="sh-t"><h2>安装向导体验</h2><p class="hint">以新用户的视角完整浏览一遍安装向导。所有步骤均为模拟，不会安装、下载或修改任何内容，bot 照常运行。</p></div><div class="act"><button id="unPreview">开始体验</button></div></div></div>
         <div class="section"><h2>开源组件</h2><p class="hint" style="margin:0">本整合包使用了以下组件：AstrBot（AGPL-3.0）、NapCat、大肥鱼配置包（MIT，作者 zexuanw958-svg）、Python（PSF）、pystray（LGPL-3.0）、Pillow、LobeHub 服务商图标（MIT）。AstrBot 和 NapCat 在安装时从官方地址下载，不随包分发。许可证原文位于整合包的 LICENSES 文件夹。整合包源码以 MIT 许可在 GitHub（Mrchks/dafeiyu-kit）公开。</p></div>
       </div>
     </section>
@@ -1955,7 +1958,61 @@ document.addEventListener('keydown', e => {
   if (!p) return; e.preventDefault(); p.click();
 });
 
+/* ---- 安装向导体验模式（地址后加 ?preview=wizard）：从头走一遍新手流程，所有步骤都是模拟的，
+   不安装、不下载、不改任何文件和设置。只放行只读的请求（模型目录、检测已有安装、接入计划、文件夹选择窗口），其余全部在本页模拟。 ---- */
+const PREVIEW = new URLSearchParams(location.search).get('preview') === 'wizard';
+const PV = {wizard: {done: [], step: 'welcome', form: {}}, home: 'D:\\Dafeiyu', bot_qq: '', owners: [], napcat_dir: '', login: 'stopped', job: null};
+const PV_REAL = /^\/api\/(model-catalog|attach\/detect|attach\/plan|attach\/pick)(\?|$)/;
+const PV_JOBS = {
+  '/api/wizard/install-astrbot': ['安装 AstrBot', 'astrbot', ['正在下载 AstrBot…', '正在创建运行环境…', '正在安装依赖（约 150 个）…', '正在写入初始配置…', 'AstrBot 安装完成']],
+  '/api/wizard/configure': ['写入配置', 'configure', ['正在写入 bot 的 QQ 号和主人…', '正在保存模型连接…', '正在连接 NapCat 与 AstrBot…', '配置完成']],
+  '/api/wizard/start-login': ['启动并登录', '', ['正在启动 AstrBot…', '正在启动 NapCat…', '请使用手机 QQ 扫码登录']],
+  '/api/wizard/import': ['导入配置', 'import', ['正在导入大肥鱼人设…', '正在安装插件组…', '正在应用插件设置…', '导入完成']],
+  '/api/wizard/wait-test': ['等待测试消息', 'test', ['正在等待主人的私聊消息…', '收到消息：在吗', 'bot 已回复，测试通过']],
+  '/api/wizard/finish': ['完成安装', 'finish', ['正在创建桌面图标…', '正在设置开机自动上线…', '安装完成']],
+  '/api/attach/apply': ['接入已有安装', 'attach', ['正在备份将会改动的配置文件…', '正在启动或接管 AstrBot…', '已连接 AstrBot 后台', '正在按勾选内容安装…', '接入完成']],
+};
+const PV_QR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" shape-rendering="crispEdges"><rect width="21" height="21" fill="#fff"/>' +
+  [...Array(441).keys()].filter(i => { const x = i % 21, y = (i / 21) | 0, f = (a, b) => x >= a && x < a + 7 && y >= b && y < b + 7;
+    if (f(0, 0) || f(14, 0) || f(0, 14)){ const cx = x % 14 % 7, cy = y % 14 % 7; return cx === 0 || cx === 6 || cy === 0 || cy === 6 || (cx > 1 && cx < 5 && cy > 1 && cy < 5); }
+    return (x * 7 + y * 13 + x * y) % 3 === 0; }).map(i => `<rect x="${i % 21}" y="${(i / 21) | 0}" width="1" height="1"/>`).join('') + '</svg>');
+async function previewApi(path, body){
+  await sleep(120 + Math.random() * 180);                     // 模拟一点网络延迟，按钮和占位的效果与真实一致
+  const p = path.split('?')[0], done = PV.wizard.done, mark = k => { if (k && !done.includes(k)) done.push(k); };
+  if (p === '/api/status') return {setup_done: false, napcat: {state: PV.login, running: PV.login !== 'stopped'}, astrbot: {running: PV.login !== 'stopped'}};
+  if (p === '/api/wizard/state') return structuredClone({setup_done: false, home: PV.home, wizard: PV.wizard, bot_qq: PV.bot_qq, owners: PV.owners, dashboard_user: 'admin', kit: PV.home, napcat_dir: PV.napcat_dir});
+  if (p === '/api/wizard/save'){ if (body.step) PV.wizard.step = body.step; if (body.form) PV.wizard.form = body.form; return {ok: true}; }
+  if (p === '/api/wizard/check-env') return [
+    {ok: true, title: '安装位置', detail: '路径为英文且不含空格，可用空间充足'}, {ok: true, title: '系统版本', detail: 'Windows 11'},
+    {ok: true, title: '网络', detail: '可以访问 AstrBot 和模型服务商'}, {ok: true, title: '端口', detail: '6185、6199 未被占用'}];
+  if (p === '/api/wizard/napcat-pick'){ PV.napcat_dir = 'D:\\NapCat\\NapCat.43000.Shell'; mark('napcat');
+    return {ok: true, item: {dir: PV.napcat_dir, version: '4.18.42', ok: true}}; }
+  if (p === '/api/models/probe'){ const m = body.model || 'chat-model';
+    return {ok: true, listed: true, message: '连接正常，已读取模型列表（体验模式，未实际请求服务商）。', models: [{id: m, vision: false}, {id: m + '-lite'}, {id: m + '-pro'}]}; }
+  if (p === '/api/models/verify') return {ok: true, message: '验证通过（体验模式）'};
+  if (p === '/api/job'){
+    const j = PV.job; if (!j) return {running: false, ok: true, lines: []};
+    const t = (Date.now() - j.t0) / 1000, n = Math.min(j.lines.length, Math.floor(t / 1.1) + 1), fin = n >= j.lines.length && t > j.lines.length * 1.1;
+    if (fin && !j.over){ j.over = true; mark(j.key); if (j.path === '/api/wizard/start-login'){ PV.login = 'need_qr'; setTimeout(() => { PV.login = 'online'; }, 6000); } }
+    return {running: !fin, ok: true, name: j.name, msg: j.lines[j.lines.length - 1], progress: Math.min(1, t / (j.lines.length * 1.1)), lines: j.lines.slice(0, n)};
+  }
+  if (PV_JOBS[p]){ const [name, key, lines] = PV_JOBS[p]; PV.job = {path: p, name, key, lines, t0: Date.now()};
+    if (p === '/api/wizard/configure' && body){ PV.bot_qq = body.bot_qq || ''; PV.owners = body.owners || []; }
+    return {ok: true}; }
+  if (PV_REAL.test(path)) return api0real(path, body);
+  return body === undefined ? {} : {ok: true};                 // 其他请求一律不发到后台
+}
+function previewBanner(){
+  const b = document.createElement('div'); b.className = 'pvbar';
+  b.innerHTML = '<b>体验模式</b><span>正在模拟新手安装流程，所有步骤都不会安装、下载或修改任何内容。</span><button class="ghost" id="pvExit">退出体验</button>';
+  document.body.appendChild(b); b.querySelector('#pvExit').onclick = () => { location.href = '/'; };
+}
+
 async function api0(path, body){
+  if (PREVIEW) return previewApi(path, body);
+  return api0real(path, body);
+}
+async function api0real(path, body){
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), body === undefined ? 10000 : 130000);
   try {
@@ -2315,7 +2372,7 @@ const BIND = {
     const tick = async () => { const s = await api('/api/status'); if (!document.getElementById('loginPill')) return clearInterval(poll);
       const m = {online:['g','已连接'], need_qr:['w','待扫码'], connecting:['w','启动中…'], stopped:['b','未启动']}[s.napcat.state] || ['',''];
       $('#loginPill').className = 'pill ' + m[0]; $('#loginPill').textContent = m[1];
-      $('#wQr').hidden = s.napcat.state !== 'need_qr'; if (s.napcat.state === 'need_qr') $('#wQrImg').src = '/api/qrcode?t=' + Date.now();
+      $('#wQr').hidden = s.napcat.state !== 'need_qr'; if (s.napcat.state === 'need_qr') $('#wQrImg').src = PREVIEW ? PV_QR : '/api/qrcode?t=' + Date.now();
       WZ.loginOk = s.napcat.state === 'online'; };
     $('#wStart').onclick = () => runJob('/api/wizard/start-login'); poll = setInterval(tick, 2500); tick();
     bindNav(() => { if (!WZ.loginOk) return alert('尚未登录成功。扫码并在手机上确认后，状态会在几秒内变为「已登录」'); clearInterval(poll); next(); }); },
@@ -2394,7 +2451,9 @@ const BIND = {
         j => { if (j.ok){ WZ.attach.done = true; $('#wNext').textContent = '下一步'; } });
     };
     bindNav(() => WZ.attach.done ? next() : start()); },
-  finish(){ $('#wFinish').onclick = () => runJob('/api/wizard/finish', {}, j => { if (j.ok) setTimeout(() => location.reload(), 1200); }); },
+  finish(){ $('#wFinish').onclick = () => runJob('/api/wizard/finish', {}, j => { if (!j.ok) return;
+      if (PREVIEW){ const m = $('#wMsg'); if (m){ m.className = 'note ok'; m.textContent = '体验结束。真实安装到这一步后会进入控制台。'; } return; }
+      setTimeout(() => location.reload(), 1200); }); },
 };
 function wizRender(){ wizNav(); $('#wizBody').innerHTML = VIEWS[WZ.step](); BIND[WZ.step](); $('main').scrollTop = 0; }
 
@@ -4150,10 +4209,11 @@ async function bootConsole(){
   } catch(e){ connectionState('暂时无法连接控制台：' + e.message); bootSettle(e); }
   finally { bootBusy = false; }
 }
+$('#unPreview').onclick = () => { location.href = '/?preview=wizard'; };
 $('#connectionRetry').onclick = () => bootReady ? refresh() : skRun($('#p-home'), homeFirst);
 (async () => {
   $$('[data-act]').forEach(x => x.disabled = true);
-  uiKitInit(); skRun($('#p-home'), homeFirst);
+  uiKitInit(); if (PREVIEW) previewBanner(); skRun($('#p-home'), homeFirst);
   setInterval(() => { if (!document.hidden) bootReady ? refresh() : bootConsole(); }, 3000);
   setInterval(() => { if (bootReady && ST?.setup_done) refreshBalance(); }, 600000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) bootReady ? refresh() : bootConsole(); });
