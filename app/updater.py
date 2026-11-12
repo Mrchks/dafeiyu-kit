@@ -121,6 +121,17 @@ def _venv_python() -> Path | None:
     return p.with_name("python.exe") if p.with_name("python.exe").exists() else p
 
 
+def update_blocked() -> str:
+    """控制台无法安全更新时返回原因（按钮置为不可用并显示原因），可以更新时返回空字符串。"""
+    s = load_state()
+    py = _venv_python()
+    if not ab_source_root() and py and not (py.parent.parent / "pyvenv.cfg").is_file():
+        return "此 AstrBot 安装在系统的 Python 中，控制台不对其更新，以免影响其他程序。请使用原来的方式更新。"
+    if s.get("attached") and not ab_source_root() and not py:
+        return "未找到运行 AstrBot 的 Python，无法由控制台更新。"
+    return ""
+
+
 def ab_current() -> str:
     root = ab_source_root()
     try:
@@ -227,6 +238,7 @@ def info(force: bool = False) -> dict:
                        if rec else None),
         }
     res["astrbot"]["mode"] = "source" if ab_source_root() else "pip"
+    res["astrbot"]["blocked"] = update_blocked()
     rec = recs.get("console") or {}
     bk = Path(rec["backup"]) if rec.get("backup") else None
     res["console"] = {**selfupdate.describe(c.get("console") or {}),
@@ -361,6 +373,9 @@ def _start_and_check() -> None:
 
 
 def update_astrbot() -> str:
+    why = update_blocked()
+    if why:
+        raise RuntimeError(why)
     c = check(force=True)
     lat = c.get("astrbot") or {}
     cur = ab_current()

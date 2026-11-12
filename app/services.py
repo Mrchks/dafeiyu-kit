@@ -553,6 +553,14 @@ def start_all() -> str:
     return f"{res.get('a', '')}；{res.get('n', 'NapCat 仍在启动')}"
 
 
+def start_all_boot() -> str:
+    """开机自启：接入已有安装且选择由启动器自启 AstrBot 时，控制台只启动 NapCat，AstrBot 由启动器启动后自动接管。"""
+    if load_state().get("boot_skip_astrbot"):
+        set_wanted("astrbot", True)
+        return start_napcat()
+    return start_all()
+
+
 def stop_all() -> str:
     set_wanted("napcat", False)
     set_wanted("astrbot", False)
@@ -612,6 +620,8 @@ def status() -> dict:
                    else f"http://127.0.0.1:{web['port']}/webui"},
         "settings": {k: s.get(k) for k in ("astrbot_port", "autostart", "watchdog", "notify", "wanted", "theme")},
         "has_dashboard_login": bool(s.get("dashboard_pass")),
+        "attached": bool(s.get("attached")) or s.get("mode") == "launcher",
+        "plugins_opt_out": bool(s.get("plugins_opt_out")),
         "last_boot": s.get("last_boot"),
         "astrbot_needs_restart": astrbot_needs_restart(s, ab),
         "updates": _updates_flag(),

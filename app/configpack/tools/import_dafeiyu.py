@@ -50,6 +50,12 @@ def read_secret_file(path, key=None):
     return lines[0].strip()
 
 
+def want(name):
+    """回答文件里给了 steps 时只做列出的几步（接入已有安装时只做增量，不覆盖原有设置）；没给时全部都做。"""
+    steps = ANSWERS.get("steps")
+    return not steps or name in steps
+
+
 def ask(name, prompt, default=None, secret=False, choices=None):
     """问一个问题；--answers 模式下从回答文件取。"""
     if name in ANSWERS:
@@ -367,309 +373,323 @@ def main():
            "唱歌后端": (pack.get("sing") or {}).get("backend") or "doubao"}
     say(f"  机器人：{platform_id}　对话模型：{chat_id}")
     results = []
+    changed, installed = [], set()
+    lm, mem_ok, tts_id, v = "astrbot_plugin_livingmemory", False, "", pack["voice"]
 
-    # ---------- 对话模型：关思考，回得快 ----------
-    step("调整对话模型")
-    prov = provider_config(api, chat_id)
-    if prov and "deepseek" in (str(prov.get("model", "")) + str(prov.get("provider_source_id", ""))).lower():
-        extra = dict(prov.get("custom_extra_body") or {})
-        extra.update(pack["chat_model"]["custom_extra_body"])
-        prov["custom_extra_body"] = extra
-        ok = api.ok(api.call("PUT", f"/providers/{urllib.parse.quote(chat_id, safe='')}", {"config": prov}))
-        say("  已关闭深度思考，回得更快" if ok else "  ！没改成，不影响使用")
-    else:
-        say("  不是 DeepSeek 模型，跳过")
-
-    # ---------- 人格 ----------
-    step("写入人格「大肥鱼」")
-    pid = pack["persona"]["id"]
-    text = open(os.path.join(PACK, pack["persona"]["file"]), encoding="utf-8-sig").read().replace("{OWNER_QQ}", owner)
-    qid = urllib.parse.quote(pid, safe="")
-    cur = api.call("GET", f"/personas/{qid}")
-    if api.ok(cur) and isinstance(cur.get("data"), dict) and cur["data"].get("persona_id") == pid:
-        body = {k: v for k, v in cur["data"].items() if k in ("begin_dialogs", "skills", "folder_id", "sort_order", "custom_error_message")}
-        body.update({"system_prompt": text, "tools": None})
-        r = api.call("PUT", f"/personas/{qid}", body)
-    else:
-        r = api.call("POST", "/personas", {"persona_id": pid, "system_prompt": text, "begin_dialogs": [], "tools": None})
-    results.append(("人格", api.ok(r)))
-    say("  完成" if api.ok(r) else f"  ！失败：{api.msg(r)}")
-
-    # ---------- 插件 ----------
-    step("从插件市场安装插件（第一次要下载，慢的话等一两分钟）")
-    installed = {p.get("name") for p in (api.call("GET", "/plugins").get("data") or []) if isinstance(p, dict)}
-    for p in pack["plugins"]:
-        if p["name"] in installed:
-            say(f"  {p['name']}：已装过")
-            continue
-        say(f"  {p['name']}：安装中…（{p['what']}）")
-        r = api.call("POST", "/plugins/install/github",
-                     {"install_method": "market", "market_plugin_id": p["market_id"]}, timeout=600)
-        if not api.ok(r):
-            warn(f"装不上：{api.msg(r)}")
-            warn("插件是从插件市场的服务器下的，可能一时没响应。等几分钟再运行一次本工具；还装不上，就在后台「插件 → 插件市场」里搜这个插件手动装，装好再运行一次。")
-    installed = {p.get("name") for p in (api.call("GET", "/plugins").get("data") or []) if isinstance(p, dict)}
-    for p in pack["plugins"]:
-        results.append((f"插件 {p['name']}", p["name"] in installed))
-
-    # 额外插件（比如豆包语音）：plugins/ 里的 zip，或带 metadata.yaml 的插件文件夹
-    for z in extra_plugins():
-        base = z[:-4] if z.endswith(".zip") else z
-        meta_path = base + ".json"
-        meta = json.load(open(meta_path, encoding="utf-8-sig")) if os.path.exists(meta_path) else {}
-        name = meta.get("name") or plugin_name(z) or os.path.basename(base)
-        if meta.get("only_with_voice") and meta["only_with_voice"] != voice and name not in installed:
-            continue
-        if name in installed and not meta.get("always_reinstall"):
-            say(f"  {name}：已装过")
+    if want("chat_model"):
+        # ---------- 对话模型：关思考，回得快 ----------
+        step("调整对话模型")
+        prov = provider_config(api, chat_id)
+        if prov and "deepseek" in (str(prov.get("model", "")) + str(prov.get("provider_source_id", ""))).lower():
+            extra = dict(prov.get("custom_extra_body") or {})
+            extra.update(pack["chat_model"]["custom_extra_body"])
+            prov["custom_extra_body"] = extra
+            ok = api.ok(api.call("PUT", f"/providers/{urllib.parse.quote(chat_id, safe='')}", {"config": prov}))
+            say("  已关闭深度思考，回得更快" if ok else "  ！没改成，不影响使用")
         else:
-            say(f"  {name}：从配置包安装…")
-            payload = open(z, "rb").read() if z.endswith(".zip") else zip_folder(z)
-            body, ctype = multipart("file", os.path.basename(base) + ".zip", payload)
-            r = api.call("POST", "/plugins/install/upload", raw_body=body, content_type=ctype, timeout=600)
-            if not api.ok(r):
-                warn(f"装不上：{api.msg(r)}")
-        if meta.get("config"):
-            pack["plugins"].append({"name": name, "config": meta["config"], "what": meta.get("what", "")})
+            say("  不是 DeepSeek 模型，跳过")
+
+    if want("persona"):
+        # ---------- 人格 ----------
+        step("写入人格「大肥鱼」")
+        pid = pack["persona"]["id"]
+        text = open(os.path.join(PACK, pack["persona"]["file"]), encoding="utf-8-sig").read().replace("{OWNER_QQ}", owner)
+        qid = urllib.parse.quote(pid, safe="")
+        cur = api.call("GET", f"/personas/{qid}")
+        if api.ok(cur) and isinstance(cur.get("data"), dict) and cur["data"].get("persona_id") == pid and ANSWERS.get("persona_keep"):
+            say("  已有同名人格，保留原内容，不覆盖")
+            r = cur
+        elif api.ok(cur) and isinstance(cur.get("data"), dict) and cur["data"].get("persona_id") == pid:
+            body = {k: v for k, v in cur["data"].items() if k in ("begin_dialogs", "skills", "folder_id", "sort_order", "custom_error_message")}
+            body.update({"system_prompt": text, "tools": None})
+            r = api.call("PUT", f"/personas/{qid}", body)
+        else:
+            r = api.call("POST", "/personas", {"persona_id": pid, "system_prompt": text, "begin_dialogs": [], "tools": None})
+        results.append(("人格", api.ok(r)))
+        say("  完成" if api.ok(r) else f"  ！失败：{api.msg(r)}")
+
+    if want("plugins"):
+        # ---------- 插件 ----------
+        step("从插件市场安装插件（第一次要下载，慢的话等一两分钟）")
         installed = {p.get("name") for p in (api.call("GET", "/plugins").get("data") or []) if isinstance(p, dict)}
-        results.append((f"插件 {name}", name in installed))
-
-    step("改插件设置")
-    changed = []
-    for p in pack["plugins"]:
-        if p["name"] not in installed or not p["config"]:
-            continue
-        r = api.call("GET", f"/plugins/config?plugin_id={urllib.parse.quote(p['name'])}")
-        conf = (r.get("data") or {}).get("config") if isinstance(r.get("data"), dict) else None
-        if not isinstance(conf, dict):
-            warn(f"{p['name']}：读不到设置")
-            continue
-        for k, v in p["config"].items():
-            if get_path(conf, k) is None and "." in k and get_path(conf, k.rsplit(".", 1)[0]) is None:
-                warn(f"{p['name']}：设置项 {k} 不存在，可能插件更新改名了，跳过")
+        for p in pack["plugins"]:
+            if p["name"] in installed:
+                say(f"  {p['name']}：已装过")
                 continue
-            set_path(conf, k, fill(v, ctx))
-        r = api.call("PUT", "/plugins/config", {"plugin_id": p["name"], "config": conf})
-        say(f"  {p['name']}：{'完成' if api.ok(r) else '失败 ' + api.msg(r)}")
-        if api.ok(r):
-            changed.append(p["name"])
-
-    for tool, perm in pack["tool_permissions"].items():
-        r = api.call("PATCH", f"/tools/{urllib.parse.quote(tool, safe='')}/permission", {"permission": perm})
-        if not api.ok(r):
-            warn(f"工具 {tool} 权限没改成：{api.msg(r)}")
-    say("  发空间、改签名只听主人的：已设置")
-
-    # ---------- 表情包 ----------
-    step("下载表情包（从表情包插件的资源广场下，几百张图，要一会儿）")
-    if "meme_manager" in installed:
-        ext = "/plugins/extensions/meme_manager"
-        # 表情包从 GitHub 下，经插件里设的加速站；加速站时好时坏，下不动就换下一个再试
-        cur = meme_accelerator(api)
-        accels = ([cur] if cur and cur not in GH_ACCELERATORS else []) + GH_ACCELERATORS
-        ai, gh_warned = 0, False
-        if cur != accels[0]:
-            meme_accelerator(api, accels[0])
-        api.call("POST", f"{ext}/community/index/fetch", {}, timeout=120)
-        have = meme_pack_ids(api, ext)
-        for mp in pack["meme_packs"]:
-            if mp["id"] in have:
-                say(f"  {mp['id']}：已有")
-                results.append((f"表情包 {mp['id']}", True))
-                continue
-            while True:
-                r = api.call("POST", f"{ext}/community/install",
-                             {"pack_id": mp["id"], "set_as_default": mp["default"]}, timeout=900)
-                ok = api.ok(r)
-                if ok or ai + 1 >= len(accels):
-                    break
-                ai += 1
-                say(f"  {mp['id']}：没下下来（{api.msg(r)[:80]}），换个 GitHub 加速地址再试：{accels[ai] or '直连 GitHub'}")
-                if meme_accelerator(api, accels[ai]) is None:
-                    break
-                api.call("POST", f"{ext}/community/index/fetch", {}, timeout=120)
-            say(f"  {mp['id']}：{'完成' if ok else '失败 ' + api.msg(r)}")
-            results.append((f"表情包 {mp['id']}", ok))
-            if not ok and not gh_warned:
-                gh_warned = True
-                warn("几个加速地址都没下下来，多半是这会儿连不上 GitHub。过一阵再运行一次本工具；"
-                     "或者在后台「插件 → meme_manager → 配置」里把 GitHub 加速地址换成你能用的，再运行一次。")
-        # 默认规则写成「几套一起用」：meme_manager 的选择规则支持 pack_ids 列表，主套排第一
-        use = [mp["id"] for mp in sorted(pack["meme_packs"], key=lambda m: not m.get("default"))
-               if mp.get("use", True)]
-        ok = bool(use) and meme_use_together(api, ext, use)
-        if not ok:
-            # 规则接口用不了（比如插件版本太老）：退回只设主套为默认
-            main = next((mp["id"] for mp in pack["meme_packs"] if mp.get("default")), None)
-            if main:
-                ok = api.ok(api.call("POST", f"{ext}/packs/default", {"pack_id": main}))
-                say(f"  只把 {main} 设成默认：{'完成' if ok else '失败'}")
-        results.append(("表情包默认用的几套", ok))
-    else:
-        results.append(("表情包", False))
-
-    # ---------- 记忆 ----------
-    step("记忆")
-    lm = "astrbot_plugin_livingmemory"
-    mem_ok = False
-    if memory == "0":
-        say("  先不装。以后想装，再运行一次本工具选 1 或 2。")
-    else:
-        m = pack["memory"]
-        if memory == "1":
-            o = m["ollama"]
-            if not ollama_ready(o["ollama_model"]):
-                warn("Ollama 没在运行或模型没下好，先跳过记忆。装好 Ollama 后再运行一次本工具。")
-                o = None
-            conf = o and {"id": o["id"], "embedding_api_key": o["embedding_api_key"],
-                          "embedding_api_base": o["embedding_api_base"], "embedding_model": o["embedding_model"]}
-        else:
-            s = m["siliconflow"]
-            conf = {"id": s["id"], "embedding_api_key": sf_key, "embedding_api_base": s["embedding_api_base"],
-                    "embedding_model": s["embedding_model"]}
-        if conf and lm in installed:
-            conf.update({"type": "openai_embedding", "provider": "openai", "provider_type": "embedding", "enable": True,
-                         "embedding_dimensions": m["embedding_dimensions"], "embedding_dimensions_mode": "auto",
-                         "timeout": 20, "proxy": ""})
-            if upsert_provider(api, conf):
-                good, why = test_provider(api, conf["id"])
-                if not good:
-                    warn(f"记忆模型测试没通过：{why}")
-                r = api.call("GET", f"/plugins/config?plugin_id={lm}")
-                lconf = (r.get("data") or {}).get("config")
-                if isinstance(lconf, dict):
-                    set_path(lconf, "provider_settings.embedding_provider_id", conf["id"])
-                    mem_ok = api.ok(api.call("PUT", "/plugins/config", {"plugin_id": lm, "config": lconf})) and good
-                    changed.append(lm)
-    if lm in installed:
-        api.call("PATCH", "/plugins/enabled", {"plugin_id": lm, "enabled": mem_ok})
-        say("  记忆已打开" if mem_ok else "  记忆插件先关着（没配好记忆模型时开着会报错）")
-    if memory != "0":
-        results.append(("记忆", mem_ok))
-
-    # ---------- 语音 ----------
-    step("语音")
-    v = pack["voice"]
-    tts_id = ""
-    if voice == "1":
-        e = v["edge"]
-        for pkg in e["pip"]:
-            say(f"  安装 {pkg.split('==')[0]}…")
-            r = api.call("POST", "/pip/install", {"package": pkg}, timeout=600)
+            say(f"  {p['name']}：安装中…（{p['what']}）")
+            r = api.call("POST", "/plugins/install/github",
+                         {"install_method": "market", "market_plugin_id": p["market_id"]}, timeout=600)
             if not api.ok(r):
                 warn(f"装不上：{api.msg(r)}")
-        conf = {"id": e["id"], "type": "edge_tts", "provider": "microsoft", "provider_type": "text_to_speech",
-                "enable": True, "voice": e["voice"], "rate": "+0%", "volume": "+0%", "pitch": "+0Hz",
-                "timeout": 20, "proxy": ""}
-        tts_id = e["id"] if upsert_provider(api, conf) else ""
-    elif voice == "2":
-        mm = v["mimo"]
-        ref = os.path.join(PACK, mm["reference_audio"])
-        if not os.path.exists(ref):
-            found = [f for f in sorted(glob.glob(os.path.join(PACK, "voice", "*"))) if f.lower().endswith((".mp3", ".wav", ".m4a"))]
-            ref = found[0] if found else ref
-        if not os.path.exists(ref):
-            ref = ask("reference_audio", "配置包里没有参考音，给一段你想克隆的声音文件路径（mp3/wav，5–10 秒）").strip('"')
-        ext = os.path.splitext(ref)[1].lower().lstrip(".") or "mp3"
-        mime = {"mp3": "audio/mpeg", "wav": "audio/wav", "m4a": "audio/mp4"}.get(ext, "audio/mpeg")
-        data_uri = f"data:{mime};base64," + base64.b64encode(open(ref, "rb").read()).decode()
-        conf = {"id": mm["id"], "type": "mimo_tts_api", "provider": "mimo", "provider_type": "text_to_speech",
-                "enable": True, "api_key": mimo_key, "api_base": mm["api_base"], "model": mm["model"],
-                "mimo-tts-voice": data_uri, "mimo-tts-format": "wav", "mimo-tts-style-prompt": "",
-                "mimo-tts-dialect": "", "mimo-tts-seed-text": "", "timeout": 30, "proxy": ""}
-        tts_id = mm["id"] if upsert_provider(api, conf) else ""
-    elif voice == "3":
-        d = v["doubao"]
-        if d["plugin"] not in installed:
-            warn(f"豆包语音要的插件 {d['plugin']} 没装上，先跳过语音。")
-        else:
-            conf = {"id": d["id"], "type": "seed_audio_tts", "provider": "volcengine", "provider_type": "text_to_speech",
-                    "enable": True, "app_id": volc_app_id, "access_key": volc_token, "credentials_file": "",
-                    "api_base": d["api_base"], "resource_id": d["resource_id"], "model": d["model"],
-                    "seed_audio_persona": d["persona"], "seed_audio_prompt_template": d["prompt_template"],
-                    "seed_audio_format": d["format"], "seed_audio_sample_rate": d["sample_rate"],
-                    "seed_audio_max_attempts": d["max_attempts"],
-                    "seed_audio_whole_reply": d.get("whole_reply", True),
-                    "seed_audio_reply_probability": v["trigger_probability"], "timeout": d["timeout"]}
-            say("  试念一句「你好呀」，豆包要十几秒…")
-            tts_id = d["id"] if upsert_provider(api, conf) else ""
-    elif voice == "4":
-        bz = v["breeze"]
-        try:
-            with urllib.request.urlopen(bz["api_base"] + "/voices", timeout=10) as r:
-                have = [x.get("id") for x in json.loads(r.read() or b"[]")]
-        except Exception:
-            have = None
-        if have is None:
-            warn("连不上本机的 Breeze。先双击桌面的「启动Breeze语音」，没装的话先双击「装Breeze语音.bat」。")
-        elif bz["voice"] not in have:
-            warn(f"Breeze 里还没有叫 {bz['voice']} 的声音，先双击「做声音.bat」做一个。")
-        else:
-            conf = {"id": bz["id"], "type": "openai_tts_api", "provider": "openai", "provider_type": "text_to_speech",
-                    "enable": True, "api_key": "unused", "api_base": bz["api_base"], "model": "tts-1",
-                    "openai-tts-voice": bz["voice"], "timeout": 180, "proxy": ""}
-            say("  试念一句，Breeze 要几秒…")
-            tts_id = bz["id"] if upsert_provider(api, conf) else ""
-    if voice != "3":
-        # 以前选过豆包又换了别的：豆包插件只要看到它的提供商开着就会掷骰子发整条语音，得关掉
-        old = provider_config(api, v["doubao"]["id"])
-        if old and old.get("enable"):
-            upsert_provider(api, {**old, "enable": False})
-            say("  之前开着的豆包语音已关掉")
-    if tts_id:
-        good, why = test_provider(api, tts_id)
-        if good:
-            say(f"  语音已打开，大约三条回复里有一条会发语音")
-            if voice == "3":
-                say("  豆包是整条回复合成一条语音，要等 15–35 秒才到")
-        else:
-            # 测不通就先关着：开着的话她每发一次语音都会报错
-            warn(f"语音测试没通过：{why}")
-            if voice == "1" and re.search(r"WinError 2|找不到指定的文件|ffmpeg", why, re.I):
-                warn("Edge 语音要用 ffmpeg 转格式，这台电脑上多半没装。在 PowerShell 里运行 "
-                     "winget install Gyan.FFmpeg 装上，重启 AstrBot，再运行一次本工具。")
-            conf["enable"] = False
-            upsert_provider(api, conf)
-            tts_id = ""
-            say("  语音先关着，处理好再运行一次本工具")
-        results.append(("语音", good))
-    elif voice != "0":
-        results.append(("语音", False))
-    else:
-        say("  先不开")
+                warn("插件是从插件市场的服务器下的，可能一时没响应。等几分钟再运行一次本工具；还装不上，就在后台「插件 → 插件市场」里搜这个插件手动装，装好再运行一次。")
+        installed = {p.get("name") for p in (api.call("GET", "/plugins").get("data") or []) if isinstance(p, dict)}
+        for p in pack["plugins"]:
+            results.append((f"插件 {p['name']}", p["name"] in installed))
 
-    # ---------- 全局设置 ----------
-    step("改全局设置（分段回复、认得主人、默认人格等）")
-    r = api.call("GET", "/config-profiles/default")
-    cfg = r["data"]["config"]
-    for k, val in pack["base"].items():
-        set_path(cfg, k, fill(val, ctx))
-    ps = cfg.setdefault("platform_settings", {})
-    if ps.get("enable_id_white_list"):
-        wl = ps.setdefault("id_whitelist", [])
-        if session not in wl and owner not in wl:
-            wl.append(session)
-    admins = cfg.setdefault("admins_id", [])
-    if owner not in admins:
-        admins.append(owner)
-    tts = cfg.setdefault("provider_tts_settings", {})
-    if tts_id and voice == "3" and v["doubao"].get("whole_reply", True):
-        # 整条语音由豆包插件掷骰子、一次合成；AstrBot 自己的按段语音要关掉，不然会再按段转一遍
-        tts.update({"enable": False, "provider_id": tts_id, "trigger_probability": v["trigger_probability"]})
-    elif tts_id:
-        tts.update({"enable": True, "provider_id": tts_id, "trigger_probability": v["trigger_probability"]})
-    else:
-        tts["enable"] = False
-    r = api.call("PUT", "/config-profiles/default", cfg)
-    results.append(("全局设置", api.ok(r)))
-    say("  完成" if api.ok(r) else f"  ！失败：{api.msg(r)}")
+        # 额外插件（比如豆包语音）：plugins/ 里的 zip，或带 metadata.yaml 的插件文件夹
+        for z in extra_plugins():
+            base = z[:-4] if z.endswith(".zip") else z
+            meta_path = base + ".json"
+            meta = json.load(open(meta_path, encoding="utf-8-sig")) if os.path.exists(meta_path) else {}
+            name = meta.get("name") or plugin_name(z) or os.path.basename(base)
+            if meta.get("only_with_voice") and meta["only_with_voice"] != voice and name not in installed:
+                continue
+            if name in installed and not meta.get("always_reinstall"):
+                say(f"  {name}：已装过")
+            else:
+                say(f"  {name}：从配置包安装…")
+                payload = open(z, "rb").read() if z.endswith(".zip") else zip_folder(z)
+                body, ctype = multipart("file", os.path.basename(base) + ".zip", payload)
+                r = api.call("POST", "/plugins/install/upload", raw_body=body, content_type=ctype, timeout=600)
+                if not api.ok(r):
+                    warn(f"装不上：{api.msg(r)}")
+            if meta.get("config"):
+                pack["plugins"].append({"name": name, "config": meta["config"], "what": meta.get("what", "")})
+            installed = {p.get("name") for p in (api.call("GET", "/plugins").get("data") or []) if isinstance(p, dict)}
+            results.append((f"插件 {name}", name in installed))
 
-    step("重新加载插件")
-    for name in dict.fromkeys(changed):
-        if name == lm and not mem_ok:
-            continue
-        api.call("POST", "/plugins/reload", {"plugin_id": name}, timeout=180)
-    say("  完成")
+    if want("plugin_config"):
+        step("改插件设置")
+        changed = []
+        for p in pack["plugins"]:
+            if p["name"] not in installed or not p["config"]:
+                continue
+            r = api.call("GET", f"/plugins/config?plugin_id={urllib.parse.quote(p['name'])}")
+            conf = (r.get("data") or {}).get("config") if isinstance(r.get("data"), dict) else None
+            if not isinstance(conf, dict):
+                warn(f"{p['name']}：读不到设置")
+                continue
+            for k, v in p["config"].items():
+                if get_path(conf, k) is None and "." in k and get_path(conf, k.rsplit(".", 1)[0]) is None:
+                    warn(f"{p['name']}：设置项 {k} 不存在，可能插件更新改名了，跳过")
+                    continue
+                set_path(conf, k, fill(v, ctx))
+            r = api.call("PUT", "/plugins/config", {"plugin_id": p["name"], "config": conf})
+            say(f"  {p['name']}：{'完成' if api.ok(r) else '失败 ' + api.msg(r)}")
+            if api.ok(r):
+                changed.append(p["name"])
+
+        for tool, perm in pack["tool_permissions"].items():
+            r = api.call("PATCH", f"/tools/{urllib.parse.quote(tool, safe='')}/permission", {"permission": perm})
+            if not api.ok(r):
+                warn(f"工具 {tool} 权限没改成：{api.msg(r)}")
+        say("  发空间、改签名只听主人的：已设置")
+
+    if want("memes"):
+        # ---------- 表情包 ----------
+        step("下载表情包（从表情包插件的资源广场下，几百张图，要一会儿）")
+        if "meme_manager" in installed:
+            ext = "/plugins/extensions/meme_manager"
+            # 表情包从 GitHub 下，经插件里设的加速站；加速站时好时坏，下不动就换下一个再试
+            cur = meme_accelerator(api)
+            accels = ([cur] if cur and cur not in GH_ACCELERATORS else []) + GH_ACCELERATORS
+            ai, gh_warned = 0, False
+            if cur != accels[0]:
+                meme_accelerator(api, accels[0])
+            api.call("POST", f"{ext}/community/index/fetch", {}, timeout=120)
+            have = meme_pack_ids(api, ext)
+            for mp in pack["meme_packs"]:
+                if mp["id"] in have:
+                    say(f"  {mp['id']}：已有")
+                    results.append((f"表情包 {mp['id']}", True))
+                    continue
+                while True:
+                    r = api.call("POST", f"{ext}/community/install",
+                                 {"pack_id": mp["id"], "set_as_default": mp["default"]}, timeout=900)
+                    ok = api.ok(r)
+                    if ok or ai + 1 >= len(accels):
+                        break
+                    ai += 1
+                    say(f"  {mp['id']}：没下下来（{api.msg(r)[:80]}），换个 GitHub 加速地址再试：{accels[ai] or '直连 GitHub'}")
+                    if meme_accelerator(api, accels[ai]) is None:
+                        break
+                    api.call("POST", f"{ext}/community/index/fetch", {}, timeout=120)
+                say(f"  {mp['id']}：{'完成' if ok else '失败 ' + api.msg(r)}")
+                results.append((f"表情包 {mp['id']}", ok))
+                if not ok and not gh_warned:
+                    gh_warned = True
+                    warn("几个加速地址都没下下来，多半是这会儿连不上 GitHub。过一阵再运行一次本工具；"
+                         "或者在后台「插件 → meme_manager → 配置」里把 GitHub 加速地址换成你能用的，再运行一次。")
+            # 默认规则写成「几套一起用」：meme_manager 的选择规则支持 pack_ids 列表，主套排第一
+            use = [mp["id"] for mp in sorted(pack["meme_packs"], key=lambda m: not m.get("default"))
+                   if mp.get("use", True)]
+            ok = bool(use) and meme_use_together(api, ext, use)
+            if not ok:
+                # 规则接口用不了（比如插件版本太老）：退回只设主套为默认
+                main = next((mp["id"] for mp in pack["meme_packs"] if mp.get("default")), None)
+                if main:
+                    ok = api.ok(api.call("POST", f"{ext}/packs/default", {"pack_id": main}))
+                    say(f"  只把 {main} 设成默认：{'完成' if ok else '失败'}")
+            results.append(("表情包默认用的几套", ok))
+        else:
+            results.append(("表情包", False))
+
+    if want("memory"):
+        # ---------- 记忆 ----------
+        step("记忆")
+        lm = "astrbot_plugin_livingmemory"
+        mem_ok = False
+        if memory == "0":
+            say("  先不装。以后想装，再运行一次本工具选 1 或 2。")
+        else:
+            m = pack["memory"]
+            if memory == "1":
+                o = m["ollama"]
+                if not ollama_ready(o["ollama_model"]):
+                    warn("Ollama 没在运行或模型没下好，先跳过记忆。装好 Ollama 后再运行一次本工具。")
+                    o = None
+                conf = o and {"id": o["id"], "embedding_api_key": o["embedding_api_key"],
+                              "embedding_api_base": o["embedding_api_base"], "embedding_model": o["embedding_model"]}
+            else:
+                s = m["siliconflow"]
+                conf = {"id": s["id"], "embedding_api_key": sf_key, "embedding_api_base": s["embedding_api_base"],
+                        "embedding_model": s["embedding_model"]}
+            if conf and lm in installed:
+                conf.update({"type": "openai_embedding", "provider": "openai", "provider_type": "embedding", "enable": True,
+                             "embedding_dimensions": m["embedding_dimensions"], "embedding_dimensions_mode": "auto",
+                             "timeout": 20, "proxy": ""})
+                if upsert_provider(api, conf):
+                    good, why = test_provider(api, conf["id"])
+                    if not good:
+                        warn(f"记忆模型测试没通过：{why}")
+                    r = api.call("GET", f"/plugins/config?plugin_id={lm}")
+                    lconf = (r.get("data") or {}).get("config")
+                    if isinstance(lconf, dict):
+                        set_path(lconf, "provider_settings.embedding_provider_id", conf["id"])
+                        mem_ok = api.ok(api.call("PUT", "/plugins/config", {"plugin_id": lm, "config": lconf})) and good
+                        changed.append(lm)
+        if lm in installed:
+            api.call("PATCH", "/plugins/enabled", {"plugin_id": lm, "enabled": mem_ok})
+            say("  记忆已打开" if mem_ok else "  记忆插件先关着（没配好记忆模型时开着会报错）")
+        if memory != "0":
+            results.append(("记忆", mem_ok))
+
+    if want("voice"):
+        # ---------- 语音 ----------
+        step("语音")
+        v = pack["voice"]
+        tts_id = ""
+        if voice == "1":
+            e = v["edge"]
+            for pkg in e["pip"]:
+                say(f"  安装 {pkg.split('==')[0]}…")
+                r = api.call("POST", "/pip/install", {"package": pkg}, timeout=600)
+                if not api.ok(r):
+                    warn(f"装不上：{api.msg(r)}")
+            conf = {"id": e["id"], "type": "edge_tts", "provider": "microsoft", "provider_type": "text_to_speech",
+                    "enable": True, "voice": e["voice"], "rate": "+0%", "volume": "+0%", "pitch": "+0Hz",
+                    "timeout": 20, "proxy": ""}
+            tts_id = e["id"] if upsert_provider(api, conf) else ""
+        elif voice == "2":
+            mm = v["mimo"]
+            ref = os.path.join(PACK, mm["reference_audio"])
+            if not os.path.exists(ref):
+                found = [f for f in sorted(glob.glob(os.path.join(PACK, "voice", "*"))) if f.lower().endswith((".mp3", ".wav", ".m4a"))]
+                ref = found[0] if found else ref
+            if not os.path.exists(ref):
+                ref = ask("reference_audio", "配置包里没有参考音，给一段你想克隆的声音文件路径（mp3/wav，5–10 秒）").strip('"')
+            ext = os.path.splitext(ref)[1].lower().lstrip(".") or "mp3"
+            mime = {"mp3": "audio/mpeg", "wav": "audio/wav", "m4a": "audio/mp4"}.get(ext, "audio/mpeg")
+            data_uri = f"data:{mime};base64," + base64.b64encode(open(ref, "rb").read()).decode()
+            conf = {"id": mm["id"], "type": "mimo_tts_api", "provider": "mimo", "provider_type": "text_to_speech",
+                    "enable": True, "api_key": mimo_key, "api_base": mm["api_base"], "model": mm["model"],
+                    "mimo-tts-voice": data_uri, "mimo-tts-format": "wav", "mimo-tts-style-prompt": "",
+                    "mimo-tts-dialect": "", "mimo-tts-seed-text": "", "timeout": 30, "proxy": ""}
+            tts_id = mm["id"] if upsert_provider(api, conf) else ""
+        elif voice == "3":
+            d = v["doubao"]
+            if d["plugin"] not in installed:
+                warn(f"豆包语音要的插件 {d['plugin']} 没装上，先跳过语音。")
+            else:
+                conf = {"id": d["id"], "type": "seed_audio_tts", "provider": "volcengine", "provider_type": "text_to_speech",
+                        "enable": True, "app_id": volc_app_id, "access_key": volc_token, "credentials_file": "",
+                        "api_base": d["api_base"], "resource_id": d["resource_id"], "model": d["model"],
+                        "seed_audio_persona": d["persona"], "seed_audio_prompt_template": d["prompt_template"],
+                        "seed_audio_format": d["format"], "seed_audio_sample_rate": d["sample_rate"],
+                        "seed_audio_max_attempts": d["max_attempts"],
+                        "seed_audio_whole_reply": d.get("whole_reply", True),
+                        "seed_audio_reply_probability": v["trigger_probability"], "timeout": d["timeout"]}
+                say("  试念一句「你好呀」，豆包要十几秒…")
+                tts_id = d["id"] if upsert_provider(api, conf) else ""
+        elif voice == "4":
+            bz = v["breeze"]
+            try:
+                with urllib.request.urlopen(bz["api_base"] + "/voices", timeout=10) as r:
+                    have = [x.get("id") for x in json.loads(r.read() or b"[]")]
+            except Exception:
+                have = None
+            if have is None:
+                warn("连不上本机的 Breeze。先双击桌面的「启动Breeze语音」，没装的话先双击「装Breeze语音.bat」。")
+            elif bz["voice"] not in have:
+                warn(f"Breeze 里还没有叫 {bz['voice']} 的声音，先双击「做声音.bat」做一个。")
+            else:
+                conf = {"id": bz["id"], "type": "openai_tts_api", "provider": "openai", "provider_type": "text_to_speech",
+                        "enable": True, "api_key": "unused", "api_base": bz["api_base"], "model": "tts-1",
+                        "openai-tts-voice": bz["voice"], "timeout": 180, "proxy": ""}
+                say("  试念一句，Breeze 要几秒…")
+                tts_id = bz["id"] if upsert_provider(api, conf) else ""
+        if voice != "3":
+            # 以前选过豆包又换了别的：豆包插件只要看到它的提供商开着就会掷骰子发整条语音，得关掉
+            old = provider_config(api, v["doubao"]["id"])
+            if old and old.get("enable"):
+                upsert_provider(api, {**old, "enable": False})
+                say("  之前开着的豆包语音已关掉")
+        if tts_id:
+            good, why = test_provider(api, tts_id)
+            if good:
+                say(f"  语音已打开，大约三条回复里有一条会发语音")
+                if voice == "3":
+                    say("  豆包是整条回复合成一条语音，要等 15–35 秒才到")
+            else:
+                # 测不通就先关着：开着的话她每发一次语音都会报错
+                warn(f"语音测试没通过：{why}")
+                if voice == "1" and re.search(r"WinError 2|找不到指定的文件|ffmpeg", why, re.I):
+                    warn("Edge 语音要用 ffmpeg 转格式，这台电脑上多半没装。在 PowerShell 里运行 "
+                         "winget install Gyan.FFmpeg 装上，重启 AstrBot，再运行一次本工具。")
+                conf["enable"] = False
+                upsert_provider(api, conf)
+                tts_id = ""
+                say("  语音先关着，处理好再运行一次本工具")
+            results.append(("语音", good))
+        elif voice != "0":
+            results.append(("语音", False))
+        else:
+            say("  先不开")
+
+    if want("base"):
+        # ---------- 全局设置 ----------
+        step("改全局设置（分段回复、认得主人、默认人格等）")
+        r = api.call("GET", "/config-profiles/default")
+        cfg = r["data"]["config"]
+        for k, val in pack["base"].items():
+            set_path(cfg, k, fill(val, ctx))
+        ps = cfg.setdefault("platform_settings", {})
+        if ps.get("enable_id_white_list"):
+            wl = ps.setdefault("id_whitelist", [])
+            if session not in wl and owner not in wl:
+                wl.append(session)
+        admins = cfg.setdefault("admins_id", [])
+        if owner not in admins:
+            admins.append(owner)
+        tts = cfg.setdefault("provider_tts_settings", {})
+        if tts_id and voice == "3" and v["doubao"].get("whole_reply", True):
+            # 整条语音由豆包插件掷骰子、一次合成；AstrBot 自己的按段语音要关掉，不然会再按段转一遍
+            tts.update({"enable": False, "provider_id": tts_id, "trigger_probability": v["trigger_probability"]})
+        elif tts_id:
+            tts.update({"enable": True, "provider_id": tts_id, "trigger_probability": v["trigger_probability"]})
+        else:
+            tts["enable"] = False
+        r = api.call("PUT", "/config-profiles/default", cfg)
+        results.append(("全局设置", api.ok(r)))
+        say("  完成" if api.ok(r) else f"  ！失败：{api.msg(r)}")
+
+    if want("reload"):
+        step("重新加载插件")
+        for name in dict.fromkeys(changed):
+            if name == lm and not mem_ok:
+                continue
+            api.call("POST", "/plugins/reload", {"plugin_id": name}, timeout=180)
+        say("  完成")
 
     say("\n===== 结果 =====")
     for name, ok in results:

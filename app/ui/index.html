@@ -214,6 +214,7 @@ tr:last-child td{border-bottom:0}
 th{color:var(--muted);font-weight:500;font-size:12px;border-bottom:1px solid var(--line2)}
 .logbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 pre.log{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin:0;font:12px/1.65 var(--mono);height:calc(100vh - 218px);overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text2)}
+pre.log.short{height:200px}
 pre.log .e{color:var(--bad)} pre.log .w{color:var(--warn)} pre.log .k{background:var(--warn-soft)}
 .checks{list-style:none;padding:0;margin:0}
 .checks li{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
@@ -1029,6 +1030,28 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
 #kt-use>.section{min-height:0;overflow:auto;margin:0;align-self:flex-start;width:100%}
 #themeSeg button{min-width:76px}
 .wcompact .field{padding:8px 0}#wPickWrap .csel{width:100%}.wcompact>.note{margin:4px 0}
+/* 接入已有安装 */
+.wmode{margin:0 0 12px}
+.found{display:flex;flex-direction:column;gap:8px}
+.fitem{display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-md);cursor:pointer;transition:border-color .15s,box-shadow .15s;animation:pin .22s var(--ease)}
+.fitem:hover{border-color:var(--line2)}
+.fitem.on{border-color:var(--text);box-shadow:0 0 0 1px var(--text)}
+.fitem.bad{cursor:default;opacity:.85}
+.fitem .rd{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line2);margin-top:3px;display:grid;place-items:center}
+.fitem .rd::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .2s var(--spring)}
+.fitem.on .rd{border-color:var(--primary)}.fitem.on .rd::after{transform:scale(1)}
+.fitem.bad .rd{border-style:dashed}
+.fbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px}
+.fbody>div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;font-size:13px;line-height:1.7}
+.fbody>div:first-child,.fbody>p{grid-column:1/-1}
+.fbody span{color:var(--muted)}.fbody b{font-weight:400;color:var(--text2);overflow-wrap:anywhere}
+.fnote{margin:6px 0 0;font-size:12.5px;line-height:1.6}.fnote.warn{color:var(--warn)}.fnote.bad{color:var(--bad)}
+.chk{display:grid!important;grid-template-columns:18px minmax(0,1fr);gap:10px;align-items:start!important;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.chk:first-of-type{border-top:0}
+.chk input{margin-top:3px}.chk b{display:block;font-weight:500}.chk small{display:block;color:var(--muted);font-size:12.5px;line-height:1.6}
+.chk.lock{cursor:default}.chk.sm{padding:6px 0}.chk.sm b{font-size:13px}
+.reclist{max-height:180px;overflow:auto;margin:4px 0 0 28px;padding-right:6px}
+.wopts{margin-bottom:12px}
 /* 空状态：说明 + 下一步操作 */
 .empty .row{justify-content:center;margin-top:12px}
 </style>
@@ -1269,6 +1292,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
           <p class="hint">bot 只查询已勾选的知识库。</p>
           <div id="kbUse" class="chips"></div>
           <div class="field" style="margin-top:12px"><label>按需检索</label><div><label class="switch"><input type="checkbox" id="kbAgentic"><span></span></label></div><div class="tip">开启：bot 判断需要时才查询（推荐，闲聊时不会牵扯到资料内容）。关闭：每条消息都先查询一次，费用更高，也容易偏离话题。</div></div>
+          <div class="framenote" id="kbAskMissing" hidden style="margin-top:16px"><span class="grow">未安装对应插件：「自主学习」依赖大肥鱼插件组，接入时未选择安装。</span><button onclick="installPluginGroup()">安装插件组</button></div>
           <div id="kbAsk" hidden>
             <h2 style="margin-top:20px">自主学习</h2>
             <p class="hint">主人通过私聊对 bot 说「记一下：……」时，bot 会将内容记入知识库（保存在资料文件夹的「主人补充.md」中，可以随时查看和修改）。群成员的同类指令无效。</p>
@@ -1418,7 +1442,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
       <div class="atab" id="at-un" hidden>
         <div class="section">
           <h2>卸载</h2>
-          <p class="hint">「移除启动项」只停止 bot，并删除桌面图标和开机自启项。「完全卸载」还会删除 AstrBot、NapCat 和 bot 的数据（删除前自动备份一份）。</p>
+          <p class="hint" id="unHint">「移除启动项」只停止 bot，并删除桌面图标和开机自启项。「完全卸载」还会删除 AstrBot、NapCat 和 bot 的数据（删除前自动备份一份）。</p>
           <div class="row" style="margin-top:0"><button id="unLight">移除启动项</button><button class="danger" id="unFull">完全卸载</button></div>
         </div>
         <div class="section"><div class="sh"><div class="sh-t"><h2>问题反馈</h2><p class="hint">遇到问题或有改进建议时，可在此直接发送给作者。也可以点击左侧导航底部的「问题反馈」。</p></div><div class="act"><button id="unFb">问题反馈</button></div></div></div>
@@ -2015,16 +2039,21 @@ document.addEventListener('keydown', e => {
 });
 
 /* ======================= 安装向导 ======================= */
-const STEPS = [
+const STEPS_NEW = [
   ['welcome','欢迎'], ['env','安装位置'], ['astrbot','安装 AstrBot'], ['napcat','安装 NapCat'],
   ['deepseek','模型 API'], ['qq','账号设置'], ['login','扫码登录'], ['import','导入配置'], ['test','测试'], ['finish','完成']
 ];
+// 接入已有的 AstrBot 和 NapCat：原位接管，不重新安装
+const STEPS_ATTACH = [['welcome','欢迎'], ['attach','检测安装'], ['account','后台登录'], ['options','接入内容'], ['finish','完成']];
+let STEPS = STEPS_NEW;
+const wizMode = m => { WZ.data.mode = m; STEPS = m === 'attach' ? STEPS_ATTACH : STEPS_NEW; };
 let WZ = {state:null, step:'welcome', data:{}, secrets:{}};
 async function wizInit(){
   WZ.state = await api('/api/wizard/state');
   const w = WZ.state.wizard || {};
   WZ.data = Object.assign({home: WZ.state.home, user: WZ.state.dashboard_user || 'admin', bot_qq: WZ.state.bot_qq || '',
     owners: (WZ.state.owners||[]).join(' '), groups: (w.groups||[]).join(' '), voice: w.voice || 'edge', memory: w.memory || 'off'}, w.form || {});
+  wizMode(WZ.data.mode === 'attach' ? 'attach' : 'new');
   const done = w.done || [];
   WZ.step = w.step && STEPS.some(s=>s[0]===w.step) ? w.step : 'welcome';
   if (done.includes('finish')) WZ.step = 'finish';
@@ -2085,18 +2114,27 @@ async function runJob(path, body, onDone){
 function stepInfo(time, you, ifbad){
   return `<div class="stepinfo"><div><span>预计用时</span><b>${time}</b></div><div><span>需要操作</span><b>${you}</b></div>${ifbad ? `<div><span>遇到问题</span><b>${ifbad}</b></div>` : ''}</div>`;
 }
+const ATTACH_NOTE = '暂不支持 Docker 部署的 AstrBot、非 Windows 系统和非 Shell 版的 NapCat。遇到这些情况，请选择「全新安装」，再在控制台的「备份与还原」中迁移数据。';
 const VIEWS = {
-  welcome(){ return `<h1>安装大肥鱼</h1><p class="sub">按向导逐步操作，全程约 20–40 分钟，主要用于下载。中途关闭后，下次打开会从中断的步骤继续。</p>
-    <div class="section"><h2>准备事项</h2><ul>
+  welcome(){ const att = WZ.data.mode === 'attach'; return `<h1>安装大肥鱼</h1><p class="sub">${att ? '接入已有的 AstrBot 和 NapCat，约需 5 分钟。原有数据不移动、不覆盖。' : '按向导逐步操作，全程约 20–40 分钟，主要用于下载。中途关闭后，下次打开会从中断的步骤继续。'}</p>
+    <div class="section"><h2>准备事项</h2><ul>${att ? `
+      <li>本机正在使用的 <b>AstrBot</b>（启动器、源码或 pip 安装均可）和 <b>Shell 版 NapCat</b>；只有 AstrBot 时也可以接入，稍后安装 NapCat。</li>
+      <li>AstrBot 后台的<b>账号和密码</b>；忘记密码时，可以在向导中重设。</li>
+      <li>主人自己常用的 <b>QQ 号</b>，用于与 bot 聊天并作为它的主人。</li>` : `
       <li>一个 <b>QQ 小号</b>，以及已登录该小号的手机（用于扫码）。不能使用腾讯官方机器人账号。</li>
       <li>主人自己常用的 <b>QQ 号</b>，用于与 bot 聊天并作为它的主人。</li>
-      <li>一个模型服务商的 <b>API Key</b>（第 5 步可选服务商或自定义中转）。</li></ul></div>
+      <li>一个模型服务商的 <b>API Key</b>（第 5 步可选服务商或自定义中转）。</li>`}</ul></div>
+    <div class="opts wmode" id="wMode">
+      <div class="opt${WZ.data.mode !== 'attach' ? ' on' : ''}" data-m="new" tabindex="0" role="radio"><b>全新安装</b><span>本机尚未安装 AstrBot 和 NapCat，由向导下载并完成配置。</span></div>
+      <div class="opt${WZ.data.mode === 'attach' ? ' on' : ''}" data-m="attach" tabindex="0" role="radio"><b>接入已有的 AstrBot 和 NapCat</b><span>本机已在使用 AstrBot 和 NapCat：保留现有的人设、模型、插件和聊天记录，只增加控制台和所选的功能。</span></div>
+    </div>
+    <p class="note" id="wModeNote">${WZ.data.mode === 'attach' ? ATTACH_NOTE : ''}</p>
     <div class="risk"><b>风险提示</b><ul>
       <li>腾讯《QQ 软件许可及服务协议》不允许使用第三方软件登录 QQ，也不允许以程序代替人工发送消息，<b>小号存在被限制或封禁的风险</b>。请务必使用小号，不要使用常用账号。新注册的账号更容易触发风控。</li>
       <li>模型按用量计费，费用由所选的模型服务商收取。群消息越多，费用增长越快；小额充值是控制支出上限的直接办法。</li>
       <li>API Key 和密码只保存在本机。电脑保持开机时，bot 才能在线。</li>
       <li>本整合包免费分发，不得用于商业用途（NapCat 的许可证要求）。</li></ul>
-      <label><input type="checkbox" id="agree"> 我已了解上述风险，并自行承担</label></div>` + navBtns('开始','wNext',true); },
+      <label><input type="checkbox" id="agree"${WZ.data.agree ? ' checked' : ''}> 我已了解上述风险，并自行承担</label></div>` + navBtns('开始','wNext',true); },
   env(){ return `<h1>安装位置与环境检查</h1><p class="sub">AstrBot、NapCat 和 bot 的数据都将安装在此文件夹。路径只能包含英文字符且不含空格，建议选择剩余空间较大的磁盘。</p>${stepInfo('1 分钟', '确认安装位置，点击「检查」', '存在未通过的项目时，按下方提示处理后重新检查')}
     <div class="section"><div class="field" style="margin:0"><label>安装位置</label><input data-k="home" style="width:100%"></div>
     <div class="row"><button id="wCheck">检查</button></div><ul class="checks" id="envList" style="margin-top:10px"></ul></div>` + navBtns(); },
@@ -2146,12 +2184,44 @@ const VIEWS = {
     <div class="row"><button class="primary" id="wImport">${wizDone('import')?'重新导入':'开始导入'}</button></div>${jobBox()}` + navBtns(); },
   test(){ return `<h1>测试</h1><p class="sub">使用主人的 QQ 号私聊小号，发送任意一句话，例如「在吗」。收到 bot 的回复即表示安装成功。</p>${stepInfo('1 分钟', '用主人的 QQ 号私聊小号，发送一句话', '未收到回复时，会提示问题出在哪一步')}
     <div class="section"><div class="row" style="margin-top:0"><button class="primary" id="wWait">开始等待测试消息</button><button id="wSkip">跳过</button></div>${jobBox()}</div>` + navBtns(); },
+  attach(){ return `<h1>检测已有安装</h1><p class="sub">控制台会查找本机的 AstrBot 和 NapCat。接入时只记录它们的位置，原有数据不移动、不覆盖。</p>
+    <div class="section"><div class="sh"><div class="sh-t"><h2>AstrBot</h2><p class="hint">确认标准：文件夹中存在 data\\cmd_config.json，并能找到运行它的 Python。</p></div><div class="act"><button id="wAbPick">选择文件夹</button></div></div><div class="found" id="wAbList"></div></div>
+    <div class="section"><div class="sh"><div class="sh-t"><h2>NapCat</h2><p class="hint">需要 Shell 版的 NapCat（NapCat.xxx.Shell 文件夹）。只有 AstrBot 时也可以继续，稍后可安装 NapCat。</p></div><div class="act"><button id="wNcPick">选择文件夹</button></div></div><div class="found" id="wNcList"></div></div>
+    <p class="note" id="wMsg"></p>` + navBtns(); },
+  account(){ const ab = WZ.attach?.ab || {}; return `<h1>连接 AstrBot 后台</h1><p class="sub">控制台通过 AstrBot 后台读取和修改设置。密码按控制台的方式加密保存在本机。</p>
+    <div class="section"><div class="opts" id="wAcMode">
+      <div class="opt${WZ.data.acReset ? '' : ' on'}" data-r="0" tabindex="0" role="radio"><b>使用现有的账号和密码</b><span>填写当前登录 AstrBot 后台所用的账号和密码。</span></div>
+      <div class="opt${WZ.data.acReset ? ' on' : ''}" data-r="1" tabindex="0" role="radio"><b>重设后台密码</b><span>忘记密码时使用。控制台会生成新密码并自动登录，期间 AstrBot 短暂重启。</span></div></div>
+      <div id="wAcFields"${WZ.data.acReset ? ' hidden' : ''}>
+        <div class="field"><label for="wAcUser">后台账号</label><input id="wAcUser" autocomplete="off" value="${esc(WZ.data.acUser || ab.dashboard_user || '')}"></div>
+        <div class="field"><label for="wAcPass">后台密码</label><input id="wAcPass" type="password" autocomplete="off"></div></div>
+      <p class="note" id="wAcNote">${WZ.data.acReset ? '新密码在接入时生成，之后可在「AstrBot 管理后台」页查看。' : '账号和密码在开始接入时验证。'}</p></div>` + navBtns(); },
+  options(){ const A = WZ.attach || {}, nc = A.nc; return `<h1>选择接入内容</h1><p class="sub">只做勾选的改动。开始前会自动备份将会改动的配置文件。</p>
+    <div class="grid2 wopts">
+      <div class="section"><h2>接入内容</h2>
+        <label class="chk lock"><input type="checkbox" checked disabled><span><b>保留现有人设、模型、插件和聊天记录</b><small>始终保留，接入不会删除或替换这些内容。</small></span></label>
+        <label class="chk"><input type="checkbox" id="wOptPlugins" ${WZ.data.optPlugins === false ? '' : 'checked'}><span><b>安装大肥鱼插件组</b><small>记忆、知识库自主学习、群聊增强等功能依赖这些插件。不安装时，相关页面会提示并提供安装入口。</small></span></label>
+        <label class="chk"><input type="checkbox" id="wOptPersona" ${WZ.data.optPersona ? 'checked' : ''}><span><b>添加大肥鱼人设</b><small>作为新增的人设加入，不替换当前使用的人设。</small></span></label>
+        <label class="chk"><input type="checkbox" id="wOptRec" ${WZ.data.optRec ? 'checked' : ''}><span><b>采用推荐的群聊和缓存设置</b><small>勾选后逐项列出「当前值 → 推荐值」，确认的项目才会应用。</small></span></label>
+        <div id="wRecList" class="reclist sc" hidden></div></div>
+      <div class="section"><h2>账号与启动</h2>
+        <div class="field"><label for="wOwners">主人 QQ 号</label><input id="wOwners" value="${esc(WZ.data.attachOwners || (A.ab?.admins || []).join(' '))}" placeholder="多个用空格分隔"></div>
+        ${nc ? `<div class="field"><label>bot 的 QQ 号</label><div>${esc(nc.qq || '未读取到')}</div></div>` :
+          `<label class="chk"><input type="checkbox" id="wOptNapcat" checked><span><b>安装 NapCat 并连接到此 AstrBot</b><small>未检测到 NapCat。安装约需 3–10 分钟，完成后在「总览」中扫码登录。</small></span></label>
+           <div class="field"><label for="wBotQQ">bot 的 QQ 小号</label><input id="wBotQQ" value="${esc(WZ.data.attachBot || '')}" placeholder="bot 使用的 QQ 号"></div>`}
+        ${(A.autostart || []).length ? `<div class="field top"><label>开机启动 AstrBot</label><div><div class="seg" id="wBoot"><button data-b="console" class="${WZ.data.boot !== 'external' ? 'on' : ''}">由控制台启动</button><button data-b="external" class="${WZ.data.boot === 'external' ? 'on' : ''}">由原有方式启动</button></div></div>
+          <div class="tip">检测到其他程序设置了开机自启（${esc(A.autostart.join('、'))}）。<span class="info" tabindex="0" data-tip-html="选择「由控制台启动」时，请在原来的启动器中关闭它的开机自启，避免重复启动。&lt;br&gt;选择「由原有方式启动」时，控制台开机只启动 NapCat，AstrBot 启动后由控制台自动接管。">!</span></div></div>` : ''}
+        <p class="note" style="margin:12px 0 0">开始接入前，将备份 ${(A.backups || []).length} 个配置文件 <span class="info" tabindex="0" data-tip-html="${esc((A.backups || []).map(esc).join('&lt;br&gt;') || '无')}">!</span>，备份位置在接入完成后显示。</p></div>
+    </div>${jobBox()}` + navBtns(WZ.attach?.done ? '下一步' : '开始接入', 'wNext'); },
   finish(){ return `<h1>完成</h1><p class="sub">最后一步：在桌面创建「大肥鱼控制台」图标，并设置开机自动上线。</p>
     <div class="section"><div class="row" style="margin-top:0"><button class="primary" id="wFinish">完成并进入控制台</button></div>${jobBox()}</div>`; },
 };
 
 const BIND = {
-  welcome(){ bindNav(() => { if (!$('#agree').checked) return alert('先勾选同意风险说明'); next(); }); },
+  welcome(){
+    $$('#wMode .opt').forEach(o => o.onclick = o.onkeydown = e => { if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return; e.preventDefault?.();
+      if (WZ.data.mode === o.dataset.m) return; WZ.data.agree = $('#agree').checked; wizMode(o.dataset.m); wizRender(); });
+    bindNav(() => { if (!$('#agree').checked) return alert('请先勾选「我已了解上述风险，并自行承担」'); next(); }); },
   env(){ bindInputs();
     const check = async () => { const list = await api('/api/wizard/check-env?home=' + encodeURIComponent(WZ.data.home));
       $('#envList').innerHTML = list.map(c => `<li><span class="i ${c.ok?'ok':(c.warn_only?'wn':'no')}">${c.ok?'✓':(c.warn_only?'!':'✗')}</span><div>${esc(c.title)}<div class="d">${esc(c.detail)}</div>${c.ok?'':`<div class="f">${esc(c.fix)}</div>`}</div></li>`).join('');
@@ -2248,6 +2318,71 @@ const BIND = {
       runJob('/api/wizard/import', {voice: WZ.data.voice, memory: WZ.data.memory, keys}); };
     bindNav(() => { if (!wizDone('import')) return alert('先导入'); next(); }); },
   test(){ $('#wWait').onclick = () => runJob('/api/wizard/wait-test', {}, j => { if (j.ok) next(); }); $('#wSkip').onclick = next; bindNav(); },
+  async attach(){
+    WZ.attach = WZ.attach || {};
+    const host = $('#wizBody'); host.classList.add('skhost');
+    const card = (it, kind) => { const ok = it.ok, sel = kind === 'ab' ? WZ.attach.ab?.root === it.root : WZ.attach.nc?.dir === it.dir;
+      const vs = it.version_status, lines = kind === 'ab'
+        ? [['位置', it.root], ['类型', `${it.kind || ''} · ${it.source}`], ['版本', it.version || '未读取到'], ['后台端口', it.port], ['QQ 平台', it.has_qq_platform ? `反向 WebSocket 端口 ${it.ws_port}` : '尚未配置']]
+        : [['位置', it.dir], ['来源', it.source], ['版本', it.version || '未读取到'], ['QQ 账号', it.qq || '未读取到'], ['连接', (it.linked || []).length ? '已连接到检测到的 AstrBot' : '未连接到检测到的 AstrBot']];
+      return `<div class="fitem${sel ? ' on' : ''}${ok ? '' : ' bad'}" data-k="${kind}" data-id="${esc(kind === 'ab' ? it.root : it.dir)}" tabindex="0" role="radio">
+        <span class="rd"></span><div class="fbody">${lines.map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+        ${vs && vs.level !== 'ok' ? `<p class="fnote ${vs.level}">${esc(vs.text)}</p>` : ''}${(it.problems || []).filter(p => !vs || p !== vs.text).map(p => `<p class="fnote bad">${esc(p)}</p>`).join('')}</div></div>`; };
+    const draw = () => {
+      const ab = WZ.attach.found?.astrbot || [], nc = WZ.attach.found?.napcat || [];
+      $('#wAbList').innerHTML = ab.length ? ab.map(x => card(x, 'ab')).join('') : '<p class="note">未找到 AstrBot。请点击「选择文件夹」手动指定 AstrBot 的运行目录（包含 data 文件夹的那一层）。</p>';
+      $('#wNcList').innerHTML = (nc.length ? nc.map(x => card(x, 'nc')).join('') : '<p class="note">未找到 NapCat。可以只接入 AstrBot，在下一步中选择安装 NapCat。</p>')
+        + (nc.length ? `<div class="fitem${WZ.attach.nc === null ? ' on' : ''}" data-k="nc" data-id="" tabindex="0" role="radio"><span class="rd"></span><div class="fbody"><div><span>暂不接入</span><b>只接入 AstrBot，稍后安装或选择 NapCat</b></div></div></div>` : '');
+      $$('#wizBody .fitem').forEach(el => el.onclick = () => { const list = el.dataset.k === 'ab' ? ab : nc;
+        const it = list.find(x => (el.dataset.k === 'ab' ? x.root : x.dir) === el.dataset.id) || null;
+        if (it && !it.ok) return; if (el.dataset.k === 'ab') WZ.attach.ab = it; else WZ.attach.nc = it; draw(); });
+    };
+    await skOnce(host, async () => {
+      if (!WZ.attach.found){ const r = await api('/api/attach/detect'); if (r.error) throw new Error(r.error); WZ.attach.found = r; }
+      const f = WZ.attach.found; if (WZ.attach.ab === undefined) WZ.attach.ab = f.astrbot.find(x => x.ok) || null;
+      if (WZ.attach.nc === undefined) WZ.attach.nc = f.napcat.find(x => x.ok && (x.linked || []).includes(WZ.attach.ab?.root)) || f.napcat.find(x => x.ok) || null;
+      draw();
+    });
+    const pick = async kind => { const r = await api('/api/attach/pick', {kind}); if (!r.ok) return;
+      const list = WZ.attach.found[kind === 'astrbot' ? 'astrbot' : 'napcat']; const key = kind === 'astrbot' ? 'root' : 'dir';
+      const i = list.findIndex(x => x[key].toLowerCase() === r.item[key].toLowerCase()); if (i >= 0) list[i] = r.item; else list.unshift(r.item);
+      if (r.item.ok){ if (kind === 'astrbot') WZ.attach.ab = r.item; else WZ.attach.nc = r.item; }
+      draw(); if (!r.item.ok) $('#wMsg').textContent = r.item.problems.join(' '); else $('#wMsg').textContent = ''; };
+    $('#wAbPick').onclick = () => pick('astrbot'); $('#wNcPick').onclick = () => pick('napcat');
+    bindNav(async () => { if (!WZ.attach.ab) return alert('请选择一个满足条件的 AstrBot');
+      const r = await api('/api/attach/plan', {root: WZ.attach.ab.root, napcat: WZ.attach.nc?.dir || ''});
+      if (!r.ok) return alert(r.error || '无法读取 AstrBot 的配置');
+      Object.assign(WZ.attach, {diff: r.diff, backups: r.backups, autostart: WZ.attach.found.autostart || []});
+      WZ.attach.ab.dashboard_user = r.dashboard_user; WZ.attach.ab.admins = r.admins; next(); }); },
+  account(){
+    if (!WZ.attach?.ab) return go('attach');
+    $$('#wAcMode .opt').forEach(o => o.onclick = () => { WZ.data.acReset = o.dataset.r === '1'; $$('#wAcMode .opt').forEach(x => x.classList.toggle('on', x === o));
+      $('#wAcFields').hidden = WZ.data.acReset; $('#wAcNote').textContent = WZ.data.acReset ? '新密码在接入时生成，之后可在「AstrBot 管理后台」页查看。' : '账号和密码在开始接入时验证。'; });
+    $('#wAcPass').value = WZ.secrets.acPass || '';
+    bindNav(() => { if (!WZ.data.acReset){ const u = $('#wAcUser').value.trim(), p = $('#wAcPass').value;
+        if (!u || !p) return alert('请填写后台账号和密码，或选择「重设后台密码」'); WZ.data.acUser = u; WZ.secrets.acPass = p; }
+      next(); }); },
+  options(){
+    if (!WZ.attach?.ab) return go('attach');
+    const A = WZ.attach, rec = () => { const on = $('#wOptRec').checked, box = $('#wRecList'); box.hidden = !on; if (!on) return;
+      box.innerHTML = (A.diff || []).length ? A.diff.map(d => `<label class="chk sm"><input type="checkbox" data-key="${esc(d.key)}" ${(WZ.data.recKeys || A.diff.map(x => x.key)).includes(d.key) ? 'checked' : ''}><span><b>${esc(d.label)}</b><small>${esc(d.current)} → ${esc(d.recommended)}</small></span></label>`).join('')
+        : '<p class="note" style="margin:6px 0">当前设置已与推荐值一致，无需修改。</p>'; };
+    $('#wOptRec').onchange = rec; rec();
+    $$('#wBoot button').forEach(b => b.onclick = () => { WZ.data.boot = b.dataset.b; $$('#wBoot button').forEach(x => x.classList.toggle('on', x === b)); });
+    const start = () => {
+      const split = s => String(s || '').split(/[\s,，、]+/).filter(Boolean);
+      const owners = split($('#wOwners').value); if (!owners.length || owners.some(o => !/^\d{5,12}$/.test(o))) return alert('请正确填写主人的 QQ 号');
+      const instNc = !A.nc && $('#wOptNapcat')?.checked, bot = ($('#wBotQQ')?.value || '').trim();
+      if (instNc && !/^\d{5,12}$/.test(bot)) return alert('请填写 bot 使用的 QQ 小号');
+      Object.assign(WZ.data, {optPlugins: $('#wOptPlugins').checked, optPersona: $('#wOptPersona').checked, optRec: $('#wOptRec').checked,
+        attachOwners: owners.join(' '), attachBot: bot, recKeys: $$('#wRecList input:checked').map(i => i.dataset.key)});
+      api('/api/wizard/save', {form: formSnapshot()});
+      runJob('/api/attach/apply', {astrbot: A.ab, napcat: A.nc || null, owners, bot_qq: A.nc ? A.nc.qq : bot, install_napcat: instNc,
+        login: WZ.data.acReset ? {reset: true} : {user: WZ.data.acUser, password: WZ.secrets.acPass || ''},
+        plugins: WZ.data.optPlugins, persona: WZ.data.optPersona, recommended: WZ.data.optRec ? WZ.data.recKeys : [], boot: WZ.data.boot || 'console'},
+        j => { if (j.ok){ WZ.attach.done = true; $('#wNext').textContent = '下一步'; } });
+    };
+    bindNav(() => WZ.attach.done ? next() : start()); },
   finish(){ $('#wFinish').onclick = () => runJob('/api/wizard/finish', {}, j => { if (j.ok) setTimeout(() => location.reload(), 1200); }); },
 };
 function wizRender(){ wizNav(); $('#wizBody').innerHTML = VIEWS[WZ.step](); BIND[WZ.step](); $('main').scrollTop = 0; }
@@ -2919,6 +3054,7 @@ async function loadKb(){
   $('#kbUse').innerHTML = KB.kbs.length ? KB.kbs.map(k => `<label class="chip" style="padding-right:12px"><input type="checkbox" value="${esc(k.kb_name)}" ${KB.used.includes(k.kb_name)?'checked':''}> ${esc(k.emoji||'')} ${esc(k.kb_name)}</label>`).join('') : '<p class="hint" style="margin:0">暂无知识库，请先在「资料管理」中新建。</p>';
   $('#kbAgentic').checked = KB.agentic || !KB.used.length;
   $('#kbAsk').hidden = KB.ask_enable == null;
+  $('#kbAskMissing').hidden = !(KB.ask_enable == null && ST && ST.plugins_opt_out);
   if (KB.ask_enable != null){ $('#kbAskOn').checked = KB.ask_enable; $('#kbAskLimit').value = KB.ask_limit ?? 0;
     const os_ = [...new Set([KB.ask_owner, ...KB.admins].filter(Boolean))];
     $('#kbAskOwner').innerHTML = os_.map(q => `<option ${q===KB.ask_owner?'selected':''}>${esc(q)}</option>`).join(''); }
@@ -3154,7 +3290,10 @@ async function loadMemory(){
   let ov;
   try { ov = await mapi('/api/memory'); } catch(e){ $('#memNotice').innerHTML = `<div class="framenote"><span class="grow">${esc(e.message)}</span></div>`; throw e; }
   MEM.ov = ov;
-  $('#memNotice').innerHTML = ov.installed ? '' : '<div class="framenote"><span class="grow">记忆插件尚未安装到 AstrBot。重启一次控制台后会自动安装，之后 bot 开始记录和整理记忆。</span></div>';
+  $('#memNotice').innerHTML = ov.installed ? '' : ST && ST.plugins_opt_out
+    ? '<div class="framenote"><span class="grow">未安装对应插件：记忆功能依赖大肥鱼插件组，接入时未选择安装。</span><button id="memInstall">安装插件组</button></div>'
+    : '<div class="framenote"><span class="grow">记忆插件尚未安装到 AstrBot。重启一次控制台后会自动安装，之后 bot 开始记录和整理记忆。</span></div>';
+  if ($('#memInstall')) $('#memInstall').onclick = installPluginGroup;
   const st = ov.stats || {};
   $('#memLast').textContent = st.last_run ? `上次整理 ${st.last_run}` : '尚未整理';
   $('#memLast').dataset.tip = st.last_run_msg || '';
@@ -3651,9 +3790,10 @@ async function loadUpdates(force){
     else if (con && x.dev) state = '当前为开发目录：只显示版本信息，不支持一键更新。';
     else if (con && x.newer && x.needs_full) state = `本次更新需要下载完整整合包${x.full_size ? `（约 ${fmt(x.full_size)}）` : ''}，下载后请使用「从压缩包更新」安装。`;
     else if (con && x.newer && x.update_size) state = `更新包约 ${fmt(x.update_size)}，更新时控制台会重启，bot 不会掉线。`;
+    if (x.blocked) state = x.blocked;      // 这种安装方式不能由控制台更新
     let main;
     if (con && x.newer && x.needs_full) main = '<button class="primary" data-cfull>下载完整包</button>';
-    else main = `<button class="primary" data-uup="${comp}" ${x.newer && !(con && (off || x.dev)) ? '' : 'disabled'}>${x.newer ? '一键更新' : '已是最新'}</button>`;
+    else main = `<button class="primary" data-uup="${comp}" ${x.newer && !x.blocked && !(con && (off || x.dev)) ? '' : 'disabled'}>${x.blocked ? '不可更新' : x.newer ? '一键更新' : '已是最新'}</button>`;
     el.innerHTML = `<h3>${COMP_NAME[comp]}${pillHtml}</h3>
       <div class="kv">现在 <b>${esc(x.current || '?')}</b> · 最新 <b>${esc(x.latest || (off ? '-' : '?'))}</b>${x.date ? ` <span class="muted">（${esc(x.date)}）</span>` : ''}</div>
       ${err ? `<div class="kv" style="color:var(--warn)">检查新版本失败：${esc(err)}</div>` : ''}
@@ -3747,7 +3887,20 @@ function renderChangelog(secs){
 }
 
 let CUR_VER = '';
+async function installPluginGroup(){
+  if (!(await ask('<h3 style="margin-top:0">安装大肥鱼插件组</h3><p>将从插件市场安装记忆、群聊增强等插件，并按整合包的推荐调整这些插件的设置；现有的人设、模型和其他插件不受影响。安装需要几分钟。</p>', '安装'))) return;
+  const r = await api('/api/attach/install-plugins', {}); if (!r.ok) return alert(r.msg || r.error);
+  busyJob('安装大肥鱼插件组');
+}
+function busyJob(name){ jobUI({running: true, name, at: Date.now() / 1000}); refresh(); }
+function unMode(){
+  const att = !!(ST && ST.attached);
+  $('#unFull').textContent = att ? '解除接入' : '完全卸载';
+  $('#unHint').textContent = att ? '「移除启动项」只停止 bot，并删除桌面图标和开机自启项。当前控制台接入的是原有的 AstrBot 和 NapCat，「解除接入」只移除控制台的桌面图标、开机自启和接入状态，不停止也不删除原有的 AstrBot、NapCat 及其数据，之后可以继续用原来的方式使用。'
+    : '「移除启动项」只停止 bot，并删除桌面图标和开机自启项。「完全卸载」还会删除 AstrBot、NapCat 和 bot 的数据（删除前自动备份一份）。';
+}
 async function loadAbout(){
+  unMode();
   const upd = loadUpdates();
   const p = await api('/api/ping'); CUR_VER = p.version; $('#verText').textContent = '当前版本 ' + p.version; $('#foot').textContent = 'v' + p.version;
   const v = await api('/api/versions'); await upd;
@@ -3770,7 +3923,10 @@ async function loadAbout(){
     page('home'); setTimeout(() => location.reload(), 8000); };
 }
 $('#unLight').onclick = async () => { if (!(await ask('停止 bot，并删除桌面图标和开机自启项？文件将全部保留。'))) return; await api('/api/uninstall', {full:false}); page('home'); };
-$('#unFull').onclick = async () => { if (!(await ask('<b>完全卸载</b>将删除 AstrBot、NapCat 以及 bot 的人设、记忆和聊天记录（删除前自动备份到 Backups）。确定继续吗？', '完全卸载'))) return;
+$('#unFull').onclick = async () => { if (ST && ST.attached){
+    if (!(await ask('<h3 style="margin-top:0">解除接入</h3><p>控制台将移除桌面图标、开机自启和接入状态。原有的 AstrBot、NapCat 及其数据全部保留，不会停止也不会删除。确定继续吗？</p>', '解除接入'))) return;
+    const r = await api('/api/uninstall', {full: true}); if (!r.ok) return alert(r.msg || r.error); page('home'); setTimeout(() => location.reload(), 4000); return; }
+  if (!(await ask('<b>完全卸载</b>将删除 AstrBot、NapCat 以及 bot 的人设、记忆和聊天记录（删除前自动备份到 Backups）。确定继续吗？', '完全卸载'))) return;
   await api('/api/uninstall', {full:true}); page('home'); setTimeout(() => location.reload(), 15000); };
 
 function infoDlg(title, html){

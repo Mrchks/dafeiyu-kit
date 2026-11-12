@@ -94,6 +94,10 @@ AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之�
 - 任一模型服务商的 API Key；
 - Windows 10 / 11，磁盘可用空间不少于 6 GB。
 
+### 已在使用 AstrBot 和 NapCat
+
+在安装向导第一步选择「接入已有的 AstrBot 和 NapCat」：控制台自动查找本机的安装位置（AstrBot 启动器实例、源码或 pip 安装，Shell 版 NapCat），原位接管，不移动、不覆盖原有数据，改动前自动备份配置文件。插件组、人设和推荐设置均由用户勾选，推荐设置逐项列出当前值与推荐值。AstrBot 需要 4.26.0 或更高版本；暂不支持 Docker 部署、非 Windows 系统和非 Shell 版 NapCat。「解除接入」只移除控制台自身的快捷方式、自启和状态，不删除原有安装。
+
 详细说明与常见问题见包内 [README.txt](README.txt)，版本变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 风险提示

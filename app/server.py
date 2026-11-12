@@ -18,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import astrbot_api  # noqa: E402
+import attach  # noqa: E402
 import modelhub  # noqa: E402
 import dashlogin  # noqa: E402
 import feedback  # noqa: E402
@@ -174,6 +175,8 @@ def rollback_console() -> str:
 
 
 def uninstall(full: bool) -> str:
+    if full and attach.is_attached():
+        return attach.detach()          # 接入形态：解除接入，绝不删除用户原有的 AstrBot、NapCat
     services.stop_all()
     installer.remove_shortcuts()
     update_state(autostart=False)
@@ -349,6 +352,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"url": dashlogin.login_url()})
             elif p == "/api/dashboard-cred":
                 self._json(dashlogin.credentials())
+            elif p == "/api/attach/detect":
+                self._json(attach.detect())
             elif p == "/api/wizard/check-env":
                 self._json(installer.check_env(q.get("home") or installer.default_home()))
             else:
@@ -605,6 +610,23 @@ class Handler(BaseHTTPRequestHandler):
                 self._ok(services.run_job("等待测试消息", installer.wait_test))
             elif p == "/api/wizard/finish":
                 self._ok(services.run_job("完成安装", installer.finish))
+            elif p == "/api/attach/pick":
+                self._json(attach.pick_folder(str(b.get("kind", "astrbot"))))
+            elif p == "/api/attach/inspect":
+                path = str(b.get("path", "")).strip().strip('"')
+                if not path:
+                    raise ValueError("请填写文件夹路径")
+                self._json({"ok": True, "item": attach.inspect_astrbot(path) if b.get("kind") == "astrbot" else attach.inspect_napcat(path)})
+            elif p == "/api/attach/plan":
+                ab = attach.inspect_astrbot(str(b.get("root", "")))
+                cfg = attach._read_cfg(Path(ab["root"]))
+                nc = attach.inspect_napcat(b["napcat"]) if b.get("napcat") else None
+                self._json({"ok": True, "diff": attach.recommended_diff(cfg), "backups": [str(x) for x in attach.files_to_backup(ab, nc)],
+                            "dashboard_user": ab.get("dashboard_user", ""), "admins": ab.get("admins", [])})
+            elif p == "/api/attach/apply":
+                self._ok(services.run_job("接入已有安装", lambda: attach.apply(b)))
+            elif p == "/api/attach/install-plugins":
+                self._ok(services.run_job("安装大肥鱼插件组", attach.install_plugins))
             else:
                 self._json({"error": "not found"}, 404)
         except astrbot_api.ApiError as e:
@@ -676,7 +698,7 @@ def main():
     threading.Thread(target=plugin_sync.sync_when_ready, daemon=True).start()
     s = load_state()
     if "--boot" in sys.argv and s["setup_done"] and s.get("autostart"):
-        services.run_job("开机自动启动", services.start_all)
+        services.run_job("开机自动启动", services.start_all_boot)
     if "--open" in sys.argv:
         threading.Timer(0.5, open_console_window).start()
     try:

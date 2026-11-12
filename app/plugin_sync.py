@@ -70,10 +70,11 @@ def outdated() -> list[dict]:
     if not data:
         return []
     todo = []
+    opt_out = bool(load_state().get("plugins_opt_out"))     # 接入已有安装时没有勾选插件组：只更新已装的，不新装
     for p in bundled():
         inst = data / "plugins" / p["name"]
         if not inst.is_dir():
-            if not p["gated"]:
+            if not p["gated"] and not opt_out:
                 todo.append({**p, "why": "没装"})
             continue
         for rel, f in _files(p["dir"]).items():
