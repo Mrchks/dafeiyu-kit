@@ -1906,12 +1906,15 @@ function skRun(host, fn, key){
   return host._skp;
 }
 
-/* ---- 按钮加载：点击后发出的请求进行中时，按钮显示转圈并锁定宽度，期间点击无效 ---- */
+/* ---- 按钮加载：点击后发出的请求进行中时，按钮显示转圈并锁定宽度，期间点击无效 ----
+   只认点击处理函数本身（含其中紧接着的 await 链）发出的请求：本轮事件结束后就清空，
+   免得同一时刻后台定时刷新的请求被算到刚点过的按钮上，按钮无故转圈。 */
 let CLK = null;
 document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('button');
   if (b && b.classList.contains('busy')){ e.preventDefault(); e.stopImmediatePropagation(); return; }
   CLK = b && !b.matches('.csel,.t-x') && !b.closest('.seg,.cmenu,.dp,.num,.t-ac,.clog-list,.kbl,.dp-pre') ? {b, t: performance.now()} : null;
+  if (CLK){ const c = CLK; setTimeout(() => { if (CLK === c) CLK = null; }, 0); }
 }, true);
 function btnBusy(b, on){
   if (!b) return;
@@ -1921,7 +1924,9 @@ function btnBusy(b, on){
 function btnHold(b, p){
   if (!b || !b.isConnected) return p;
   b._hold = (b._hold || 0) + 1;
-  const t = setTimeout(() => { if (b._hold) btnBusy(b, true); }, 120);
+  // 点击后打开了弹窗（弹窗里在读数据）时，弹窗外的按钮不转圈
+  const covered = () => [...document.querySelectorAll('dialog[open]')].some(d => !d.contains(b));
+  const t = setTimeout(() => { if (b._hold && b.isConnected && !covered()) btnBusy(b, true); }, 120);
   const end = () => { clearTimeout(t); b._hold = Math.max(0, b._hold - 1); if (!b._hold) btnBusy(b, false); };
   p.then(end, end); return p;
 }
@@ -1967,7 +1972,7 @@ async function api0(path, body){
 const APIC = new Map(), API_CACHE = /^\/api\/(personas|kb|kb\/docs|memes|versions|groups|backups|group-rules|usage|updates)(\?(?!.*force=)|$)/;
 function apiFlush(){ APIC.clear(); }
 function api(path, body){
-  const b = CLK && performance.now() - CLK.t < 400 ? CLK.b : null;
+  const b = CLK ? CLK.b : null;
   return b ? btnHold(b, api1(path, body)) : api1(path, body);
 }
 async function api1(path, body){
