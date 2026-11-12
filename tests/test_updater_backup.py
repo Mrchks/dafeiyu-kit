@@ -63,5 +63,27 @@ class CheckError(unittest.TestCase):
         self.assertIn("没有可下载的发布版本", str(c.exception))
 
 
+
+class NapcatFrozen(unittest.TestCase):
+    def test_check_skips_napcat_and_info_marks_frozen(self):
+        saved = {}
+        with patch.object(updater, "load_state", return_value={"update_check": {}}), \
+             patch.object(updater, "update_state", side_effect=lambda **k: saved.update(k)), \
+             patch.object(updater, "ab_latest", return_value={"version": "4.29.4"}), \
+             patch.object(updater.selfupdate, "latest", return_value={}), \
+             patch.object(updater, "nc_latest", side_effect=AssertionError("不应再检查 NapCat")):
+            c = updater.check(force=True)
+        self.assertNotIn("napcat", c)
+        with patch.object(updater, "check", return_value={"at": 1, "errors": {"napcat": "旧错误"}, "napcat": {"version": "9.9.9"}}), \
+             patch.object(updater, "_records", return_value={}), patch.object(updater, "ab_current", return_value="4.29.4"), \
+             patch.object(updater, "nc_current", return_value="4.18.42"), patch.object(updater, "ab_source_root", return_value=None), \
+             patch.object(updater, "update_blocked", return_value=""), \
+             patch.object(updater.selfupdate, "describe", return_value={}):
+            info = updater.info()
+        self.assertTrue(info["napcat"]["frozen"])
+        self.assertFalse(info["napcat"]["newer"])
+        self.assertNotIn("napcat", info["errors"])
+
+
 if __name__ == "__main__":
     unittest.main()

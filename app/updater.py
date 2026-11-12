@@ -235,7 +235,7 @@ def check(force: bool = False) -> dict:
         return c
     with _check_lock:
         out = {"at": time.time(), "errors": {}}
-        for comp, fn in (("astrbot", ab_latest), ("napcat", nc_latest), ("console", selfupdate.latest)):
+        for comp, fn in (("astrbot", ab_latest), ("console", selfupdate.latest)):      # NapCat 已停止发布，不再检查
             try:
                 out[comp] = fn()
             except Exception as e:  # noqa: BLE001
@@ -249,7 +249,7 @@ def check(force: bool = False) -> dict:
 def info(force: bool = False) -> dict:
     c = check(force)
     recs = _records()
-    res = {"checked_at": c.get("at"), "errors": c.get("errors", {})}
+    res = {"checked_at": c.get("at"), "errors": {k: v for k, v in (c.get("errors") or {}).items() if k != "napcat"}}
     for comp, cur in (("astrbot", ab_current()), ("napcat", nc_current())):
         lat = c.get(comp) or {}
         rec = recs.get(comp) or {}
@@ -261,6 +261,7 @@ def info(force: bool = False) -> dict:
                         "size": _size(bk) if bk else 0, "exists": not _backup_missing(rec)}
                        if rec else None),
         }
+    res["napcat"].update(latest="", newer=False, notes="", date="", frozen=True)       # NapCat 已停止发布，不再检查和更新
     res["astrbot"]["mode"] = "source" if ab_source_root() else "pip"
     res["astrbot"]["blocked"] = update_blocked()
     rec = recs.get("console") or {}
@@ -277,8 +278,6 @@ def has_updates() -> list[str]:
     out = []
     if _newer((c.get("astrbot") or {}).get("version", ""), ab_current()):
         out.append("astrbot")
-    if _newer((c.get("napcat") or {}).get("version", ""), nc_current()):
-        out.append("napcat")
     con = selfupdate.describe(c.get("console") or {})
     if con["newer"] and con["enabled"] and not con["dev"]:
         out.append("console")

@@ -456,9 +456,9 @@ class Handler(BaseHTTPRequestHandler):
                 ok = astrbot_api.save_login(b.get("user", ""), b.get("password", ""))
                 self._json({"ok": ok, "msg": "" if ok else "账号或密码不正确（或 AstrBot 未运行）"})
             elif p == "/api/updates/run":
-                fn = {"astrbot": ("更新 AstrBot", updater.update_astrbot), "napcat": ("更新 NapCat", updater.update_napcat),
-                      "napcat_full": ("完整更新 NapCat（含 QQ 内核）", updater.update_napcat_full),
-                      "console": ("更新控制台", update_console)}.get(b.get("comp"))
+                if b.get("comp") in ("napcat", "napcat_full"):      # NapCat 官方已停止发布，不再提供更新
+                    return self._json({"error": "NapCat 官方已停止发布新版本，不再提供更新。"}, 400)
+                fn = {"astrbot": ("更新 AstrBot", updater.update_astrbot), "console": ("更新控制台", update_console)}.get(b.get("comp"))
                 if not fn:
                     return self._json({"error": "未知组件"}, 400)
                 self._ok(services.run_job(*fn))

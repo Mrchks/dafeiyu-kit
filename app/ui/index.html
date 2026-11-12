@@ -3846,7 +3846,7 @@ async function loadUpdates(force){
   const fmt = n => n > 1048576 ? (n / 1048576).toFixed(0) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
   const card = (el, comp, x, err) => {
     const con = comp === 'console', off = con && !x.enabled;
-    const pillHtml = off ? '<span class="pill">未启用</span>' : x.newer ? '<span class="pill w">有新版本</span>' : x.latest ? '<span class="pill g">已是最新</span>' : '<span class="pill">未查询到</span>';
+    const pillHtml = x.frozen ? '<span class="pill">停止发布</span>' : off ? '<span class="pill">未启用</span>' : x.newer ? '<span class="pill w">有新版本</span>' : x.latest ? '<span class="pill g">已是最新</span>' : '<span class="pill">未查询到</span>';
     const b = x.backup;
     const bk = !b ? '<div class="kv">上一版备份：无</div>'
       : b.exists === false ? `<div class="kv">上一版备份：${esc(b.from || '?')}（备份文件已不存在，无法回退）</div>
@@ -3859,17 +3859,18 @@ async function loadUpdates(force){
     else if (con && x.newer && x.needs_full) state = `本次更新需要下载完整整合包${x.full_size ? `（约 ${fmt(x.full_size)}）` : ''}，下载后请使用「从压缩包更新」安装。`;
     else if (con && x.newer && x.update_size) state = `更新包约 ${fmt(x.update_size)}，更新时控制台会重启，bot 不会掉线。`;
     if (x.blocked) state = x.blocked;      // 这种安装方式不能由控制台更新
+    if (x.frozen) state = 'NapCat 官方已停止发布新版本，当前版本即为可获取的最新版本，不再检查更新。';
     let main;
-    if (con && x.newer && x.needs_full) main = '<button class="primary" data-cfull>下载完整包</button>';
+    if (x.frozen) main = '';
+    else if (con && x.newer && x.needs_full) main = '<button class="primary" data-cfull>下载完整包</button>';
     else main = `<button class="primary" data-uup="${comp}" ${x.newer && !x.blocked && !(con && (off || x.dev)) ? '' : 'disabled'}>${x.blocked ? '不可更新' : x.newer ? '一键更新' : '已是最新'}</button>`;
     el.innerHTML = `<h3>${COMP_NAME[comp]}${pillHtml}</h3>
-      <div class="kv">现在 <b>${esc(x.current || '?')}</b> · 最新 <b>${esc(x.latest || (off ? '-' : '?'))}</b>${x.date ? ` <span class="muted">（${esc(x.date)}）</span>` : ''}</div>
+      <div class="kv">现在 <b>${esc(x.current || '?')}</b>${x.frozen ? '' : ` · 最新 <b>${esc(x.latest || (off ? '-' : '?'))}</b>`}${x.date ? ` <span class="muted">（${esc(x.date)}）</span>` : ''}</div>
       ${err ? `<div class="kv" style="color:var(--warn)">检查新版本失败：${esc(err)}</div>` : ''}
       ${state ? `<div class="kv">${esc(state)}</div>` : ''}
       <div class="grow"></div>
       <div class="row" style="margin-top:8px">${main}
       ${x.notes ? `<button data-unotes="${comp}">更新说明</button>` : ''}
-      ${comp === 'napcat' ? '<button data-uup="napcat_full" data-tip="同时更新 QQ 内核。新版 NapCat 要求更新版本的 QQ 时使用。">完整更新</button>' : ''}
       ${con ? '<button data-czip>从压缩包更新</button>' : ''}</div>
       ${bk}`;
   };
