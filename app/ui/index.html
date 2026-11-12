@@ -21,9 +21,9 @@
   --shadow-2:0 12px 32px -8px rgba(24,24,27,.18),0 2px 6px rgba(24,24,27,.06);
   --font:"Segoe UI Variable Text","Segoe UI","Microsoft YaHei UI","PingFang SC","Noto Sans CJK SC",sans-serif;
   --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
-  /* 记忆脑图的节点颜色：低饱和，和整体灰阶协调 */
-  --mc-persona:#18181b; --mc-scope:#5b6fd0; --mc-category:#a1a1aa; --mc-fact:#3f9a84; --mc-diary:#7c96e8;
-  --mc-week:#4c64c4; --mc-followup:#d08a3a; --mc-tag:#b07cc6;
+  /* 记忆脑图（D 层次）：按类型配色，彩度略高于界面灰阶；line 为虚线连线，grid 为背景点阵 */
+  --mc-persona:#18181b; --mc-scope:#4f62d8; --mc-category:#a1a1aa; --mc-fact:#2c9c82; --mc-diary:#5b8de8;
+  --mc-week:#7a63d6; --mc-followup:#dc8a28; --mc-tag:#b871c4; --mc-line:#b9b9b4; --mc-grid:rgba(24,24,27,.05);
 }
 /* 深色变量：「常用设置 → 外观」选了浅色或深色时以所选为准（html 上的 data-theme），选「跟随系统」时随系统切换 */
 :root{color-scheme:light}
@@ -34,8 +34,8 @@
     --accent:#7c9cf2; --accent-soft:#1a2238;
     --good:#4ade80; --good-soft:#12241a; --warn:#f0b35a; --warn-soft:#2a2112; --bad:#f87171; --bad-soft:#2b1616;
     --shadow-1:none; --shadow-2:0 16px 40px -8px rgba(0,0,0,.65);
-    --mc-persona:#ededef; --mc-scope:#8ea0f5; --mc-category:#6b6b73; --mc-fact:#5cc4a8; --mc-diary:#8eaaf7;
-    --mc-week:#6f86e8; --mc-followup:#f0b35a; --mc-tag:#cf9be3; }
+    --mc-persona:#ededef; --mc-scope:#8e9ff7; --mc-category:#6b6b73; --mc-fact:#55c6a8; --mc-diary:#86acf8;
+    --mc-week:#a48df0; --mc-followup:#f0b35a; --mc-tag:#d29be4; --mc-line:#6b6b73; --mc-grid:rgba(255,255,255,.045); }
 }
 :root[data-theme="dark"]{color-scheme:dark; --bg:#0c0c0d; --panel:#141416; --panel2:#1c1c1f; --line:#26262a; --line2:#34343a;
     --text:#ededef; --text2:#c9c9ce; --muted:#8b8b93; --faint:#74747c;
@@ -43,8 +43,8 @@
     --accent:#7c9cf2; --accent-soft:#1a2238;
     --good:#4ade80; --good-soft:#12241a; --warn:#f0b35a; --warn-soft:#2a2112; --bad:#f87171; --bad-soft:#2b1616;
     --shadow-1:none; --shadow-2:0 16px 40px -8px rgba(0,0,0,.65);
-    --mc-persona:#ededef; --mc-scope:#8ea0f5; --mc-category:#6b6b73; --mc-fact:#5cc4a8; --mc-diary:#8eaaf7;
-    --mc-week:#6f86e8; --mc-followup:#f0b35a; --mc-tag:#cf9be3; }
+    --mc-persona:#ededef; --mc-scope:#8e9ff7; --mc-category:#6b6b73; --mc-fact:#55c6a8; --mc-diary:#86acf8;
+    --mc-week:#a48df0; --mc-followup:#f0b35a; --mc-tag:#d29be4; --mc-line:#6b6b73; --mc-grid:rgba(255,255,255,.045); }
 /* 切换外观：整页交叉淡入，不逐个元素过渡（各元素过渡不同步会显得生硬） */
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.4s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 *{box-sizing:border-box}
@@ -779,15 +779,16 @@ dialog .field{grid-template-columns:72px 1fr}
 .mtab:not([hidden]){animation:pin .22s var(--ease)}
 .mapgrid{flex:1;min-height:360px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
 .mapgrid>.section{margin:0;min-height:0}
-.mapbox{position:relative;padding:0;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,var(--panel) 0%,var(--panel) 55%,var(--panel2) 100%)}
+.mapbox{position:relative;padding:0;overflow:hidden;background:radial-gradient(circle,var(--mc-grid) 0 .75px,transparent 1.1px) 2px 2px/24px 24px,var(--panel)}
 .mapbox canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
 .mapbox canvas.drag{cursor:grabbing}
 .mapbox canvas.hot{cursor:pointer}
 .map-tools{position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:12px;z-index:1;font-size:12.5px}
 .seg.sm button{padding:3px 10px;font-size:12.5px}
 .map-legend{position:absolute;left:14px;bottom:12px;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);z-index:1;max-width:calc(100% - 28px)}
-.map-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0}
-.map-hint{position:absolute;right:14px;bottom:12px;font-size:12px;color:var(--faint);z-index:1}
+.map-legend span{display:inline-flex;align-items:center}
+.map-legend img{width:14px;height:14px;margin-right:5px}
+.map-hint{position:absolute;right:14px;top:21px;max-width:calc(100% - 260px);text-align:right;font-size:12px;color:var(--faint);z-index:1}
 .mapside{display:flex;flex-direction:column;padding:18px 18px 16px;overflow:auto}
 .mapside .ms-type{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
 .mapside .ms-type i{width:8px;height:8px;border-radius:50%;display:inline-block}
@@ -1326,7 +1327,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
               <label class="muted"><input type="checkbox" id="memArchived"> 显示已淡忘</label>
             </div>
             <div class="map-legend" id="memLegend"></div>
-            <div class="map-hint">拖动画布可平移，滚轮可缩放；3D 模式下拖动可旋转。点击节点查看详情。</div>
+            <div class="map-hint">拖动平移 · 滚轮缩放 · 3D 下拖动旋转 · 点击节点查看详情</div>
           </div>
           <div class="section mapside" id="memSide"></div>
         </div>
@@ -1996,7 +1997,7 @@ function themeApply(v){
   const run = () => { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; themeMark(); themeRepaint(); };
   if (document.startViewTransition && !REDUCED) document.startViewTransition(run); else run();
 }
-function themeRepaint(){ if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function') mapFrame(); }); }
+function themeRepaint(){ if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function'){ mapFrame(); if (MEM.graph) mapLegend(); } }); }
 async function themeSave(v){
   if (v === themeNow()) return;
   const old = themeNow(); themeApply(v);
@@ -3249,26 +3250,51 @@ const TIERN = {permanent: '永久', long: '长期', normal: '一般', temp: '临
 const CATS = ['身份', '偏好', '习惯', '人际', '经历', '健康', '计划', '称呼', '群规', '其他'];
 const FSTAT = {open: ['', '待跟进'], asked: ['w', '已问过'], done: ['g', '已完成'], expired: ['', '已过期']};
 /* 脑图用到的颜色、字体只在主题变化时读取一次；逐帧读取样式会产生大量临时对象，旋转时会周期性卡顿 */
-const MAPC = {key: null, c: {}, spr: {}};
+const MAPC = {key: null, c: {}, spr: {}, mix: []};
 const MAP_LABELED = new Set(['persona', 'scope', 'category', 'hub']);
 function mapTheme(){
   const dark = isDark(), key = (document.documentElement.dataset.theme || '') + (dark ? 'd' : 'l');
   if (MAPC.key === key) return MAPC;
   const css = getComputedStyle(document.documentElement), g = n => css.getPropertyValue(n).trim();
-  MAPC.key = key; MAPC.dark = g('--bg').toLowerCase() < '#8'; MAPC.c = {}; MAPC.spr = {};
-  for (const t of ['persona', 'scope', 'category', 'fact', 'diary', 'week', 'followup', 'tag']) MAPC.c[t] = g('--mc-' + t) || '#888';
-  MAPC.line2 = g('--line2'); MAPC.faint = g('--faint'); MAPC.txt = g('--text'); MAPC.muted = g('--muted');
+  MAPC.key = key; MAPC.dark = dark; MAPC.c = {}; MAPC.spr = {}; MAPC.mix = []; MAPC.legend = null;
+  for (const t of MAP_TYPES) MAPC.c[t] = g('--mc-' + t) || '#888';
+  MAPC.c.hub = MAPC.c.followup;
+  MAPC.panel = g('--panel'); MAPC.line = g('--mc-line'); MAPC.neutral = MAPC.c.category;
+  MAPC.txt = g('--text'); MAPC.muted = g('--muted');
   const font = g('--font'); MAPC.fontBig = `600 13px ${font}`; MAPC.fontSm = `400 11.5px ${font}`;
   return MAPC;
 }
-function mcol(t){ return mapTheme().c[t === 'hub' ? 'followup' : t] || '#888'; }
-/* 光晕用预先画好的贴图，不逐帧创建渐变 */
-function mapGlow(col){
-  const T = mapTheme(); if (T.spr[col]) return T.spr[col];
-  const sp = document.createElement('canvas'); sp.width = sp.height = 64; const x = sp.getContext('2d');
-  const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, col); g.addColorStop(1, 'transparent'); x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-  return T.spr[col] = sp;
+function mcol(t){ return mapTheme().c[t] || '#888'; }
+/* 连线渐变的分段颜色：按（起点类型, 终点类型, 段号）编号，编号与主题无关，颜色按主题缓存 */
+const MAP_TYPES = ['persona', 'scope', 'category', 'fact', 'diary', 'week', 'followup', 'tag'];
+const MAP_SEG = 3, MIXID = {};
+function mixId(ta, tb, i){ const k = ta + '|' + tb + '|' + i; return MIXID[k] ?? (MIXID[k] = Object.keys(MIXID).length); }
+const MIXKEY = [];
+function mixCol(id){
+  const T = mapTheme(); if (T.mix[id]) return T.mix[id];
+  if (!MIXKEY.length || MIXKEY.length < Object.keys(MIXID).length) for (const k in MIXID) MIXKEY[MIXID[k]] = k;
+  const [ta, tb, i] = MIXKEY[id].split('|'), u = (+i + 0.5) / MAP_SEG, hx = c => [1, 3, 5].map(j => parseInt(c.slice(j, j + 2), 16));
+  const A = hx(mcol(ta)), B = hx(mcol(tb)), m = A.map((v, j) => Math.round(v + (B[j] - v) * u));
+  return T.mix[id] = `rgb(${m[0]},${m[1]},${m[2]})`;
 }
+/* 节点和色域都是预先画好的贴图（按主题缓存），逐帧只做贴图绘制。shape：core 人设、hub 对象（带外环）、dot 其余、wash 色域 */
+function mapSprite(shape, col){
+  const T = mapTheme(), key = shape + col; if (T.spr[key]) return T.spr[key];
+  const s = document.createElement('canvas'); s.width = s.height = 128; const x = s.getContext('2d');
+  if (shape === 'wash'){ const g = x.createRadialGradient(64, 64, 0, 64, 64, 64), top = T.dark ? 0.2 : 0.17;
+    for (let i = 0; i <= 8; i++){ const u = i / 8; g.addColorStop(u, col + Math.round(255 * top * Math.pow(1 - u, 2.2)).toString(16).padStart(2, '0')); }
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128); return T.spr[key] = s; }
+  const r = 40, disc = rr => { x.beginPath(); x.arc(0, 0, rr, 0, 6.283); };
+  x.translate(64, 64);
+  if (!T.dark){ x.shadowColor = 'rgba(24,24,27,.18)'; x.shadowBlur = 10; x.shadowOffsetY = 4; }
+  x.fillStyle = col; disc(r); x.fill(); x.shadowColor = 'transparent';
+  const h = x.createLinearGradient(0, -r, 0, r); h.addColorStop(0, 'rgba(255,255,255,.28)'); h.addColorStop(0.6, 'rgba(255,255,255,0)'); h.addColorStop(1, 'rgba(0,0,0,.10)');
+  x.fillStyle = h; disc(r); x.fill();
+  x.lineWidth = shape === 'dot' ? 6 : 5; x.strokeStyle = T.panel; disc(r - (shape === 'dot' ? 3 : 2.5)); x.stroke();
+  if (shape !== 'dot'){ x.globalAlpha = 0.28; x.lineWidth = 3; x.strokeStyle = col; disc(r + 10); x.stroke(); }
+  return T.spr[key] = s;
+}
+const mapShape = t => t === 'persona' ? 'core' : t === 'scope' ? 'hub' : 'dot';
 const mapByDepth = (p, q) => q._z - p._z;
 async function mapi(path, body){ const r = await api(path, body); if (r && r.error) throw new Error(r.error); return r; }
 
@@ -3528,7 +3554,11 @@ function mapLoad(g){
     MAP.by[n.id] = m; MAP.nb[n.id] = new Set(); return m; });
   const pers = MAP.nodes.filter(n => n.type === 'persona');
   pers.forEach((p, i) => { if (!old[p.id]){ const a = i / Math.max(1, pers.length) * 6.283; p.x = pers.length > 1 ? Math.cos(a) * 140 : 0; p.y = pers.length > 1 ? Math.sin(a) * 140 : 0; p.z = 0; } });
-  MAP.edges = g.edges.filter(e => MAP.by[e.a] && MAP.by[e.b]).map(e => ({...e, s: MAP.by[e.a], t: MAP.by[e.b]}));
+  MAP.edges = g.edges.filter(e => MAP.by[e.a] && MAP.by[e.b]).map(e => { const s = MAP.by[e.a], t = MAP.by[e.b];
+    let h = 7; for (const ch of e.a + '>' + e.b) h = (h * 31 + ch.charCodeAt(0)) | 0;         // 弧度按两端编号固定，刷新后不变
+    const u = ((h >>> 0) % 1000) / 1000, tag = e.kind === 'tag';
+    const seg = s.type === t.type ? [mixId(s.type, t.type, 1)] : [0, 1, 2].map(i => mixId(s.type, t.type, i));
+    return {...e, s, t, tag, bend: tag ? (u < 0.5 ? -0.2 : 0.2) : (u - 0.5) * 0.36, seg}; });
   MAP.edges.forEach(e => { MAP.nb[e.a].add(e.b); MAP.nb[e.b].add(e.a); });
   if (MAP.sel) MAP.sel = MAP.by[MAP.sel.id] || null;
   const fresh = !Object.keys(old).length;
@@ -3586,8 +3616,8 @@ function mapProject(n){
   if (MAP.dim === 2){ n._sx = W / 2 + v.x + n.x * v.k; n._sy = H / 2 + v.y + n.y * v.k; n._s = v.k; n._d = 1; return; }
   const ca = Math.cos(MAP.rot.a), sa = Math.sin(MAP.rot.a), cb = Math.cos(MAP.rot.b), sb = Math.sin(MAP.rot.b);
   const x1 = n.x * ca - n.z * sa, z1 = n.x * sa + n.z * ca, y1 = n.y * cb - z1 * sb, z2 = n.y * sb + z1 * cb;
-  const f = 520 / (520 + z2) * v.k;
-  n._sx = W / 2 + v.x + x1 * f; n._sy = H / 2 + v.y + y1 * f; n._s = f; n._z = z2; n._d = Math.max(0.25, Math.min(1, 0.65 - z2 / 600));
+  const f = 620 / (620 + z2) * v.k;
+  n._sx = W / 2 + v.x + x1 * f; n._sy = H / 2 + v.y + y1 * f; n._s = f; n._z = z2; n._d = Math.max(0.3, Math.min(1, 0.74 - z2 / 620));
 }
 function mapPick(x, y){
   let best = null, bd = 1e9;
@@ -3595,43 +3625,72 @@ function mapPick(x, y){
     const d = (n._sx - x) ** 2 + (n._sy - y) ** 2; if (d < r * r && d < bd){ bd = d; best = n; } }
   return best;
 }
+const nodeR = n => (NODE_R[n.type] || 5) * (0.6 + 0.6 * (n.size || 0.5)) * n._s;
+/* 连线按（颜色, 透明度档, 是否高亮）分桶，每桶一次描边；桶和数组跨帧复用，逐帧不创建渐变和对象 */
+const MAPB = {map: new Map(), used: []};
+function mapBucket(id, x0, y0, cx, cy, x1, y1){
+  let b = MAPB.map.get(id); if (!b){ b = []; MAPB.map.set(id, b); }
+  if (!b.length) MAPB.used.push(id);
+  b.push(x0, y0, cx, cy, x1, y1);
+}
 function mapFrame(){
   const c = MAP.ctx; if (!c) return;
-  c.setTransform(MAP.dpr, 0, 0, MAP.dpr, 0, 0); c.clearRect(0, 0, MAP.W, MAP.H);
+  c.setTransform(MAP.dpr, 0, 0, MAP.dpr, 0, 0); c.globalAlpha = 1; c.clearRect(0, 0, MAP.W, MAP.H);
   if (!MAP.nodes.length) return;
   MAP.nodes.forEach(mapProject);
-  const focus = MAP.sel || MAP.hover, near = focus ? MAP.nb[focus.id] : null;
+  const focus = MAP.hover || MAP.sel, near = focus ? MAP.nb[focus.id] : null;
   const lit = n => !focus || n === focus || near.has(n.id);
-  const T = mapTheme(), line = MAP.dim === 3 ? T.faint : T.line2, txt = T.txt, muted = T.muted, dark = T.dark;
-  // 连线
-  for (const e of MAP.edges){ const a = e.s, b = e.t, on = focus && (a === focus || b === focus);
-    c.globalAlpha = (on ? 0.85 : focus ? 0.06 : (e.kind === 'tag' ? 0.16 : e.kind === 'time' ? 0.38 : 0.28)) * Math.min(a._d, b._d);
-    c.strokeStyle = on ? mcol(b === focus ? a.type : b.type) : line; c.lineWidth = on ? 1.4 : (e.kind === 'time' ? 1.2 : 0.8);
-    if (e.kind === 'tag'){ c.setLineDash([2, 3]); } c.beginPath(); c.moveTo(a._sx, a._sy); c.lineTo(b._sx, b._sy); c.stroke(); c.setLineDash([]); }
+  const T = mapTheme(), txt = T.txt, muted = T.muted;
+  // 色域：每个对象周围一片很淡的中性色
+  const wash = mapSprite('wash', T.neutral);
+  for (const n of MAP.nodes){ if (n.type !== 'scope') continue; const R = 150 * n._s;
+    c.globalAlpha = n._d * (lit(n) ? 1 : 0.4); c.drawImage(wash, n._sx - R, n._sy - R, R * 2, R * 2); }
+  // 连线：弧线分成三段，每段取两端颜色之间的插值，近似沿线渐变
+  for (const e of MAP.edges){ const a = e.s, b = e.t, on = !!focus && (a === focus || b === focus);
+    const al = (on ? 0.9 : focus ? 0.07 : e.tag ? 0.26 : 0.5) * Math.min(a._d, b._d), q = Math.max(1, Math.round(al * 20));
+    const ax = a._sx, ay = a._sy, bx = b._sx, by = b._sy, kx = (ax + bx) / 2 - (by - ay) * e.bend, ky = (ay + by) / 2 + (bx - ax) * e.bend;
+    const flag = (q * 2 + (on ? 1 : 0)) * 2 + (e.tag ? 1 : 0);
+    if (e.tag && !on){ mapBucket(-1 - flag, ax, ay, kx, ky, bx, by); continue; }
+    const n = e.seg.length;
+    if (n === 1){ mapBucket(e.seg[0] * 256 + flag, ax, ay, kx, ky, bx, by); continue; }
+    for (let i = 0; i < n; i++){ const t0 = i / n, t1 = (i + 1) / n, s0 = 1 - t0, s1 = 1 - t1;
+      // 二次曲线在 [t0, t1] 上的子段：端点为曲线上的点，控制点为 Q(t0, t1)
+      const p0x = s0 * s0 * ax + 2 * s0 * t0 * kx + t0 * t0 * bx, p0y = s0 * s0 * ay + 2 * s0 * t0 * ky + t0 * t0 * by;
+      const p1x = s1 * s1 * ax + 2 * s1 * t1 * kx + t1 * t1 * bx, p1y = s1 * s1 * ay + 2 * s1 * t1 * ky + t1 * t1 * by;
+      const qx = s0 * s1 * ax + (s0 * t1 + t0 * s1) * kx + t0 * t1 * bx, qy = s0 * s1 * ay + (s0 * t1 + t0 * s1) * ky + t0 * t1 * by;
+      mapBucket(e.seg[i] * 256 + flag, p0x, p0y, qx, qy, p1x, p1y); } }
+  c.lineCap = 'round';
+  for (const id of MAPB.used){ const b = MAPB.map.get(id), neg = id < 0, f = neg ? -1 - id : id % 256, tag = f & 1, on = (f >> 1) & 1, q = f >> 2;
+    c.globalAlpha = q / 20; c.strokeStyle = neg ? T.line : mixCol(Math.floor(id / 256));
+    c.lineWidth = on ? 1.7 : tag ? 0.9 : 1.2; c.setLineDash(tag ? [2, 4] : []);
+    c.beginPath(); for (let i = 0; i < b.length; i += 6){ c.moveTo(b[i], b[i + 1]); c.quadraticCurveTo(b[i + 2], b[i + 3], b[i + 4], b[i + 5]); }
+    c.stroke(); b.length = 0; }
+  MAPB.used.length = 0; c.setLineDash([]);
   // 节点（3D 下远的先画）
   let order = MAP.nodes;
   if (MAP.dim === 3){ order = MAP.order || (MAP.order = []); order.length = 0; for (const n of MAP.nodes) order.push(n); order.sort(mapByDepth); }
-  for (const n of order){ const col = mcol(n.type), r = (NODE_R[n.type] || 5) * (0.6 + 0.6 * (n.size || 0.5)) * n._s;
-    const al = (n.alpha ?? 1) * n._d * (lit(n) ? 1 : 0.18);
-    if (MAP.dim === 3 || n.type === 'persona'){       // 发光的神经元
-      const R = r * 2.6; c.globalAlpha = al * (dark ? 0.45 : 0.25); c.drawImage(mapGlow(col), n._sx - R, n._sy - R, R * 2, R * 2); }
-    c.globalAlpha = al; c.fillStyle = col; c.beginPath(); c.arc(n._sx, n._sy, Math.max(1.2, r), 0, 6.283); c.fill();
-    if (n.status && n.status !== 'active' && n.type === 'fact'){ c.globalAlpha = al; c.strokeStyle = muted; c.lineWidth = 1; c.setLineDash([2, 2]); c.beginPath(); c.arc(n._sx, n._sy, r + 2.5, 0, 6.283); c.stroke(); c.setLineDash([]); }
-    if (n === MAP.sel){ c.globalAlpha = 1; c.strokeStyle = txt; c.lineWidth = 1.6; c.beginPath(); c.arc(n._sx, n._sy, r + 4, 0, 6.283); c.stroke(); } }
+  for (const n of order){ const col = mcol(n.type), r = Math.max(1.6, nodeR(n)), d = r * 3.2;
+    const al = (n.alpha ?? 1) * n._d * (lit(n) ? 1 : 0.18) * (n.type === 'category' ? 0.75 : 1);
+    c.globalAlpha = al; c.drawImage(mapSprite(mapShape(n.type), col), n._sx - d / 2, n._sy - d / 2, d, d);
+    if (n.status && n.status !== 'active' && n.type === 'fact'){ c.strokeStyle = muted; c.lineWidth = 1; c.setLineDash([2, 2]); c.beginPath(); c.arc(n._sx, n._sy, r + 2.5, 0, 6.283); c.stroke(); c.setLineDash([]); }
+    if (n === MAP.sel){ c.globalAlpha = 1; c.strokeStyle = txt; c.lineWidth = 1.6; c.beginPath(); c.arc(n._sx, n._sy, r + (mapShape(n.type) === 'dot' ? 4 : 7), 0, 6.283); c.stroke(); } }
   // 文字：人设、对象、分类常显；放大后显示档案；选中和悬停的连同邻居都显示
   c.textAlign = 'center'; c.textBaseline = 'top';
-  for (const n of order){ const r = (NODE_R[n.type] || 5) * (0.6 + 0.6 * (n.size || 0.5)) * n._s;
+  for (const n of order){ const r = nodeR(n);
     const show = n === focus || (focus && near.has(n.id)) || MAP_LABELED.has(n.type) || (MAP.view.k > 1.6 && n._d > 0.5);
     if (!show || (focus && !lit(n))) continue;
     const big = n.type === 'persona' || n.type === 'scope';
     c.font = big ? T.fontBig : T.fontSm;
     c.globalAlpha = Math.min(1, n._d + 0.2); c.fillStyle = n === focus || big ? txt : muted;
-    c.fillText(n.label || '', n._sx, n._sy + r + 4); }
+    c.fillText(n.label || '', n._sx, n._sy + r + (big ? 9 : 6)); }
   c.globalAlpha = 1;
 }
 function mapLegend(){
-  const t = ['persona', 'scope', 'fact', 'diary', 'week', 'followup', 'tag'];
-  $('#memLegend').innerHTML = t.map(k => `<span><i style="background:${mcol(k)}"></i>${MTYPE[k]}</span>`).join('') + '<span>大小 = 重要性 · 亮度 = 保持度</span>';
+  const T = mapTheme();
+  if (!T.legend){ T.legend = {}; for (const k of ['persona', 'scope', 'fact', 'diary', 'week', 'followup', 'tag']){
+    const m = document.createElement('canvas'); m.width = m.height = 28; const x = m.getContext('2d');
+    x.drawImage(mapSprite(mapShape(k), mcol(k)), 0, 0, 28, 28); T.legend[k] = m.toDataURL(); } }
+  $('#memLegend').innerHTML = Object.keys(T.legend).map(k => `<span><img src="${T.legend[k]}" alt="">${MTYPE[k]}</span>`).join('') + '<span>大小 = 重要性 · 亮度 = 保持度 · 虚线 = 同一人物或话题</span>';
 }
 function mapSide(err){
   const box = $('#memSide'), n = MAP.sel;
