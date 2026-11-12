@@ -610,7 +610,7 @@ def status() -> dict:
                    "webui_up": webui_up, "state": napcat_login_state(nc_running, connected),
                    "webui": f"http://127.0.0.1:{web['port']}/webui?token={url_q(web['token'])}" if web["token"]
                    else f"http://127.0.0.1:{web['port']}/webui"},
-        "settings": {k: s[k] for k in ("astrbot_port", "autostart", "watchdog", "notify", "wanted")},
+        "settings": {k: s.get(k) for k in ("astrbot_port", "autostart", "watchdog", "notify", "wanted", "theme")},
         "has_dashboard_login": bool(s.get("dashboard_pass")),
         "last_boot": s.get("last_boot"),
         "astrbot_needs_restart": astrbot_needs_restart(s, ab),

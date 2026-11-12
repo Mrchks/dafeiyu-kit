@@ -33,7 +33,16 @@ import selfupdate  # noqa: E402
 import updater  # noqa: E402
 import versions  # noqa: E402
 from core import (CONSOLE_PORTS, KIT, console_alive, console_port, LOG_DIR, UI_DIR, VERSION, load_state, log, log_exc, open_console_window,  # noqa: E402
-                  popen_detached, port_open, set_wanted, tail_lines, update_state)
+                  popen_detached, port_open, set_wanted, tail_lines, update_state, THEMES, ui_theme)
+
+def themed_index() -> bytes:
+    """返回控制台页面，并在 html 上写好外观设置，首次绘制前就是所选颜色，不会先闪一下另一种颜色。"""
+    html = (UI_DIR / "index.html").read_bytes()
+    t = ui_theme()
+    if t != "system":
+        html = html.replace(b'<html lang="zh-CN">', f'<html lang="zh-CN" data-theme="{t}">'.encode(), 1)
+    return html
+
 
 ACTIONS = {
     "start_all": ("全部启动", services.start_all),
@@ -227,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             p = u.path
             if p in ("/", "/index.html"):
-                self._send(200, (UI_DIR / "index.html").read_bytes(), "text/html; charset=utf-8")
+                self._send(200, themed_index(), "text/html; charset=utf-8")
             elif p == "/icon.png":
                 self._send(200, (UI_DIR / "icon.png").read_bytes(), "image/png")
             elif p == "/models.js":
@@ -363,6 +372,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._ok(services.run_job("保存设置", services.with_astrbot_stopped(lambda: manage.apply_settings(b))))
             elif p == "/api/console-settings":
                 kw = {k: bool(b[k]) for k in ("autostart", "watchdog", "notify") if k in b}
+                if "theme" in b:
+                    if b["theme"] not in THEMES:
+                        return self._json({"error": "外观选项无效"}, 400)
+                    kw["theme"] = b["theme"]
                 update_state(**kw)
                 self._json({"ok": True})
             elif p == "/api/backup":

@@ -25,9 +25,11 @@
   --mc-persona:#18181b; --mc-scope:#5b6fd0; --mc-category:#a1a1aa; --mc-fact:#3f9a84; --mc-diary:#7c96e8;
   --mc-week:#4c64c4; --mc-followup:#d08a3a; --mc-tag:#b07cc6;
 }
+/* 深色变量：「常用设置 → 外观」选了浅色或深色时以所选为准（html 上的 data-theme），选「跟随系统」时随系统切换 */
+:root{color-scheme:light}
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#0c0c0d; --panel:#141416; --panel2:#1c1c1f; --line:#26262a; --line2:#34343a;
-    --text:#ededef; --text2:#c9c9ce; --muted:#8b8b93; --faint:#5f5f66;
+  :root:not([data-theme="light"]){color-scheme:dark; --bg:#0c0c0d; --panel:#141416; --panel2:#1c1c1f; --line:#26262a; --line2:#34343a;
+    --text:#ededef; --text2:#c9c9ce; --muted:#8b8b93; --faint:#74747c;
     --primary:#ededef; --on-primary:#0c0c0d;
     --accent:#7c9cf2; --accent-soft:#1a2238;
     --good:#4ade80; --good-soft:#12241a; --warn:#f0b35a; --warn-soft:#2a2112; --bad:#f87171; --bad-soft:#2b1616;
@@ -35,6 +37,16 @@
     --mc-persona:#ededef; --mc-scope:#8ea0f5; --mc-category:#6b6b73; --mc-fact:#5cc4a8; --mc-diary:#8eaaf7;
     --mc-week:#6f86e8; --mc-followup:#f0b35a; --mc-tag:#cf9be3; }
 }
+:root[data-theme="dark"]{color-scheme:dark; --bg:#0c0c0d; --panel:#141416; --panel2:#1c1c1f; --line:#26262a; --line2:#34343a;
+    --text:#ededef; --text2:#c9c9ce; --muted:#8b8b93; --faint:#74747c;
+    --primary:#ededef; --on-primary:#0c0c0d;
+    --accent:#7c9cf2; --accent-soft:#1a2238;
+    --good:#4ade80; --good-soft:#12241a; --warn:#f0b35a; --warn-soft:#2a2112; --bad:#f87171; --bad-soft:#2b1616;
+    --shadow-1:none; --shadow-2:0 16px 40px -8px rgba(0,0,0,.65);
+    --mc-persona:#ededef; --mc-scope:#8ea0f5; --mc-category:#6b6b73; --mc-fact:#5cc4a8; --mc-diary:#8eaaf7;
+    --mc-week:#6f86e8; --mc-followup:#f0b35a; --mc-tag:#cf9be3; }
+/* 切换外观：整页交叉淡入，不逐个元素过渡（各元素过渡不同步会显得生硬） */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.4s;animation-timing-function:cubic-bezier(.4,0,.2,1)}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.6 var(--font);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
@@ -934,6 +946,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
 .mtab.skhost,.cdet.skhost,.fb-what.skhost{position:relative}
 #kt-use:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
 #kt-use>.section{min-height:0;overflow:auto;margin:0;align-self:flex-start;width:100%}
+#themeSeg button{min-width:76px}
 /* 空状态：说明 + 下一步操作 */
 .empty .row{justify-content:center;margin-top:12px}
 </style>
@@ -1042,7 +1055,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
     <!-- 常用设置 -->
     <section class="page fit" id="p-settings">
       <div class="head"><div><h1>常用设置</h1><p class="sub" data-tip="保存时会自动重启 AstrBot，约需半分钟。此页未列出的设置，可在「AstrBot 管理后台」中修改。按 Ctrl+S 也可以保存。">保存时会自动重启 AstrBot，约需半分钟；按 <kbd>Ctrl</kbd>+<kbd>S</kbd> 也能保存。</p></div></div>
-      <div class="setwrap"><aside class="setnav" id="setNav"><a data-sec="sec0" class="on">访问白名单</a><a data-sec="sec1">身份与人设</a><a data-sec="sec2">群聊</a><a data-sec="sec3">私聊主动消息</a><a data-sec="sec4">语音与表情包</a></aside><div class="setcol">
+      <div class="setwrap"><aside class="setnav" id="setNav"><a data-sec="sec0" class="on">访问白名单</a><a data-sec="sec1">身份与人设</a><a data-sec="sec2">群聊</a><a data-sec="sec3">私聊主动消息</a><a data-sec="sec4">语音与表情包</a><a data-sec="sec5">外观</a></aside><div class="setcol">
       <div class="section on" id="sec0">
         <h2>访问白名单</h2>
         <p class="hint">白名单。bot 不会回复白名单以外的私聊和群，也不会因此产生费用。</p>
@@ -1074,6 +1087,11 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
         <h2>语音与表情包</h2>
         <div class="field"><label>语音回复概率</label><div class="slider"><input type="range" id="voiceProb" min="0" max="1" step="0.01"><output id="voiceProbOut"></output></div><div class="tip">回复以语音形式发送的概率。未启用语音时，此处显示「未安装」。</div></div>
         <div class="field"><label>表情包概率</label><div class="slider"><input type="range" id="memeProb" min="0" max="100" step="1"><output id="memeProbOut"></output></div><div class="tip">每条回复附带一张表情包的概率。默认 20%。</div></div>
+      </div>
+      <div class="section" id="sec5">
+        <h2>外观</h2>
+        <p class="hint">外观设置立即生效，无需点击「保存」，也不会重启 AstrBot。</p>
+        <div class="field"><label>颜色模式</label><div><div class="seg" id="themeSeg"><button data-v="system">跟随系统</button><button data-v="light">浅色</button><button data-v="dark">深色</button></div></div><div class="tip">选择「跟随系统」时，控制台随 Windows 的深色模式设置自动切换。安装向导和托盘面板同步使用此设置；AstrBot 和 NapCat 的原版后台不受影响。</div></div>
       </div>
       </div></div>
       <div class="savebar"><button class="primary" id="saveBtn">保存并重启 AstrBot</button><button id="reloadBtn">放弃修改</button><button id="defaultsBtn">恢复推荐值</button><span class="note" id="saveNote"></span></div>
@@ -1847,6 +1865,22 @@ function ask(html, okText='确定'){
   });
 }
 let ST = null;
+/* 外观：页面打开前由控制台在 html 上写好 data-theme，这里只负责切换和保存 */
+const themeNow = () => document.documentElement.dataset.theme || 'system';
+const isDark = () => { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+function themeMark(){ $$('#themeSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === themeNow())); }
+function themeApply(v){
+  const run = () => { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; themeMark(); themeRepaint(); };
+  if (document.startViewTransition && !REDUCED) document.startViewTransition(run); else run();
+}
+function themeRepaint(){ if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function') mapFrame(); }); }
+async function themeSave(v){
+  if (v === themeNow()) return;
+  const old = themeNow(); themeApply(v);
+  try { const r = await api('/api/console-settings', {theme: v}); if (!r.ok) throw new Error(r.error || '外观设置未保存'); }
+  catch(e){ themeApply(old); toast('外观设置未保存\n' + e.message, 'err'); }
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themeNow() === 'system') themeRepaint(); });
 /* 右下角提示：滑入；成功几秒后自己收起（鼠标放上去暂停）；失败的一直留着等你关 */
 function toast(msg, kind = '', ms, actions = []){
   const box = $('#toasts'), text = String(msg ?? '').trim();
@@ -2518,6 +2552,7 @@ function fillSettings(){
   $('#othersNote').hidden = !SET.others.length; $('#othersNote').textContent = '另外还有 ' + SET.others.length + ' 条其他格式的白名单，将原样保留。';
 }
 async function loadSettings(){ const s = await api('/api/settings'); if (s.error) throw new Error(s.error); SET = s; clean(); fillSettings(); $('#saveNote').textContent = ''; }
+$$('#themeSeg button').forEach(b => b.onclick = () => themeSave(b.dataset.v)); themeMark();
 $('#saveBtn').onclick = async () => { if (!SET) return; if (!SET.admins.length && !(await ask('管理员列表为空，确定保存吗？'))) return;
   const r = await api('/api/settings', SET); if (!r.ok) return alert(r.msg || r.error || '有其他任务正在进行，请稍后再保存'); clean(); $('#saveNote').textContent = '正在保存并重启 AstrBot，约需半分钟…'; };
 $('#reloadBtn').onclick = async () => { if (SET && SET._dirty && !(await ask('放弃未保存的修改？', '放弃'))) return; SET = null; loadSettings(); };
@@ -2940,7 +2975,7 @@ const FSTAT = {open: ['', '待跟进'], asked: ['w', '已问过'], done: ['g', '
 const MAPC = {key: null, c: {}, spr: {}};
 const MAP_LABELED = new Set(['persona', 'scope', 'category', 'hub']);
 function mapTheme(){
-  const dark = matchMedia('(prefers-color-scheme: dark)').matches, key = (document.documentElement.dataset.theme || '') + (dark ? 'd' : 'l');
+  const dark = isDark(), key = (document.documentElement.dataset.theme || '') + (dark ? 'd' : 'l');
   if (MAPC.key === key) return MAPC;
   const css = getComputedStyle(document.documentElement), g = n => css.getPropertyValue(n).trim();
   MAPC.key = key; MAPC.dark = g('--bg').toLowerCase() < '#8'; MAPC.c = {}; MAPC.spr = {};

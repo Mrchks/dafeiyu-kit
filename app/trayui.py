@@ -144,6 +144,14 @@ def _scale_at(pt: W.POINT) -> tuple[float, W.RECT]:
 
 
 def _theme() -> str:
+    """托盘面板与控制台使用同一个外观设置；选「跟随系统」时读取 Windows 的深浅色设置。"""
+    try:
+        import core
+        t = core.ui_theme()
+        if t in ("light", "dark"):
+            return t
+    except Exception:
+        pass
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as k:
             return "light" if winreg.QueryValueEx(k, "AppsUseLightTheme")[0] else "dark"

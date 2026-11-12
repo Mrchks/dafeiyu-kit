@@ -24,12 +24,12 @@ v1.4.0 起的界面规范。改界面前先看这份，新加的页面、弹窗�
 | 次级底色 | `--panel2` | #f2f2f0 | #1c1c1f |
 | 分隔线 | `--line` / `--line2` | #e7e7e4 / #d6d6d1 | #26262a / #34343a |
 | 文字 | `--text` / `--text2` | #18181b / #3f3f46 | #ededef / #c9c9ce |
-| 次要文字 | `--muted` / `--faint` | #71717a / #a1a1aa | #8b8b93 / #5f5f66 |
+| 次要文字 | `--muted` / `--faint` | #71717a / #a1a1aa | #8b8b93 / #74747c |
 | 主要按钮 | `--primary` | #18181b | #ededef |
 | 链接、焦点框 | `--accent` | #2f5bd3 | #7c9cf2 |
 | 状态 | `--good` `--warn` `--bad`（各带 `-soft` 浅底） | | |
 
-深色模式跟随系统（`prefers-color-scheme`），只换变量，不另写组件样式。
+深浅色由「常用设置 → 外观」决定：跟随系统 / 浅色 / 深色，保存在 `state.json` 的 `theme`。控制台返回页面时在 `<html>` 上写好 `data-theme`（跟随系统时不写），首次绘制前就是所选颜色。深色变量写两份：`@media (prefers-color-scheme: dark)` 下的 `:root:not([data-theme="light"])` 和 `:root[data-theme="dark"]`，只换变量，不另写组件样式。切换时用 View Transitions 整页交叉淡入约 0.4 秒，不做逐个元素的过渡。脚本里判断深浅色用 `isDark()`；画布（记忆脑图）在切换后重画。托盘面板读取同一设置。
 
 ## 字号
 

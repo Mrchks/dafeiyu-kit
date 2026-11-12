@@ -92,6 +92,7 @@ DEFAULT_STATE = {
     "autostart": True,
     "watchdog": True,
     "notify": True,
+    "theme": "system",          # 外观：system 跟随系统 / light 浅色 / dark 深色
     "wanted": {"napcat": False, "astrbot": False},
     "wizard": {},               # 向导里填过的东西（不含密钥）
 }
@@ -111,6 +112,14 @@ def load_state() -> dict:
         for k, v in DEFAULT_STATE.items():
             s.setdefault(k, v)
         return s
+
+
+THEMES = ("system", "light", "dark")
+
+
+def ui_theme() -> str:
+    t = load_state().get("theme")
+    return t if t in THEMES else "system"
 
 
 def save_state(s: dict) -> None:
