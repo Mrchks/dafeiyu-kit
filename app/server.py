@@ -341,7 +341,7 @@ class Handler(BaseHTTPRequestHandler):
                 s = load_state()
                 self._json({"setup_done": s["setup_done"], "home": s["home"] or installer.default_home(),
                             "wizard": s["wizard"], "bot_qq": s["bot_qq"], "owners": s["owners"],
-                            "dashboard_user": s["dashboard_user"], "kit": str(KIT)})
+                            "dashboard_user": s["dashboard_user"], "kit": str(KIT), "napcat_dir": s.get("napcat_dir") or ""})
             elif p == "/api/updates":
                 self._json(updater.info(force=q.get("force") == "1"))
             elif p == "/api/group-rules":
@@ -596,6 +596,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._ok(services.run_job("安装 AstrBot", lambda: installer.install_astrbot(b["home"], b.get("user") or "", b.get("password") or "")))
             elif p == "/api/wizard/install-napcat":
                 self._ok(services.run_job("安装 NapCat", installer.install_napcat))
+            elif p == "/api/wizard/napcat-pick":         # 选择本机已有的 NapCat.xxx.Shell 文件夹
+                r = attach.pick_folder("napcat")
+                self._json(installer.use_napcat(r["item"]["dir"]) if r.get("ok") else r)
             elif p == "/api/wizard/check-deepseek":
                 self._json(manage.check_deepseek(b.get("key", "").strip()))
             elif p == "/api/wizard/configure":

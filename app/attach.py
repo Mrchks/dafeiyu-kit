@@ -485,8 +485,9 @@ def apply(body: dict) -> str:
     if not owners:
         raise RuntimeError("请填写主人的 QQ 号")
     bot_qq = str(body.get("bot_qq") or (nc or {}).get("qq") or "").strip()
-    if body.get("install_napcat") and not re.fullmatch(r"\d{5,12}", bot_qq):
-        raise RuntimeError("安装 NapCat 需要填写 bot 使用的 QQ 小号")
+    if body.get("install_napcat"):
+        import installer
+        raise RuntimeError(installer.NAPCAT_GONE)
 
     job_line("正在备份将会改动的配置文件…")
     job_progress(0.05)
@@ -520,7 +521,7 @@ def apply(body: dict) -> str:
 
     steps = (["persona"] if body.get("persona") else []) + (["plugins", "plugin_config", "memes", "reload"] if body.get("plugins") else [])
     if steps:
-        if not ab["has_qq_platform"] and not body.get("install_napcat"):
+        if not ab["has_qq_platform"]:
             job_line("AstrBot 中还没有 QQ 平台，暂不安装插件组和人设；接入 NapCat 后可在「记忆」页安装。")
         else:
             job_line("正在按勾选内容安装：" + "、".join({"persona": "大肥鱼人设", "plugins": "插件组"}.get(s, "") for s in steps if s in ("persona", "plugins")))
@@ -534,14 +535,15 @@ def apply(body: dict) -> str:
         conf = conf.get("config", conf)
         astrbot_api.call("PUT", "/api/v1/config-profiles/default", apply_recommended(conf, keys))
 
-    if not nc and body.get("install_napcat"):
-        import installer
-        job_line("正在安装 NapCat…")
-        installer.install_napcat()
-        shell = Path(load_state()["napcat_dir"])
-        _link_napcat(ab, shell, bot_qq)
-        services.stop_astrbot()
-        services.start_astrbot()
+    # 选择的 NapCat 还没有连到这个 AstrBot 时补上连接（NapCat 已停止发布，不再提供安装，只能接入本机已有的）
+    if nc and not (ab.get("ws_port") and ab["ws_port"] in nc.get("ws_ports", [])):
+        if re.fullmatch(r"\d{5,12}", bot_qq):
+            job_line("正在把 NapCat 连接到此 AstrBot（需要短暂重启 AstrBot）…")
+            services.stop_astrbot()                # 改 cmd_config.json 前先停 AstrBot
+            _link_napcat(ab, Path(nc["dir"]), bot_qq)
+            services.start_astrbot()
+        else:
+            job_line("所选 NapCat 尚未登录过 QQ，无法自动连接；请在 NapCat 中登录 bot 的 QQ 号后，在「总览」中重启 NapCat。")
     job_progress(1.0)
     log(f"已接入已有安装：AstrBot {ab['root']}（{ab['kind']}），NapCat {(nc or {}).get('dir', '未接入')}，备份 {dest}")
     return "接入完成。原有的人设、模型、插件和聊天记录均已保留；改动前的配置备份在 " + str(dest)

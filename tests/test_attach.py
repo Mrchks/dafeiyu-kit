@@ -206,3 +206,39 @@ class PluginSyncOptOutTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LocalNapcatTests(unittest.TestCase):
+    """NapCat 官方停止发布后：安装向导只接受本机已有的 NapCat，不再在线下载。"""
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def test_use_napcat_accepts_shell_and_rejects_others(self):
+        import installer
+        shell = make_napcat(self.tmp)
+        saved, done = {}, []
+        with patch.object(installer, "update_state", side_effect=lambda **k: saved.update(k)), \
+             patch.object(installer, "step_done", side_effect=done.append):
+            ok = installer.use_napcat(str(self.tmp))          # 选上级文件夹也能找到里面的 Shell
+            bad = installer.use_napcat(str(self.tmp / "empty"))
+        self.assertTrue(ok["ok"])
+        self.assertEqual(saved["napcat_dir"], str(shell))
+        self.assertEqual(done, ["napcat"])
+        self.assertFalse(bad["ok"])
+        self.assertIn("NapCatWinBootMain.exe", bad["error"])
+
+    def test_install_napcat_no_longer_downloads(self):
+        import installer
+        with patch.object(installer, "load_state", return_value={"home": str(self.tmp), "napcat_dir": ""}):
+            with self.assertRaises(RuntimeError) as c:
+                installer.install_napcat()
+        self.assertIn("停止发布", str(c.exception))
+
+    def test_attach_refuses_install_request(self):
+        ab = self.tmp / "AstrBot"
+        make_astrbot(ab)
+        with patch.object(attach, "inspect_astrbot", return_value={"ok": True, "root": str(ab)}):
+            with self.assertRaises(RuntimeError) as c:
+                attach.apply({"astrbot": {"root": str(ab)}, "owners": ["12345678"], "install_napcat": True})
+        self.assertIn("停止发布", str(c.exception))

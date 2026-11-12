@@ -2048,7 +2048,7 @@ document.addEventListener('keydown', e => {
 
 /* ======================= 安装向导 ======================= */
 const STEPS_NEW = [
-  ['welcome','欢迎'], ['env','安装位置'], ['astrbot','安装 AstrBot'], ['napcat','安装 NapCat'],
+  ['welcome','欢迎'], ['env','安装位置'], ['astrbot','安装 AstrBot'], ['napcat','选择 NapCat'],
   ['deepseek','模型 API'], ['qq','账号设置'], ['login','扫码登录'], ['import','导入配置'], ['test','测试'], ['finish','完成']
 ];
 // 接入已有的 AstrBot 和 NapCat：原位接管，不重新安装
@@ -2154,10 +2154,13 @@ const VIEWS = {
     <div class="field"><label></label><label class="note"><input type="checkbox" id="showPw"> 显示密码</label></div>
     ${wizDone('astrbot')?'<p class="note" style="color:var(--good)">已安装完成。需要重新安装时，可再次点击。</p>':''}
     <div class="row"><button class="primary" id="wInstall">${wizDone('astrbot')?'重新安装':'开始安装'}</button></div>${jobBox()}</div>` + navBtns(); },
-  napcat(){ return `<h1>安装 NapCat</h1><p class="sub">NapCat 负责为 bot 登录 QQ。安装程序会自动下载 NapCat 和 QQ 内核（约 300MB），约需 3–10 分钟。电脑上已安装的 QQ 不受影响。</p>${stepInfo('3–10 分钟，下载约 300MB', '点击「开始安装」；出现防火墙提示时点击「取消」', '下载不完整时会自动更换下载地址重试')}
-    <div class="section">${wizDone('napcat')?'<p class="note" style="color:var(--good)">已安装完成。</p>':''}
-    <div class="row" style="margin-top:0"><button class="primary" id="wInstall">${wizDone('napcat')?'重新安装':'开始安装'}</button></div>${jobBox()}
-    <p class="note">出现 Windows 防火墙提示时，点击「取消」即可；NapCat 只在本机内部建立连接。</p></div>` + navBtns(); },
+  napcat(){ const it = WZ.napcatPick, cur = (WZ.state.napcat_dir || '');
+    return `<h1>选择 NapCat</h1><p class="sub">NapCat 负责为 bot 登录 QQ。NapCat 官方已停止发布新版本，整合包无法再在线下载安装，请先在本机准备好 Shell 版 NapCat，再选择它的文件夹。</p>${stepInfo('约 1 分钟', '点击「选择文件夹」，选中 NapCat.xxx.Shell 文件夹（其中有 NapCatWinBootMain.exe）', '已有 AstrBot 和 NapCat 时，可返回欢迎页选择「接入已有的 AstrBot 和 NapCat」')}
+    <div class="section">
+      ${wizDone('napcat') && cur ? `<p class="note" style="color:var(--good)">已选择：${esc(cur)}${it && it.item && it.item.version ? `（NapCat ${esc(it.item.version)}）` : ''}</p>` : ''}
+      ${it && !it.ok && it.error ? `<p class="note" style="color:var(--bad)">${esc(it.error)}</p>` : ''}
+      <div class="row" style="margin-top:0"><button class="primary" id="wPickNc">${wizDone('napcat') ? '重新选择' : '选择文件夹'}</button></div>
+      <p class="note">选择后不会移动或复制 NapCat，整合包直接使用该文件夹；电脑上已安装的 QQ 不受影响。</p></div>` + navBtns(); },
   deepseek(){ return `<h1>模型 API</h1><p class="sub">选择服务商并填写 API Key。预设已包含接口地址和型号；使用中转站时请选择「自定义」。</p>
     <div class="section wcompact"><div class="field"><label for="wModelPreset">服务商</label><select id="wModelPreset"></select></div>
     <p class="note" id="wModelHint"></p><div class="field"><label for="dsKey">API Key</label><div class="keyrow"><input id="dsKey" type="password" autocomplete="off" spellcheck="false" style="flex:1;min-width:0"><button id="wProbe">检测连接</button></div>
@@ -2215,8 +2218,7 @@ const VIEWS = {
       <div class="section"><h2>账号与启动</h2>
         <div class="field"><label for="wOwners">主人 QQ 号</label><input id="wOwners" value="${esc(WZ.data.attachOwners || (A.ab?.admins || []).join(' '))}" placeholder="多个用空格分隔"></div>
         ${nc ? `<div class="field"><label>bot 的 QQ 号</label><div>${esc(nc.qq || '未读取到')}</div></div>` :
-          `<label class="chk"><input type="checkbox" id="wOptNapcat" checked><span><b>安装 NapCat 并连接到此 AstrBot</b><small>未检测到 NapCat。安装约需 3–10 分钟，完成后在「总览」中扫码登录。</small></span></label>
-           <div class="field"><label for="wBotQQ">bot 的 QQ 小号</label><input id="wBotQQ" value="${esc(WZ.data.attachBot || '')}" placeholder="bot 使用的 QQ 号"></div>`}
+          `<p class="note" style="margin:4px 0 12px">本次只接入 AstrBot。NapCat 官方已停止发布，整合包不再提供安装；需要接入 NapCat 时，请返回上一步点击「选择文件夹」，指定本机的 NapCat.xxx.Shell 文件夹。</p>`}
         ${(A.autostart || []).length ? `<div class="field top"><label>开机启动 AstrBot</label><div><div class="seg" id="wBoot"><button data-b="console" class="${WZ.data.boot !== 'external' ? 'on' : ''}">由控制台启动</button><button data-b="external" class="${WZ.data.boot === 'external' ? 'on' : ''}">由原有方式启动</button></div></div>
           <div class="tip">检测到其他程序设置了开机自启（${esc(A.autostart.join('、'))}）。<span class="info" tabindex="0" data-tip-html="选择「由控制台启动」时，请在原来的启动器中关闭它的开机自启，避免重复启动。&lt;br&gt;选择「由原有方式启动」时，控制台开机只启动 NapCat，AstrBot 启动后由控制台自动接管。">!</span></div></div>` : ''}
         <p class="note" style="margin:12px 0 0">开始接入前，将备份 ${(A.backups || []).length} 个配置文件 <span class="info" tabindex="0" data-tip-html="${esc((A.backups || []).map(esc).join('&lt;br&gt;') || '无')}">!</span>，备份位置在接入完成后显示。</p></div>
@@ -2243,7 +2245,9 @@ const BIND = {
       if (user && !/^[A-Za-z0-9_\-]{3,32}$/.test(user)) return alert('账号只能使用 3–32 位英文字母、数字或下划线（留空则使用 admin）');
       runJob('/api/wizard/install-astrbot', {home: WZ.data.home, user, password: pw}); };
     bindNav(() => { if (!wizDone('astrbot')) return alert('先装好 AstrBot'); next(); }); },
-  napcat(){ $('#wInstall').onclick = () => runJob('/api/wizard/install-napcat'); bindNav(() => { if (!wizDone('napcat')) return alert('先装好 NapCat'); next(); }); },
+  napcat(){ $('#wPickNc').onclick = async () => { const r = await api('/api/wizard/napcat-pick', {}); if (r.cancelled) return;
+      WZ.napcatPick = r; WZ.state = await api('/api/wizard/state'); wizRender(); };
+    bindNav(() => { if (!wizDone('napcat')) return alert('请先选择 NapCat 文件夹'); next(); }); },
   async deepseek(){
     const catalog = await api('/api/model-catalog'); if (!$('#wModelPreset')) return;
     if (!Array.isArray(catalog.presets)) { $('#dsMsg').textContent='预设读取失败，请返回重试'; return; }
@@ -2380,12 +2384,11 @@ const BIND = {
     const start = () => {
       const split = s => String(s || '').split(/[\s,，、]+/).filter(Boolean);
       const owners = split($('#wOwners').value); if (!owners.length || owners.some(o => !/^\d{5,12}$/.test(o))) return alert('请正确填写主人的 QQ 号');
-      const instNc = !A.nc && $('#wOptNapcat')?.checked, bot = ($('#wBotQQ')?.value || '').trim();
-      if (instNc && !/^\d{5,12}$/.test(bot)) return alert('请填写 bot 使用的 QQ 小号');
+      const bot = A.nc ? (A.nc.qq || '') : '';
       Object.assign(WZ.data, {optPlugins: $('#wOptPlugins').checked, optPersona: $('#wOptPersona').checked, optRec: $('#wOptRec').checked,
         attachOwners: owners.join(' '), attachBot: bot, recKeys: $$('#wRecList input:checked').map(i => i.dataset.key)});
       api('/api/wizard/save', {form: formSnapshot()});
-      runJob('/api/attach/apply', {astrbot: A.ab, napcat: A.nc || null, owners, bot_qq: A.nc ? A.nc.qq : bot, install_napcat: instNc,
+      runJob('/api/attach/apply', {astrbot: A.ab, napcat: A.nc || null, owners, bot_qq: bot,
         login: WZ.data.acReset ? {reset: true} : {user: WZ.data.acUser, password: WZ.secrets.acPass || ''},
         plugins: WZ.data.optPlugins, persona: WZ.data.optPersona, recommended: WZ.data.optRec ? WZ.data.recKeys : [], boot: WZ.data.boot || 'console'},
         j => { if (j.ok){ WZ.attach.done = true; $('#wNext').textContent = '下一步'; } });

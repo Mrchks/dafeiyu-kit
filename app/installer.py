@@ -8,22 +8,19 @@ import platform
 import re
 import secrets
 import shutil
-import subprocess
 import tempfile
 import time
-import zipfile
 from pathlib import Path
 
 import manage
 import modelhub
 import services
-from core import (zip_ok, GH_PROXIES, ASTRBOT_VERSION, CREATE_NO_WINDOW, KIT, LOG_DIR, PACK_DIR, PYPI_MIRRORS, RUNTIME_PY, WIN,
-                  cmd_config_path, disk_free_gb, download, edge_path, github_latest_asset, is_ascii_path,
+from core import (GH_PROXIES, ASTRBOT_VERSION, CREATE_NO_WINDOW, KIT, LOG_DIR, PACK_DIR, PYPI_MIRRORS, RUNTIME_PY, WIN,
+                  cmd_config_path, disk_free_gb, edge_path, is_ascii_path,
                   load_state, log, mem_gb, napcat_cfg_dir, ps, read_json, run, run_stream, set_wanted,
                   update_state, write_json)
 from services import job_line, job_progress
 
-NAPCAT_FALLBACK_TAG = "v4.18.41"
 BOT_NAME = "大肥鱼"
 
 
@@ -181,86 +178,33 @@ def _find_shell(d: Path) -> Path | None:
     return sorted(hits)[-1] if hits else None
 
 
+NAPCAT_GONE = ("NapCat 官方已停止发布新版本，整合包无法再在线下载安装 NapCat。"
+               "请先在本机准备好 Shell 版 NapCat，再选择它的 NapCat.xxx.Shell 文件夹。")
+
+
 def install_napcat() -> str:
+    """NapCat 官方已撤下全部发布（2026-11），不再在线下载。只接受本机已有的 NapCat（home/napcat 下已安装的，或用 use_napcat 选择的）。"""
     s = load_state()
-    home = Path(s["home"])
-    ndir = home / "napcat"
-    ndir.mkdir(parents=True, exist_ok=True)
-    shell = _find_shell(ndir)
+    shell = Path(s["napcat_dir"]) if s.get("napcat_dir") else None
+    if not (shell and (shell / "NapCatWinBootMain.exe").exists()):
+        shell = _find_shell(Path(s["home"]) / "napcat") if s.get("home") else None
     if not shell:
-        installer = next(iter(ndir.glob("**/NapCatInstaller.exe")), None)
-        if not installer:
-            job_line("正在查询 NapCat 最新版本…")
-            tag, url = github_latest_asset("NapNeko/NapCatQQ", lambda n: n == "NapCat.Shell.Windows.OneKey.zip")
-            if not url:
-                tag = tag or NAPCAT_FALLBACK_TAG
-                url = f"https://github.com/NapNeko/NapCatQQ/releases/download/{tag}/NapCat.Shell.Windows.OneKey.zip"
-            job_line(f"正在下载 NapCat 安装器 {tag}…")
-            zp = ndir / "NapCat.OneKey.zip"
-            download(url, zp, progress=lambda g, t: job_progress(0.1 * g / t if t else None), github=True)
-            with zipfile.ZipFile(zp) as z:
-                z.extractall(ndir)
-            installer = next(iter(ndir.glob("**/NapCatInstaller.exe")), None)
-            if not installer:
-                raise RuntimeError("解压 NapCat 安装器后未找到 NapCatInstaller.exe")
-        zp_shell = installer.parent / "NapCat.Shell.zip"
-
-        def shell_zip_bad() -> bool:
-            """NapCat 官方安装器下载 NapCat 本体后不做校验，下到半截也会拿去解压，然后报「解压失败」。"""
-            return zp_shell.exists() and not zip_ok(zp_shell)
-
-        def drop_bad_zip() -> None:
-            if shell_zip_bad():
-                try:
-                    zp_shell.unlink()
-                    job_line("上次下载的 NapCat 本体不完整，已删除并重新下载")
-                except OSError:
-                    pass
-
-        code = None
-        for attempt in range(1, 4):
-            drop_bad_zip()
-            job_line(f"运行 NapCat 安装器（第 {attempt} 次）：将下载 QQ 内核（约 300MB）和 NapCat，需要几分钟…")
-            job_progress(0.15)
-            t0 = time.time()
-
-            def on(l, t0=t0):
-                job_line(l[-200:])
-                if time.time() - t0 > 5:
-                    job_progress(min(0.9, 0.15 + (time.time() - t0) / 600))
-            code = run_stream([str(installer)], on, cwd=str(installer.parent), timeout=1800)
-            shell = _find_shell(ndir)
-            if shell:
-                break
-            if not shell_zip_bad():
-                break               # 不是下载不完整，换下面的方式再试
-            job_line("NapCat 本体下载中断（文件不完整），正在更换下载地址重试…")
-        if not shell and not shell_zip_bad():
-            job_line("后台安装失败，改为在单独的窗口中安装。请留意弹出的黑色窗口：安装完成后窗口会暂停，"
-                     "出现「Press any key」时按任意键关闭即可，控制台会继续处理。")
-            p = subprocess.Popen([str(installer)], cwd=str(installer.parent),
-                                 creationflags=subprocess.CREATE_NEW_CONSOLE if WIN else 0)
-            for _ in range(900):
-                time.sleep(2)
-                shell = _find_shell(ndir)
-                if (shell and (shell / "napcat.bat").exists()) or p.poll() is not None:
-                    time.sleep(5)
-                    shell = _find_shell(ndir)
-                    break
-            try:
-                p.kill()
-            except Exception:
-                pass
-        if not shell:
-            if shell_zip_bad():
-                drop_bad_zip()
-                raise RuntimeError("NapCat 本体连续多次未能完整下载（文件不完整，解压失败）。通常是网络不稳定所致，"
-                                   "请更换网络或开启代理后点击「重试」。")
-            raise RuntimeError(f"NapCat 安装未完成（安装器退出码 {code}）。请点击「重试」；仍未解决时，可生成问题报告并反馈给作者。")
+        raise RuntimeError(NAPCAT_GONE)
     update_state(napcat_dir=str(shell))
     job_progress(1.0)
     step_done("napcat")
-    return "NapCat 安装完成"
+    return "已使用本机的 NapCat"
+
+
+def use_napcat(path: str) -> dict:
+    """安装向导「选择 NapCat」：检查所选文件夹是 Shell 版 NapCat，记为本整合包使用的 NapCat。"""
+    import attach
+    it = attach.inspect_napcat(path)
+    if not it["ok"]:
+        return {"ok": False, "item": it, "error": " ".join(it["problems"])}
+    update_state(napcat_dir=it["dir"])
+    step_done("napcat")
+    return {"ok": True, "item": it}
 
 
 # ---------------------------------------------------------------- 4 配置（小号、主人、DeepSeek、连接）

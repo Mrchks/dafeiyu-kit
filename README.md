@@ -12,7 +12,7 @@
 
 - **桌面控制台**（本仓库）：安装向导、运行管理、记忆与知识库管理、模型与费用管理、故障诊断与更新。
 - **配套插件组**（本仓库 `app/configpack/`）：记忆、知识库检索、群聊行为修正等自研 AstrBot 插件，由控制台自动安装和升级。
-- **运行底座**：[AstrBot](https://github.com/AstrBotDevs/AstrBot)（机器人框架）与 [NapCat](https://github.com/NapNeko/NapCatQQ)（QQ 协议端），安装时从官方渠道下载，不随包分发。
+- **运行底座**：[AstrBot](https://github.com/AstrBotDevs/AstrBot)（机器人框架）与 [NapCat](https://github.com/NapNeko/NapCatQQ)（QQ 协议端）。AstrBot 安装时从官方渠道下载；NapCat 官方已停止发布，需由用户自行准备 Shell 版，均不随包分发。
 
 AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之后的问题：如何让 bot 记住人、在群里行为得当、成本可控，并且在出现故障时由非技术用户自行处理。
 
@@ -94,6 +94,7 @@ AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之�
 - 一个 QQ 小号，以及已登录该小号的手机（用于扫码）；
 - 主人使用的 QQ 号；
 - 任一模型服务商的 API Key；
+- 本机已有的 Shell 版 NapCat（NapCat 官方已停止发布，整合包无法在线下载）；
 - Windows 10 / 11，磁盘可用空间不少于 6 GB。
 
 ### 已在使用 AstrBot 和 NapCat
@@ -121,7 +122,7 @@ AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之�
 ## 许可与致谢
 
 - 本仓库代码以 [MIT 许可](LICENSE) 发布；`app/configpack/` 为大肥鱼配置包（MIT，作者 zexuanw958-svg）。
-- AstrBot（AGPL-3.0）与 NapCat 不随包分发，安装时从官方渠道下载，并遵循其各自的许可条款；随包附带的 Python、pystray、Pillow 等组件的许可证见 [LICENSES](LICENSES)。
+- AstrBot（AGPL-3.0）与 NapCat 不随包分发：AstrBot 安装时从官方渠道下载，NapCat 由用户自行准备；并遵循其各自的许可条款；随包附带的 Python、pystray、Pillow 等组件的许可证见 [LICENSES](LICENSES)。
 - 「模型与 API」中的服务商图标来自 [lobe-icons](https://github.com/lobehub/lobe-icons)（MIT），各标志归其权利人所有，来源说明见 [LICENSES/provider-icons-SOURCES.txt](LICENSES/provider-icons-SOURCES.txt)。
 - 依据 NapCat 许可条款，整合包免费分发，**不得用于商业用途**。
 
