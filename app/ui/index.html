@@ -2062,7 +2062,7 @@ function themeApply(v){
   const run = () => { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; themeMark(); themeRepaint(); };
   if (document.startViewTransition && !REDUCED) document.startViewTransition(run); else run();
 }
-/* 窗口标题栏颜色：Edge 应用窗口按 theme-color 着色，跟页面背景一致（浅色 #f7f7f6，深色 #0c0c0d） */
+/* theme-color 跟随外观。注意：用 --app 打开的普通 Edge 应用窗口不读取它，标题栏仍是 Edge 默认色；只有安装为应用（PWA）后才会生效 */
 function themeMeta(){ const m = document.getElementById('themeColor'); if (m) m.content = isDark() ? '#0c0c0d' : '#f7f7f6'; }
 themeMeta();
 function themeRepaint(){ themeMeta(); if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function'){ mapFrame(); if (MEM.graph) mapLegend(); } }); }
