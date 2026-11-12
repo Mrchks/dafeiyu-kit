@@ -50,6 +50,7 @@ AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之�
 ### 四、模型与成本管理
 
 - **多服务商接入**：内置 OpenAI、Anthropic、DeepSeek、Kimi、Gemini、Grok、Qwen、Doubao、MiniMax、MiMo、GLM、LongCat 共 12 家预设，并支持自定义中转地址、接口协议与请求参数；API Key 保存后不回显。
+- **配置时即可检测**：填写密钥后直接请求服务商，未保存前即可确认密钥是否有效、读取可选模型；失败时区分密钥、地址与协议、余额与限流、网络、证书与代理等原因。思考程度以分段选项选择，由控制台换算为各服务商的实际参数；安装向导同样可以检测。
 - **按用途分配模型**：默认聊天、识图、各群与各私聊可分别指定模型，保存连接不会改变已有会话的分配。
 - **缓存优化**：固定系统提示与工具列表的顺序和内容，将时间、情绪、检索结果等易变内容移至当轮消息，并调整历史截断策略，以提高服务商的输入缓存命中率、降低重复输入的费用。
 - **用量统计**：按人、按群合并统计 token、调用次数与估算费用，支持今天 / 7 天 / 30 天 / 全部时段，并展示输入缓存占比。
@@ -115,6 +116,7 @@ AstrBot 与 NapCat 解决「能否接入」的问题；本项目解决接入之�
 
 - 本仓库代码以 [MIT 许可](LICENSE) 发布；`app/configpack/` 为大肥鱼配置包（MIT，作者 zexuanw958-svg）。
 - AstrBot（AGPL-3.0）与 NapCat 不随包分发，安装时从官方渠道下载，并遵循其各自的许可条款；随包附带的 Python、pystray、Pillow 等组件的许可证见 [LICENSES](LICENSES)。
+- 「模型与 API」中的服务商图标来自 [lobe-icons](https://github.com/lobehub/lobe-icons)（MIT），各标志归其权利人所有，来源说明见 [LICENSES/provider-icons-SOURCES.txt](LICENSES/provider-icons-SOURCES.txt)。
 - 依据 NapCat 许可条款，整合包免费分发，**不得用于商业用途**。
 
 感谢 AstrBot、NapCat 及本项目所使用的各开源项目的作者。

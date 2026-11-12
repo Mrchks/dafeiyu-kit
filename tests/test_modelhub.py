@@ -73,6 +73,11 @@ class ModelTests(unittest.TestCase):
         self.data.start()
         self.addCleanup(self.api.stop)
         self.addCleanup(self.data.stop)
+        self.state = {}                       # 验证记录写进假的状态，不碰正在用的 state.json
+        for p in (patch.object(hub, "load_state", lambda: dict(self.state)),
+                  patch.object(hub, "update_state", lambda **kw: self.state.update(kw))):
+            p.start()
+            self.addCleanup(p.stop)
 
     def test_all_twelve_presets_build_with_key_only(self):
         presets = hub.catalog()["presets"]

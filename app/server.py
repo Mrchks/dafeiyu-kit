@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
 import threading
@@ -241,6 +242,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(200, (UI_DIR / "icon.png").read_bytes(), "image/png")
             elif p == "/models.js":
                 self._send(200, (UI_DIR / "models.js").read_bytes(), "text/javascript; charset=utf-8")
+            elif re.fullmatch(r"/icons/providers/[a-z0-9-]{1,40}\.svg", p) and (UI_DIR / p.lstrip("/")).is_file():
+                self._send(200, (UI_DIR / p.lstrip("/")).read_bytes(), "image/svg+xml")
+            elif p == "/api/doc/models":
+                self._json({"text": (UI_DIR.parent / "docs" / "模型与API配置说明.md").read_text(encoding="utf-8")})
             elif p == "/api/ping":
                 self._json({"ok": True, "version": VERSION})
             elif p == "/api/status":
@@ -562,6 +567,12 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(modelhub.assign(b))
             elif p == "/api/models/test":
                 self._json(modelhub.test(str(b.get("id", ""))))
+            elif p == "/api/models/probe":
+                self._json(modelhub.probe(b))
+            elif p == "/api/models/verify":
+                self._json(modelhub.verify_draft(b))
+            elif p == "/api/models/delete":
+                self._json(modelhub.delete(str(b.get("id", ""))))
             elif p == "/api/models/image-rules":
                 self._json(modelhub.apply_image_rules())
             elif p == "/api/ensure-onebot-http":

@@ -894,14 +894,95 @@ button.danger.busy::after{border-top-color:var(--bad)}
 .mtable td:last-child{width:1%;white-space:nowrap}
 .massign{display:grid;grid-template-columns:120px minmax(0,1fr) auto;align-items:center;gap:12px 16px;margin-top:12px}
 .massign label{color:var(--text2);font-size:13.5px}.massign .csel{width:100%;min-width:0}
-#modelDlg{width:min(760px,94vw);max-width:none;height:min(640px,90vh);padding:0}
-#modelDlg[open]{display:flex;flex-direction:column}
+#modelDlg{width:min(920px,95vw);max-width:none;height:min(640px,92vh);padding:0;overflow:hidden}
+#modelDlg[open]{display:grid;grid-template-columns:200px minmax(0,1fr)}
+.mprov{border-right:1px solid var(--line);background:var(--bg);padding:14px 10px;display:flex;flex-direction:column;min-height:0}
+.mprov small{display:block;color:var(--faint);font-size:12px;padding:4px 10px 8px}
+.mprov-list{position:relative;flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.mprov-list>.ind{position:absolute;left:0;top:0;border-radius:var(--r-sm);background:var(--panel);outline:1px solid var(--line);outline-offset:-1px;box-shadow:var(--shadow-1);pointer-events:none;transition:transform .28s var(--out),height .28s var(--out),width .28s var(--out)}
+.mprov-list.noanim>.ind{transition:none}
+.mprov-list a{position:relative;z-index:1;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r-sm);color:var(--text2);cursor:pointer;font-size:13.5px;user-select:none;text-decoration:none;transition:color .15s}
+.mprov-list a:hover{color:var(--text);text-decoration:none}.mprov-list a.on{color:var(--text);font-weight:500}
+.mprov-list a.dis{opacity:.45;pointer-events:none}
+.pv-ic{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;flex:none}
+.pv-ic img{width:18px;height:18px;display:block}
+.pv-ic.ph{background:var(--panel2);border:1px solid var(--line);color:var(--muted);font-size:13px;line-height:1}
+.mform{display:flex;flex-direction:column;min-width:0;min-height:0}
 .mdlg-head{display:flex;align-items:center;gap:16px;padding:20px 24px 0}
 .mdlg-head h3{margin:0;flex:1}
 .mdlg-body{flex:1;min-height:0;overflow:auto;padding:16px 24px}
 .mdlg-body .mpane[hidden]{display:none}
 .mdlg-body .mpane:not([hidden]){animation:pin .2s var(--ease)}
-.mdlg-body .field{grid-template-columns:132px 1fr}
+.mdlg-body .field{grid-template-columns:112px minmax(0,1fr);padding:10px 0}
+.mdlg-body .field.top{align-items:start}.mdlg-body .field.top>label{padding-top:7px}
+.mdlg-body .field.nob{border-top:0;padding-top:0}
+.mdlg-body .field>label{display:flex;align-items:center}
+.keyrow{display:flex;gap:8px;min-width:0}
+.keyin{position:relative;flex:1;min-width:0}.keyin input{width:100%;padding-right:36px;font-family:var(--mono)}
+.keyin .eye{position:absolute;right:3px;top:50%;transform:translateY(-50%);border:0;background:none;padding:4px 6px;color:var(--muted);line-height:0;border-radius:6px}
+.keyin .eye:hover{color:var(--text);background:var(--panel2)}.keyin .eye.on{color:var(--text)}
+.keyin .eye:active:not(:disabled){transform:translateY(-50%) scale(.94)}
+.probe{display:flex;align-items:center;gap:10px;min-height:38px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--text2);line-height:1.5;transition:background .25s,border-color .25s,color .25s}
+.probe .pt{min-width:0}
+.probe.ok{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.probe.err{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.probe.warn{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.probe .spin{width:14px;height:14px}
+.mbox{border:1px solid var(--line2);border-radius:10px;background:var(--panel);overflow:hidden}
+.mbox .find{display:flex;align-items:center;gap:8px;padding:0 11px;height:34px;border-bottom:1px solid var(--line);color:var(--faint);font-size:12.5px}
+.mbox .find svg{width:14px;height:14px;flex:none}
+.mbox .find input{flex:1;border:0;padding:0;background:none;font-size:13px;box-shadow:none!important;min-width:0}
+.mbox .find span{white-space:nowrap;flex:none}
+.mlist{height:156px;overflow:auto;padding:4px}
+.mopt{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 9px;border-radius:7px;cursor:pointer;color:var(--text2);transition:background .15s,color .15s;animation:pin .22s var(--ease) both}
+.mopt:hover{background:var(--panel2)}
+.mopt code{font:13px var(--mono);background:none;padding:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mopt .rd{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line2);display:inline-grid;place-items:center;transition:border-color .15s}
+.mopt .rd::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .2s var(--spring)}
+.mopt.on{background:var(--panel2);color:var(--text)}.mopt.on code{font-weight:600}
+.mopt.on .rd{border-color:var(--primary)}.mopt.on .rd::after{transform:scale(1)}
+.mopt .caps{display:flex;gap:5px}
+.pill.a{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.mlist .mempty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--faint);font-size:13px;text-align:center;padding:0 24px;line-height:1.7}
+.vrow{display:flex;align-items:center;gap:10px;min-width:0}
+#thinkSeg button[data-v=custom]{font-style:normal}
+/* 说明图标：圆圈内感叹号，悬浮显示说明 */
+.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.2px solid var(--faint);color:var(--muted);font-size:10px;font-weight:700;line-height:1;margin-left:6px;cursor:help;flex:none;font-style:normal;user-select:none}
+.info:hover,.info:focus-visible{border-color:var(--text2);color:var(--text)}
+.ctip.wide{max-width:340px;padding:10px 12px;background:var(--panel);color:var(--text2);border:1px solid var(--line);box-shadow:var(--shadow-2);font-size:12.5px;line-height:1.7;border-radius:10px}
+.ctip.wide b{color:var(--text);font-weight:600}.ctip.wide code{font-size:11.5px}
+/* 连接列表 */
+.conns{margin:0 -20px;padding:0 20px}
+.conn{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border-top:1px solid var(--line);animation:pin .22s var(--ease)}
+.conn:first-child{border-top:0}
+.conn .cn{display:flex;align-items:center;gap:12px;min-width:0}
+.conn .cn .pv-ic{width:28px;height:28px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)}
+.conn .cn .pv-ic img{width:18px;height:18px}
+.conn .cn b{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn .cn code{display:block;font:12.5px var(--mono);color:var(--muted);background:none;padding:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conn .tags{display:flex;gap:6px;flex-wrap:wrap}
+.conn .st{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);min-width:0}
+.conn .st span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.conn .ops{display:flex;gap:2px}
+.conn .ops button{padding:4px 10px}
+/* 深色模式下单色服务商图标反色 */
+:root[data-theme="dark"] img.mono{filter:invert(1)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) img.mono{filter:invert(1)}}
+/* 配置说明 */
+#docDlg{width:min(880px,95vw);max-width:none;height:min(680px,92vh);padding:0;overflow:hidden}
+#docDlg[open]{display:flex;flex-direction:column}
+.doc-head{display:flex;align-items:center;gap:12px;padding:18px 24px 12px;border-bottom:1px solid var(--line)}
+.doc-head h3{margin:0;flex:1}
+.doc-wrap{flex:1;min-height:0;display:grid;grid-template-columns:200px minmax(0,1fr)}
+.doc-toc{position:relative;border-right:1px solid var(--line);padding:12px 10px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.doc-toc a{position:relative;z-index:1;padding:6px 10px;border-radius:var(--r-sm);color:var(--muted);font-size:13px;cursor:pointer;text-decoration:none;transition:color .15s}
+.doc-toc a:hover{color:var(--text);text-decoration:none}.doc-toc a.on{color:var(--text);font-weight:500}
+.doc-toc>.ind{position:absolute;left:0;top:0;border-radius:var(--r-sm);background:var(--panel2);pointer-events:none;transition:transform .28s var(--out),height .28s var(--out),width .28s var(--out)}
+.doc-body{overflow:auto;padding:8px 28px 28px;scroll-behavior:smooth}
+.doc-body h2{font-size:16px;font-weight:600;margin:20px 0 6px;color:var(--text)}
+.doc-body h3{font-size:14px;margin:14px 0 4px}
+.doc-body p,.doc-body li{line-height:1.8}
+.doc-body ol{margin:4px 0 8px;padding-left:20px}
 .mpane>.field:first-child{border-top:0}
 .fld-err:empty{display:none}
 .mdlg-body textarea{min-height:88px;resize:none}
@@ -947,6 +1028,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
 #kt-use:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
 #kt-use>.section{min-height:0;overflow:auto;margin:0;align-self:flex-start;width:100%}
 #themeSeg button{min-width:76px}
+.wcompact .field{padding:8px 0}#wPickWrap .csel{width:100%}.wcompact>.note{margin:4px 0}
 /* 空状态：说明 + 下一步操作 */
 .empty .row{justify-content:center;margin-top:12px}
 </style>
@@ -1099,12 +1181,12 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
 
     <!-- 模型与 API -->
     <section class="page fit" id="p-models">
-      <div class="head"><div><h1>模型与 API</h1><p class="sub">管理模型服务商的连接，并为聊天、识图和各会话指定模型。</p></div><div class="act"><button id="modelRefresh">刷新</button><button class="primary" id="modelAdd">添加连接</button></div></div>
+      <div class="head"><div><h1>模型与 API</h1><p class="sub">管理模型服务商的连接，并为聊天、识图和各会话指定模型。</p></div><div class="act"><button class="ghost" id="modelDoc">配置说明</button><button id="modelRefresh">刷新</button><button class="primary" id="modelAdd">添加连接</button></div></div>
       <div id="modelNeedLogin"></div>
       <div class="seg" id="modelTabs"><button data-mt2="conn" class="on">连接</button><button data-mt2="use">用途分配</button></div>
       <div class="fcol" id="mt2-conn">
         <div class="section grow"><div class="sh"><div class="sh-t"><h2>已添加的连接</h2><p class="hint">保存连接不会切换正在使用的模型。「验证」会发起一次简短的 API 请求，可能产生极少量用量。</p></div></div>
-          <div class="tscroll"><table class="mtable"><thead><tr><th>连接 / 模型</th><th>能力与用途</th><th></th></tr></thead><tbody id="modelRows"></tbody></table></div></div>
+          <div class="tscroll conns" id="modelRows"></div></div>
       </div>
       <div class="fcol" id="mt2-use" hidden>
         <div class="section"><div class="sh"><div class="sh-t"><h2>默认用途</h2><p class="hint">默认聊天模型用于未单独指定模型的会话；识图模型的选择会同步到群聊图片描述。</p></div><div class="act"><button id="modelApplyRules" data-tip="识图规则支持识别万象棋的血量、绿色昵称和独立界面区域，其他图片按普通图片读取。">更新识图规则</button></div></div>
@@ -1363,26 +1445,35 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
   <div class="qr" style="margin:0"><img id="qrImg" alt="登录二维码"></div><div class="row" style="justify-content:flex-end"><button id="qrLater">稍后</button></div></dialog>
 <dialog id="loginDlg"></dialog>
 <dialog id="modelDlg" aria-labelledby="modelEditTitle">
-  <div class="mdlg-head"><h3 id="modelEditTitle">添加连接</h3><div class="seg sm" id="modelDlgTabs"><button data-mp="basic" class="on">基本</button><button data-mp="adv">高级</button></div></div>
-  <input id="modelEditID" type="hidden">
-  <div class="mdlg-body">
-    <div class="mpane" id="mp-basic">
-      <div class="field"><label for="modelPreset">服务商预设</label><select id="modelPreset"></select></div>
-      <div class="field"><label for="modelKey">API Key</label><input id="modelKey" type="password" autocomplete="new-password" spellcheck="false" placeholder="填写密钥"><div class="tip" id="modelKeyNote">保存后不回显密钥。</div></div>
-      <div class="field"><label>预设说明</label><div class="note" id="modelPresetHint"></div></div>
-      <div class="field"><label for="modelVision">图片输入</label><div><label class="switch"><input id="modelVision" type="checkbox"><span></span></label></div><div class="tip" id="modelVisionNote">图片能力仅对应所选型号，更换型号后需要重新确认。</div></div>
+  <aside class="mprov"><small>服务商</small><div class="mprov-list" id="modelProvList" role="listbox" aria-label="服务商"></div></aside>
+  <div class="mform">
+    <div class="mdlg-head"><h3 id="modelEditTitle">添加连接</h3><div class="seg sm" id="modelDlgTabs"><button data-mp="basic" class="on">基本</button><button data-mp="adv">高级</button></div></div>
+    <input id="modelEditID" type="hidden"><input id="modelProtocol" type="hidden">
+    <div class="mdlg-body">
+      <div class="mpane" id="mp-basic">
+        <div class="field"><label for="modelKey">API Key<i class="req">*</i></label>
+          <div class="keyrow"><div class="keyin"><input id="modelKey" type="password" autocomplete="new-password" spellcheck="false" placeholder="填写 API Key"><button type="button" class="eye" id="modelKeyEye" aria-label="显示密钥" data-tip="显示或隐藏密钥"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div><button id="modelProbe">检测连接</button></div>
+          <div class="tip" id="modelKeyNote"></div></div>
+        <div class="field nob"><label></label><div class="probe" id="modelProbeBox" role="status"><span class="dot"></span><span class="pt">尚未检测。检测会直接请求服务商，可能产生极少量用量。</span></div></div>
+        <div class="field top"><label>模型<i class="req">*</i></label>
+          <div class="mbox"><div class="find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input id="modelFind" placeholder="输入模型名称筛选" autocomplete="off" spellcheck="false" aria-label="筛选模型"><span id="modelCount"></span></div><div class="mlist" id="modelList" role="listbox" aria-label="模型"></div></div></div>
+        <div class="field" id="thinkRow"><label>思考程度</label><div><div class="seg" id="thinkSeg"></div><span class="note" id="thinkNone" hidden></span></div><div class="tip" id="thinkTip"></div></div>
+        <div class="field"><label for="modelVision">图片输入</label><div class="vrow"><label class="switch"><input id="modelVision" type="checkbox"><span></span></label><span class="note" id="modelVisionNote"></span></div></div>
+      </div>
+      <div class="mpane" id="mp-adv" hidden>
+        <div class="field"><label for="modelName">连接名称</label><input id="modelName" maxlength="80" placeholder="例如：我的 OpenAI"></div>
+        <div class="field"><label for="modelBase">API 基础地址<span class="info" tabindex="0" role="note" aria-label="说明" data-tip-html="服务商接口的公共地址，填写到版本号为止，例如 &lt;code&gt;https://api.example.com/v1&lt;/code&gt;。&lt;br&gt;不要包含 &lt;code&gt;/chat/completions&lt;/code&gt; 等具体接口路径，也不要写入密钥或查询参数。选择预设时已自动填写。">!</span></label><input id="modelBase" autocomplete="off" spellcheck="false" placeholder="https://api.example.com/v1"><div class="fld-err" id="modelBaseErr"></div></div>
+        <div class="field"><label>接口协议<span class="info" tabindex="0" role="note" aria-label="说明" data-tip-html="&lt;b&gt;Chat Completions&lt;/b&gt;：最通用的格式，绝大多数服务商和中转站都支持，不确定时选择此项。&lt;br&gt;&lt;b&gt;Responses&lt;/b&gt;：OpenAI 较新的格式，仅 OpenAI 官方和少数中转站支持。&lt;br&gt;&lt;b&gt;Anthropic&lt;/b&gt;：Claude 官方接口使用的格式。&lt;br&gt;&lt;b&gt;Gemini&lt;/b&gt;：Google 官方接口使用的格式。&lt;br&gt;选择服务商预设时已自动选好，一般无需修改；使用中转站时，以中转站说明文档为准。">!</span></label><div><div class="seg" id="protoSeg"><button data-v="openai">Chat Completions</button><button data-v="responses">Responses</button><button data-v="anthropic">Anthropic</button><button data-v="gemini">Gemini</button></div></div></div>
+        <div class="field"><label for="modelCode">模型 ID</label><input id="modelCode" spellcheck="false" autocomplete="off" placeholder="填写服务商给出的模型 ID" style="font-family:var(--mono)"></div>
+        <div class="field top"><label for="modelExtra">其他参数<span class="info" tabindex="0" role="note" aria-label="说明" data-tip-html="附加到每次请求中的参数，JSON 对象格式，选填。&lt;br&gt;思考程度由「基本」分页的选项管理，此处无需填写；两处设置同一参数时，以思考程度选项为准。">!</span></label><textarea id="modelExtra" spellcheck="false" placeholder="{}"></textarea></div>
+        <div class="field top"><label for="modelHeaders">额外请求头<span class="info" tabindex="0" role="note" aria-label="说明" data-tip-html="附加到每次请求中的 HTTP 请求头，JSON 对象格式，选填，例如 &lt;code&gt;{&quot;anthropic-workspace-id&quot;: &quot;…&quot;}&lt;/code&gt;。&lt;br&gt;编辑已有连接时留空则保留原请求头。">!</span></label><textarea id="modelHeaders" spellcheck="false" placeholder="选填，JSON 对象"></textarea></div>
+      </div>
     </div>
-    <div class="mpane" id="mp-adv" hidden>
-      <div class="field"><label for="modelName">连接名称</label><input id="modelName" maxlength="80" placeholder="例如：我的 OpenAI"></div>
-      <div class="field"><label for="modelBase">API 基础地址</label><input id="modelBase" autocomplete="off" spellcheck="false" placeholder="https://api.example.com/v1"><div class="fld-err" id="modelBaseErr"></div></div>
-      <div class="field"><label for="modelProtocol">接口协议</label><select id="modelProtocol"><option value="openai">OpenAI Chat Completions</option><option value="responses">OpenAI Responses</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Google Gemini 原生</option></select></div>
-      <div class="field"><label for="modelCode">模型 ID</label><input id="modelCode" spellcheck="false" placeholder="填写服务商给出的模型 ID"></div>
-      <div class="field"><label for="modelExtra">其他参数</label><textarea id="modelExtra" spellcheck="false">{}</textarea><div class="tip">JSON 对象，原样附加到请求体。</div></div>
-      <div class="field"><label for="modelHeaders">额外请求头</label><textarea id="modelHeaders" spellcheck="false" placeholder="留空则保留原请求头"></textarea><div class="tip">JSON 对象，可不填写。</div></div>
-    </div>
+    <div class="mdlg-foot"><span class="note" id="modelSaveNote">保存时会对所选模型再验证一次。</span><button id="modelForce" hidden>仍然保存</button><button id="modelClose">取消</button><button class="primary" id="modelSave">保存连接</button></div>
   </div>
-  <div class="mdlg-foot"><span class="note" id="modelSaveNote"></span><button id="modelClose">取消</button><button class="primary" id="modelSave">保存连接</button></div>
 </dialog>
+<dialog id="docDlg" aria-labelledby="docTitle"><div class="doc-head"><h3 id="docTitle">模型与 API 配置说明</h3><button class="ghost" id="docClose">关闭</button></div>
+  <div class="doc-wrap"><nav class="doc-toc" id="docToc" aria-label="目录"></nav><div class="doc-body md" id="docBody"></div></div></dialog>
 <dialog id="infoDlg" style="width:min(680px,92vw)"><h3 style="margin:0 0 10px" id="infoTitle"></h3><div class="md fixed-scroll" id="infoBody"></div>
   <div class="row" style="justify-content:flex-end"><button class="primary" id="infoOk">关闭</button></div></dialog>
 <dialog id="noticeDlg" style="width:min(620px,92vw)">
@@ -1534,17 +1625,25 @@ document.addEventListener('scroll', e => { if (MENU && !MENU.m.contains(e.target
 /* ---- 悬停提示：把 title 换成自己画的小气泡 ---- */
 let TIP = {el: null, t: 0, on: null};
 document.addEventListener('mouseover', e => {
-  const el = e.target.closest && e.target.closest('[title]:not(iframe),[data-tip]'); if (!el || el === TIP.on) return;
+  const el = e.target.closest && e.target.closest('[title]:not(iframe),[data-tip],[data-tip-html]'); if (!el || el === TIP.on) return;
   if (el.hasAttribute('title')){ const t = el.getAttribute('title'); el.removeAttribute('title'); if (t) el.dataset.tip = t; else delete el.dataset.tip; }
-  if (!el.dataset.tip) return;
+  tipShow(el);
+});
+// 说明图标用键盘聚焦时也显示说明
+document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest('.info[data-tip-html]'); if (el && el !== TIP.on) tipShow(el); });
+document.addEventListener('focusout', e => { if (TIP.on && TIP.on === e.target) tipHide(); });
+function tipShow(el){
+  if (!el.dataset.tip && !el.dataset.tipHtml) return;
   tipHide(); TIP.on = el;
   TIP.t = setTimeout(() => {
-    const d = document.createElement('div'); d.className = 'ctip'; d.textContent = el.dataset.tip; topLayer(d);
+    const d = document.createElement('div'); d.className = 'ctip';
+    if (el.dataset.tipHtml){ d.classList.add('wide'); d.innerHTML = el.dataset.tipHtml; } else d.textContent = el.dataset.tip;
+    topLayer(d, el);
     const r = el.getBoundingClientRect(); let top = r.top - d.offsetHeight - 8; if (top < 8) top = r.bottom + 8;
     d.style.left = Math.max(8, Math.min(r.left + r.width / 2 - d.offsetWidth / 2, innerWidth - d.offsetWidth - 8)) + 'px'; d.style.top = top + 'px';
     requestAnimationFrame(() => d.classList.add('open')); TIP.el = d;
   }, 200);
-});
+}
 document.addEventListener('mouseout', e => { if (TIP.on && !TIP.on.contains(e.relatedTarget)) tipHide(); });
 document.addEventListener('mousedown', () => tipHide(), true);
 function tipHide(){ clearTimeout(TIP.t); TIP.on = null; const d = TIP.el; TIP.el = null; if (d){ d.classList.remove('open'); later(() => d.remove(), 150); } }
@@ -1803,7 +1902,7 @@ function btnHold(b, p){
 }
 
 /* ---- 区域内滚动：上下边缘渐隐 ---- */
-const SC_SEL = '.dg-list,.rlist,.kbl,.kbd-docs,.mrows,.vscroll,.clog-list,.clog-body,.chat,.fixed-scroll,.cd,.mreplay,.kbd-out,.tscroll,#p-persona .plist ul,.mdlg-body';
+const SC_SEL = '.mlist,.doc-body,.doc-toc,.mprov-list,.dg-list,.rlist,.kbl,.kbd-docs,.mrows,.vscroll,.clog-list,.clog-body,.chat,.fixed-scroll,.cd,.mreplay,.kbd-out,.tscroll,#p-persona .plist ul,.mdlg-body';
 const scRO = new ResizeObserver(es => es.forEach(e => scFade(e.target)));
 function scFade(el){
   const t = el.scrollTop > 1, b = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
@@ -2014,14 +2113,16 @@ const VIEWS = {
     <div class="row" style="margin-top:0"><button class="primary" id="wInstall">${wizDone('napcat')?'重新安装':'开始安装'}</button></div>${jobBox()}
     <p class="note">出现 Windows 防火墙提示时，点击「取消」即可；NapCat 只在本机内部建立连接。</p></div>` + navBtns(); },
   deepseek(){ return `<h1>模型 API</h1><p class="sub">选择服务商并填写 API Key。预设已包含接口地址和型号；使用中转站时请选择「自定义」。</p>
-    <div class="section"><div class="field"><label for="wModelPreset">服务商</label><select id="wModelPreset"></select></div>
-    <p class="note" id="wModelHint"></p><div class="field"><label for="dsKey">API Key</label><input id="dsKey" type="password" autocomplete="off" style="width:100%"></div>
+    <div class="section wcompact"><div class="field"><label for="wModelPreset">服务商</label><select id="wModelPreset"></select></div>
+    <p class="note" id="wModelHint"></p><div class="field"><label for="dsKey">API Key</label><div class="keyrow"><input id="dsKey" type="password" autocomplete="off" spellcheck="false" style="flex:1;min-width:0"><button id="wProbe">检测连接</button></div>
+      <div class="tip"><div class="probe" id="wProbeBox" role="status" style="margin-top:4px"><span class="dot"></span><span class="pt">填写 API Key 后点击「检测连接」，确认密钥可用并读取模型列表。</span></div></div></div>
+    <div class="field" id="wThinkRow" hidden><label>思考程度</label><div><div class="seg" id="wThink"></div></div><div class="tip" id="wThinkTip"></div></div>
     <div id="wModelAdvanced">
     <div class="field"><label for="wModelBase">API 基础地址</label><input id="wModelBase" style="width:100%"></div>
-    <div class="field"><label for="wModelCode">模型 ID</label><input id="wModelCode" style="width:100%"></div>
+    <div class="field"><label for="wModelCode">模型 ID</label><div class="keyrow" id="wCodeRow"><input id="wModelCode" style="flex:1;min-width:0"><span id="wPickWrap" hidden style="flex:1;min-width:0"><select id="wModelPick" style="width:100%"></select></span><button class="ghost" id="wPickMode" hidden>手动填写</button></div></div>
     <div class="field"><label for="wModelProtocol">接口协议</label><select id="wModelProtocol"><option value="openai">OpenAI Chat Completions</option><option value="responses">OpenAI Responses</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Gemini 原生接口</option></select></div>
     <div class="field"><label></label><label><input type="checkbox" id="wModelVision"> 此型号支持图片输入（自定义型号请自行确认）</label></div></div>
-    <p class="note" id="dsMsg">保存时会检查填写格式；安装完成后，可在「模型与 API」中验证连接。API Key 只用于本机配置。</p></div>` + navBtns(); },
+    <p class="note" id="dsMsg">进入下一步前，会对所选模型发起一次简短的请求进行验证，可能产生极少量用量。API Key 只保存在本机。</p></div>` + navBtns(); },
   qq(){ return `<h1>账号设置</h1><p class="sub">只需填写 QQ 号，<b>不要填写密码</b>。小号将在下一步通过手机扫码登录。</p>${stepInfo('1 分钟', '填写小号和主人的 QQ 号，不填写密码', '')}
     <div class="section"><div class="field" style="margin-top:0"><label>小号 QQ 号</label><input data-k="bot_qq" placeholder="bot 使用的 QQ 号"></div>
     <div class="field"><label>主人 QQ 号</label><input data-k="owners" placeholder="主人的 QQ 号，多个用空格分隔"></div>
@@ -2069,18 +2170,58 @@ const BIND = {
     const catalog = await api('/api/model-catalog'); if (!$('#wModelPreset')) return;
     if (!Array.isArray(catalog.presets)) { $('#dsMsg').textContent='预设读取失败，请返回重试'; return; }
     const select=$('#wModelPreset'); select.replaceChildren(...catalog.presets.map(p=>new Option(p.name,p.id)));
+    // 检测与验证复用「模型与 API」的同一套接口：此时 AstrBot 尚未运行，由控制台直接请求服务商
+    const W = {think: null, verified: ''};
+    const wSpec = () => { const p = catalog.presets.find(x => x.id === select.value), proto = $('#wModelProtocol').value;
+      return p && p.thinking && p.protocol === proto ? p.thinking : (catalog.thinking_generic || {})[proto] || null; };
+    const wBox = (kind, text, spin) => { const b = $('#wProbeBox'); b.className = 'probe' + (kind ? ' ' + kind : '');
+      b.innerHTML = (spin ? '<span class="spin"></span>' : `<span class="dot${kind === 'ok' ? ' g' : kind === 'err' ? ' b' : kind === 'warn' ? ' w' : ''}"></span>`) + '<span class="pt"></span>'; b.querySelector('.pt').textContent = text; };
+    const wThink = () => { const spec = wSpec(), row = $('#wThinkRow'); row.hidden = !spec || !!spec.always; if (row.hidden){ W.think = null; return; }
+      const levels = ['auto', 'off', 'on', 'low', 'medium', 'high'].filter(l => l in spec.levels); if (!levels.includes(W.think)) W.think = spec.initial || spec.default;
+      const L = {auto: '不指定', off: '关闭', on: '开启', low: '低', medium: '中', high: '高'};
+      $('#wThink').innerHTML = levels.map(l => `<button data-v="${l}" class="${l === W.think ? 'on' : ''}">${L[l]}</button>`).join('');
+      $$('#wThink button').forEach(b => b.onclick = () => { W.think = b.dataset.v; $$('#wThink button').forEach(x => x.classList.toggle('on', x === b)); W.verified = ''; });
+      $('#wThinkTip').textContent = '程度越高，回答越慢，用量越大。日常聊天建议选择「低」。'; };
+    const draft = () => ({preset: select.value, base_url: $('#wModelBase').value.trim(), protocol: $('#wModelProtocol').value, key: $('#dsKey').value.trim(),
+      model: $('#wModelCode').value.trim(), extra_body: (catalog.presets.find(p => p.id === select.value) || {}).extra_body || {}, thinking: W.think || undefined});
     const fill = saved => { const p=catalog.presets.find(p=>p.id===select.value); if(!p) return;
       $('#wModelBase').value=saved?.base_url ?? p.base_url; $('#wModelCode').value=saved?.model ?? p.model;
       $('#wModelProtocol').value=saved?.protocol ?? p.protocol; $('#wModelVision').checked=saved?.vision ?? p.vision;
-      $('#wModelHint').textContent=p.note; };
+      $('#wModelHint').textContent=p.note; W.think = saved?.thinking || null; W.verified = ''; W.models = [];
+      wBox('', '填写 API Key 后点击「检测连接」，确认密钥可用并读取模型列表。'); wThink(); wPick(false); };
+    // 检测到模型列表后，模型 ID 改为从列表中选择；也可以切回手动填写。两种方式占用同样的高度
+    const wPick = on => { $('#wPickWrap').hidden = !on; $('#wModelCode').hidden = on; $('#wPickMode').hidden = !(W.models || []).length;
+      $('#wPickMode').textContent = on ? '手动填写' : '从列表选择'; };
+    $('#wPickMode').onclick = () => wPick($('#wPickWrap').hidden);
     select.value=WZ.data.model?.preset || 'deepseek'; fill(WZ.data.model); select.onchange=()=>fill();
-    $('#dsKey').value=WZ.secrets.ds || ''; $('#wModelCode').oninput=()=>{ $('#wModelVision').checked=false; };
+    $('#wModelProtocol').addEventListener('change', () => { W.verified = ''; wThink(); });
+    $('#dsKey').value=WZ.secrets.ds || ''; $('#wModelCode').oninput=()=>{ $('#wModelVision').checked=false; W.verified = ''; };
+    $('#dsKey').addEventListener('input', () => { W.verified = ''; });
+    $('#wModelPick').onchange = () => { $('#wModelCode').value = $('#wModelPick').value; const m = (W.models || []).find(x => x.id === $('#wModelPick').value);
+      $('#wModelVision').checked = m && typeof m.vision === 'boolean' ? m.vision : $('#wModelPick').value === (catalog.presets.find(p => p.id === select.value) || {}).model; W.verified = ''; };
+    $('#wProbe').onclick = async () => { const d = draft(); if (!d.key){ wBox('warn', '请先填写 API Key。'); return; }
+      wBox('', '正在检测连接并读取模型列表…', true);
+      const r = await api('/api/models/probe', d).catch(e => ({ok: false, message: e.message}));
+      wBox(r.ok ? (r.listed ? 'ok' : 'warn') : 'err', r.message || r.error || '检测未完成。');
+      W.models = r.models || []; wPick(!!W.models.length);
+      if (W.models.length){ const pre = (catalog.presets.find(p => p.id === select.value) || {}).model;
+        const ids = W.models.map(m => m.id).sort((a, b) => (b === pre) - (a === pre));
+        $('#wModelPick').replaceChildren(...ids.map(id => new Option(id === pre ? id + '（推荐）' : id, id)));
+        $('#wModelPick').value = ids.includes($('#wModelCode').value) ? $('#wModelCode').value : ids[0]; $('#wModelPick').dispatchEvent(new Event('change')); } };
     enhanceSelect(select); enhanceSelect($('#wModelProtocol'));
-    bindNav(() => { const key=$('#dsKey').value.trim(), preset=catalog.presets.find(p=>p.id===select.value);
+    bindNav(async () => { const key=$('#dsKey').value.trim(), preset=catalog.presets.find(p=>p.id===select.value);
       if (!key) { $('#dsMsg').textContent='请填写 API Key'; return; }
       let url; try { url=new URL($('#wModelBase').value.trim()); } catch(e) { $('#dsMsg').textContent='API 地址格式不正确'; return; }
       if (!['https:','http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || !$('#wModelCode').value.trim()) { $('#dsMsg').textContent='请填写完整地址和模型 ID，地址中不要带密钥或查询参数'; return; }
-      WZ.secrets.ds=key; WZ.data.model={preset:select.value,base_url:$('#wModelBase').value.trim(),model:$('#wModelCode').value.trim(),protocol:$('#wModelProtocol').value,vision:$('#wModelVision').checked,extra_body:preset.extra_body || {}}; next(); }); },
+      const d = draft(), sig = JSON.stringify(d);
+      if (W.verified !== sig){
+        $('#dsMsg').textContent = '正在验证所选模型…';
+        const r = await api('/api/models/verify', d).catch(e => ({ok: false, message: e.message}));
+        if (!r.ok){ $('#dsMsg').innerHTML = `<span style="color:var(--bad)">验证未通过：${esc(r.message || r.error || '验证未完成。')}</span> <a href="#" id="wForce">仍然继续</a>`;
+          $('#wForce').onclick = e => { e.preventDefault(); W.verified = sig; $('#wNext').click(); }; return; }
+        W.verified = sig;
+      }
+      WZ.secrets.ds=key; WZ.data.model={preset:select.value,base_url:d.base_url,model:d.model,protocol:d.protocol,vision:$('#wModelVision').checked,extra_body:preset.extra_body || {},thinking:W.think || undefined}; next(); }); },
   qq(){ bindInputs(); bindNav(() => {
       const split = s => String(s||'').split(/[\s,，、]+/).filter(Boolean);
       if (!/^\d{5,12}$/.test(WZ.data.bot_qq||'')) return alert('小号 QQ 号不对');

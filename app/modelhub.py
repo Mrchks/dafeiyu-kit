@@ -7,12 +7,14 @@ import json
 import re
 import sqlite3
 import threading
+import time
 import urllib.parse
 from contextlib import closing
 from uuid import uuid4
 
 import astrbot_api as ab
-from core import APP, astrbot_data
+import modelprobe
+from core import APP, astrbot_data, load_state, update_state
 from image_rules import VISION_PROMPT
 
 PROTOCOLS = {
@@ -27,6 +29,81 @@ NON_VISUAL = {"deepseek-v4-pro", "glm-5.3"}
 
 def catalog() -> dict:
     return json.loads((APP / "model_presets.json").read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------- 思考程度
+# 预设在 model_presets.json 的 thinking 中描述每个档位写入的参数：
+#   where=extra    写进 custom_extra_body（OpenAI 兼容和 Responses 适配器把它原样并入请求体）
+#   where=provider 写进模型配置本身（Anthropic 用 anth_thinking_config，Gemini 用 gm_thinking_config）
+# 没有写参数时按 default 显示（即服务商或 AstrBot 实际采用的默认档位）。无法识别时显示「自定义」，用户改选前不覆盖。
+THINK_EXTRA_KEYS = {"thinking", "reasoning_effort", "enable_thinking", "reasoning", "thinking_budget"}
+EMPTY_PROVIDER_THINKING = ({}, {"type": "", "budget": 0, "effort": ""}, {"budget": 0, "level": ""})
+
+
+def thinking_spec(preset_id: str, protocol: str) -> dict | None:
+    cat = catalog()
+    preset = next((p for p in cat["presets"] if p["id"] == preset_id), None)
+    if preset and preset.get("thinking") and preset["protocol"] == protocol:
+        return preset["thinking"]
+    return cat.get("thinking_generic", {}).get(protocol)
+
+
+def _owned(spec: dict) -> set[str]:
+    return {k for m in spec.get("levels", {}).values() for k in m}
+
+
+def thinking_parse(spec: dict | None, extra: dict | None, provider: dict | None) -> str | None:
+    """配置 → 界面档位。返回档位名、custom（无法识别），或 None（该型号不提供档位）。"""
+    if not spec or spec.get("always"):
+        return None
+    extra, provider = extra or {}, provider or {}
+    owned = _owned(spec)
+    if spec["where"] == "extra":
+        if any(k in extra for k in THINK_EXTRA_KEYS - owned):
+            return "custom"
+        present = {k: extra[k] for k in owned if k in extra}
+    else:
+        present = {k: provider[k] for k in owned if k in provider and provider[k] not in EMPTY_PROVIDER_THINKING}
+        if any(k in extra for k in THINK_EXTRA_KEYS):
+            return "custom"
+    if not present:
+        return spec["default"]
+    for level, mapping in spec["levels"].items():
+        if mapping and present == mapping:
+            return level
+    return "custom"
+
+
+def thinking_apply(spec: dict, level: str, extra: dict, provider: dict) -> tuple[dict, dict]:
+    """界面档位 → 配置。先去掉该型号所有档位用到的参数，再写入所选档位的参数。"""
+    if level not in spec.get("levels", {}):
+        raise ValueError("该型号不支持所选的思考程度")
+    extra, provider = copy.deepcopy(extra or {}), copy.deepcopy(provider or {})
+    target = extra if spec["where"] == "extra" else provider
+    for k in _owned(spec):
+        target.pop(k, None)
+    target.update(copy.deepcopy(spec["levels"][level]))
+    return extra, provider
+
+
+def _merged_thinking(source: dict, provider: dict) -> dict:
+    """AstrBot 读取模型配置时，模型自身的字段覆盖连接（provider source）上的同名字段。"""
+    return {**{k: source[k] for k in ("anth_thinking_config", "gm_thinking_config") if k in source}, **provider}
+
+
+# ---------------------------------------------------------------- 验证记录（只存在本机 state.json，不改 AstrBot 配置）
+def _checks() -> dict:
+    c = load_state().get("model_checks")
+    return c if isinstance(c, dict) else {}
+
+
+def _record(provider_id: str, result: dict) -> dict:
+    rec = {"ok": bool(result.get("ok")), "status": result.get("status", "unknown"),
+           "message": result.get("message", ""), "at": int(time.time())}
+    checks = _checks()
+    checks[provider_id] = rec
+    update_state(model_checks=checks)
+    return rec
 
 
 def _items(value, name):
@@ -58,6 +135,7 @@ def snapshot() -> dict:
     default = config.get("agent_runner", {}).get("config", {}).get("model", {}).get("provider_id", "")
     image = config.get("provider_settings", {}).get("default_image_caption_provider_id", "")
     by_source = {s["id"]: s for s in sources}
+    checks = _checks()
     result = []
     for p in providers:
         source = by_source.get(p.get("provider_source_id"), {})
@@ -69,6 +147,9 @@ def snapshot() -> dict:
                        "key_set": bool(source.get("key")), "vision": "image" in (p.get("modalities") or []),
                        "enabled": p.get("enable", True), "extra_body": _safe_json(p.get("custom_extra_body", {})),
                        "has_headers": bool(source.get("custom_headers")),
+                       "thinking": thinking_parse(thinking_spec(source.get("dafeiyu_preset", "custom"), protocol),
+                                                  p.get("custom_extra_body", {}), _merged_thinking(source, p)),
+                       "check": checks.get(p["id"]),
                        "shared_source": sum(x.get("provider_source_id") == source.get("id") for x in providers) > 1})
     sessions = []
     data = astrbot_data()
@@ -134,6 +215,16 @@ def connection(body: dict, source_id: str, provider_id: str = "", old_source=Non
         source["custom_headers"] = headers
     source.setdefault("custom_headers", {})
     cfg = copy.deepcopy(old_model) if old_model else {}
+    spec = thinking_spec(preset["id"], protocol)
+    mode = body.get("thinking")
+    if spec and not spec.get("always") and mode not in (None, "", "custom"):
+        if mode == "keep":
+            # 档位未改动：界面上隐藏了思考参数，这里原样放回，不产生任何配置变化
+            if spec["where"] == "extra":
+                old_extra = (old_model or {}).get("custom_extra_body") or {}
+                extra = {**extra, **{k: old_extra[k] for k in _owned(spec) if k in old_extra}}
+        else:
+            extra, cfg = thinking_apply(spec, mode, extra, cfg)
     vision = bool(body.get("vision", model == preset["model"] and preset.get("vision", False))) and model.lower() not in NON_VISUAL
     cfg.update({"id": provider_id or source_id + "/" + model, "provider_source_id": source_id, "model": model,
                 "enable": True, "modalities": ["text", "tool_use"] + (["image"] if vision else []),
@@ -141,9 +232,65 @@ def connection(body: dict, source_id: str, provider_id: str = "", old_source=Non
     return source, cfg
 
 
+def _saved_key(source: dict | None) -> str:
+    keys = (source or {}).get("key") or []
+    return str(keys[0]) if keys else ""
+
+
+def _probe_target(body: dict) -> tuple[str, str, str, dict]:
+    """检测和验证用的地址、协议、密钥、请求头。编辑已有连接且未重新填写密钥时，由后端读取已保存的密钥。"""
+    preset = next((p for p in catalog()["presets"] if p["id"] == body.get("preset")), None) or {}
+    protocol = body.get("protocol") or preset.get("protocol") or "openai"
+    if protocol not in PROTOCOLS:
+        raise ValueError("请选择受支持的接口协议")
+    base = _url(str(body.get("base_url") or preset.get("base_url") or ""))
+    key = str(body.get("key") or "").strip()
+    headers = body.get("headers") if isinstance(body.get("headers"), dict) else None
+    if body.get("id") and (not key or headers is None):
+        old = ab.call("GET", "/api/v1/providers/by-id?merged=false&provider_id=" +
+                      urllib.parse.quote(str(body["id"]), safe="")).get("provider", {})
+        src = ab.call("GET", "/api/v1/provider-sources/by-id?source_id=" +
+                      urllib.parse.quote(old.get("provider_source_id", ""), safe="")).get("provider_source", {})
+        if not key:
+            if base != str(src.get("api_base", "")).rstrip("/"):
+                raise ValueError("更换 API 地址时，请重新填写该地址对应的密钥")
+            key = _saved_key(src)
+        if headers is None:
+            headers = src.get("custom_headers") or {}
+    return protocol, base, key, headers or {}
+
+
+def verify_draft(body: dict) -> dict:
+    """安装向导用：AstrBot 尚未运行时，直接对填写的内容发起最小请求验证。"""
+    protocol, base, key, headers = _probe_target({k: v for k, v in body.items() if k != "id"})
+    spec = thinking_spec(str(body.get("preset") or ""), protocol)
+    extra = body.get("extra_body") if isinstance(body.get("extra_body"), dict) else {}
+    if spec and spec.get("where") == "extra" and body.get("thinking") in (spec.get("levels") or {}):
+        extra, _ = thinking_apply(spec, body["thinking"], extra, {})
+    return modelprobe.verify(protocol, base, key, str(body.get("model") or ""), extra, headers)
+
+
+def probe(body: dict) -> dict:
+    """配置时检测：直接请求服务商，返回是否连通、密钥是否有效、耗时和模型列表。"""
+    protocol, base, key, headers = _probe_target(body)
+    preset = next((p for p in catalog()["presets"] if p["id"] == body.get("preset")), None) or {}
+    expect = bool(preset.get("list")) and protocol == preset.get("protocol")
+    return modelprobe.probe(protocol, base, key, headers, expect_list=expect)
+
+
 def save(body: dict) -> dict:
     """Create or edit a connection without changing active session assignments."""
     old_source, old_model = None, None
+    check = None
+    if body.get("verify") and not body.get("skip_verify"):
+        protocol, base, key, headers = _probe_target(body)
+        spec = thinking_spec(str(body.get("preset") or ""), protocol)
+        extra = body.get("extra_body") if isinstance(body.get("extra_body"), dict) else {}
+        if spec and spec.get("where") == "extra" and body.get("thinking") in (spec.get("levels") or {}):
+            extra, _ = thinking_apply(spec, body["thinking"], extra, {})
+        check = modelprobe.verify(protocol, base, key, str(body.get("model") or ""), extra, headers)
+        if not check["ok"]:
+            return {"ok": False, "verify_failed": True, **check}
     with _lock:
         provider_id = str(body.get("id") or "")
         if provider_id:
@@ -176,7 +323,39 @@ def save(body: dict) -> dict:
                     ab.call("DELETE", "/api/v1/provider-sources/by-id?source_id=" +
                             urllib.parse.quote(source_id, safe=""))
             raise ValueError("模型连接未保存成功，已尝试恢复原配置；请检查接口协议、地址和模型 ID")
-    return {"ok": True, "id": provider_id, "message": "已保存，尚未验证；原有会话的模型分配未改变"}
+    if check:
+        _record(provider_id, check)
+    else:
+        checks = _checks()
+        if checks.pop(provider_id, None) is not None:
+            update_state(model_checks=checks)
+    return {"ok": True, "id": provider_id, "verified": bool(check),
+            "message": "已保存并验证通过；原有会话的模型分配未改变" if check else "已保存，尚未验证；原有会话的模型分配未改变"}
+
+
+def delete(provider_id: str) -> dict:
+    """删除连接。正在作为默认聊天、识图或某个会话的模型时，要求先修改分配。"""
+    with _lock:
+        view = snapshot()
+        model = next((p for p in view["models"] if p["id"] == provider_id), None)
+        if model is None:
+            raise ValueError("连接不存在")
+        uses = []
+        if view["default_chat"] == provider_id:
+            uses.append("默认聊天模型")
+        if view["default_image"] == provider_id:
+            uses.append("识图模型")
+        uses += [s["label"] for s in view["sessions"] if s["provider"] == provider_id and not s["inherited"]]
+        if uses:
+            return {"ok": False, "in_use": uses,
+                    "message": "该连接正在用作" + "、".join(uses) + "。请先在「用途分配」中改为其他连接，再删除。"}
+        ab.call("DELETE", "/api/v1/providers/by-id?provider_id=" + urllib.parse.quote(provider_id, safe=""))
+        if model["source_id"] and not any(p["source_id"] == model["source_id"] and p["id"] != provider_id for p in view["models"]):
+            ab.call("DELETE", "/api/v1/provider-sources/by-id?source_id=" + urllib.parse.quote(model["source_id"], safe=""))
+        checks = _checks()
+        if checks.pop(provider_id, None) is not None:
+            update_state(model_checks=checks)
+    return {"ok": True}
 
 
 def assign(body: dict) -> dict:
@@ -240,13 +419,18 @@ def apply_image_rules() -> dict:
 
 
 def test(provider_id: str) -> dict:
-    if not any(p["id"] == provider_id for p in snapshot()["models"]):
-        raise ValueError("模型不存在")
-    result = ab.call("POST", "/api/v1/providers/test", {"provider_id": provider_id}, timeout=125)
-    # Provider errors can contain headers or URLs. Keep the public failure text generic.
-    return {"ok": result.get("status") == "available",
-            "message": "模型验证通过" if result.get("status") == "available" else
-                       "验证未通过，请检查密钥、模型权限、接口协议和网络；密钥不会回显"}
+    """验证已保存的连接：用保存的密钥对该模型发起一次最小请求，结果记入本机，列表中显示状态和时间。"""
+    model = ab.call("GET", "/api/v1/providers/by-id?merged=false&provider_id=" +
+                    urllib.parse.quote(provider_id, safe="")).get("provider", {})
+    if not model.get("provider_source_id"):
+        raise ValueError("连接不存在，或需要在 AstrBot 原版后台中验证")
+    src = ab.call("GET", "/api/v1/provider-sources/by-id?source_id=" +
+                  urllib.parse.quote(model["provider_source_id"], safe="")).get("provider_source", {})
+    protocol = next((k for k, v in PROTOCOLS.items() if v[1] == src.get("type")), "openai")
+    result = modelprobe.verify(protocol, str(src.get("api_base", "")), _saved_key(src), str(model.get("model", "")),
+                               model.get("custom_extra_body") or {}, src.get("custom_headers") or {})
+    rec = _record(provider_id, result)
+    return {**result, "check": rec}
 
 
 def remote_models(source_id: str) -> dict:

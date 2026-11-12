@@ -1,0 +1,20 @@
+服务商图标来源说明（app/ui/icons/providers/）
+
+以下 SVG 图标原样取自 LobeHub 的开源图标库 lobe-icons，npm 包 @lobehub/icons-static-svg 1.102.0
+（https://github.com/lobehub/lobe-icons），许可为 MIT，许可全文见同目录 lobe-icons-MIT.txt。
+
+  openai.svg          OpenAI
+  claude-color.svg    Anthropic / Claude
+  deepseek-color.svg  DeepSeek
+  kimi-color.svg      Kimi（月之暗面）
+  gemini-color.svg    Google Gemini
+  grok.svg            xAI Grok
+  qwen-color.svg      通义千问（阿里云百炼）
+  doubao-color.svg    豆包（火山方舟）
+  minimax-color.svg   MiniMax
+  xiaomimimo.svg      小米 MiMo
+  zhipu-color.svg     智谱 GLM
+  longcat-color.svg   LongCat（美团）
+
+各图标所代表的名称和标志归各自的权利人所有，此处仅用于在控制台中标识对应的服务商，不表示与这些服务商存在关联或得到其认可。
+单色图标（openai、grok、xiaomimimo）在深色模式下由控制台反色显示，未修改图标文件本身。
