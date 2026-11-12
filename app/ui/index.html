@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>大肥鱼控制台</title>
+<meta name="theme-color" id="themeColor" content="#f7f7f6">
 <link rel="icon" href="/icon.png">
 <style>
 /* ==========================================================================
@@ -2061,7 +2062,10 @@ function themeApply(v){
   const run = () => { const r = document.documentElement; if (v === 'light' || v === 'dark') r.dataset.theme = v; else delete r.dataset.theme; themeMark(); themeRepaint(); };
   if (document.startViewTransition && !REDUCED) document.startViewTransition(run); else run();
 }
-function themeRepaint(){ if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function'){ mapFrame(); if (MEM.graph) mapLegend(); } }); }
+/* 窗口标题栏颜色：Edge 应用窗口按 theme-color 着色，跟页面背景一致（浅色 #f7f7f6，深色 #0c0c0d） */
+function themeMeta(){ const m = document.getElementById('themeColor'); if (m) m.content = isDark() ? '#0c0c0d' : '#f7f7f6'; }
+themeMeta();
+function themeRepaint(){ themeMeta(); if (typeof MAP !== 'undefined' && MAP.cv) requestAnimationFrame(() => { if (typeof mapFrame === 'function'){ mapFrame(); if (MEM.graph) mapLegend(); } }); }
 async function themeSave(v){
   if (v === themeNow()) return;
   const old = themeNow(); themeApply(v);
