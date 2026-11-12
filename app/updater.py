@@ -198,7 +198,7 @@ def nc_current() -> str:
 def nc_latest() -> dict:
     tag, url = github_latest_asset(NAPCAT_REPO, lambda n: n == "NapCat.Shell.zip")
     if not tag:
-        return {}
+        raise RuntimeError("查询不到 NapCat 的最新版本：NapCat 官方 GitHub 仓库目前没有可下载的发布版本，或 GitHub 暂时限制了查询。")
     url = url or f"https://github.com/{NAPCAT_REPO}/releases/download/{tag}/NapCat.Shell.zip"
     notes = ""
     try:
@@ -217,6 +217,8 @@ _check_lock = threading.Lock()
 def _check_error(e: Exception) -> str:
     """检查新版本失败时给界面看的说明；原始报错只写进日志。"""
     t = str(e)
+    if "404" in t and "加速站" in t:            # 所有地址都返回 404：还没有带 latest.json 的发布
+        return "GitHub 上还没有支持自动更新的控制台版本（1.5.1 正式发布后即可检查）。"
     if isinstance(e, RuntimeError) and not t.startswith("<"):
         return t[:120]                         # 本模块自己抛出的说明
     if "403" in t or "rate limit" in t.lower():

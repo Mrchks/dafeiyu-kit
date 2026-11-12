@@ -53,6 +53,14 @@ class CheckError(unittest.TestCase):
         self.assertIn("限制了查询次数", updater._check_error(OSError("HTTP Error 403: rate limit exceeded")))
         self.assertIn("超时", updater._check_error(TimeoutError("timed out")))
         self.assertEqual(updater._check_error(RuntimeError("更新包签名无效")), "更新包签名无效")
+        e404 = RuntimeError("读取更新信息失败：直连和加速站都没连上（github.com：HTTP Error 404: Not Found；gh-proxy.com：HTTP Error 404: Not Found）")
+        self.assertIn("还没有支持自动更新", updater._check_error(e404))
+
+    def test_napcat_no_release_is_an_error(self):
+        with patch.object(updater, "github_latest_asset", return_value=("", "")):
+            with self.assertRaises(RuntimeError) as c:
+                updater.nc_latest()
+        self.assertIn("没有可下载的发布版本", str(c.exception))
 
 
 if __name__ == "__main__":
