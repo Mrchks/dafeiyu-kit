@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "1.5.0"
+VERSION = "1.5.1"
 CONSOLE_PORT = 6190
 # 6190 用不了时依次换这些。Windows 会把一段段端口「保留」给 Hyper-V、WSL、Docker 等用（每次开机可能不同），
 # 落在保留段里的端口没有人在用，却绑不上（WinError 10013）。换端口后记进 state.json 的 console_port。
@@ -26,7 +26,7 @@ CONSOLE_PORTS = [6190, 6290, 8190, 16190, 26190, 36190, 41190]
 ASTRBOT_VERSION = "4.29.3"
 # 控制台自动更新：从这个 GitHub 仓库的 Release 读取 latest.json；签名公钥由 scripts/release.py 首次正式发版时写入
 UPDATE_REPO = "Mrchks/dafeiyu-kit"
-UPDATE_PUBKEY = ""
+UPDATE_PUBKEY = "e8390dc5683100ca7b2ff437a54e62d5b888412c7a94749fbc9e70ecc37b0232"
 # 问题反馈的中转地址（阿里云函数计算，代码在 scripts/feedback-relay）；要换地址时随自动更新下发
 FEEDBACK_URL = "https://dafeiyufeedback-xhqjjdjhgd.cn-hangzhou.fcapp.run/"
 
