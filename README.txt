@@ -103,6 +103,7 @@ bot 每天凌晨将前一天的聊天整理为日记，并记录关于对方的�
 - AstrBot（AGPL-3.0）、NapCat：安装时从官方地址下载，不随包分发。
 - 大肥鱼配置包（MIT，作者 zexuanw958-svg，github.com/zexuanw958-svg/dafeiyu-config-pack）：人设、插件设置和导入工具。
 - Python 3.12（PSF 许可）、pystray（LGPL-3.0）、Pillow：随包附带，许可证位于 LICENSES 文件夹。
+- 「模型与 API」中的服务商图标来自 lobe-icons（MIT），各标志归其权利人所有，来源说明位于 LICENSES 文件夹。
 - 整合包源码以 MIT 许可公开：github.com/Mrchks/dafeiyu-kit。
 - 依据 NapCat 的许可条款，本整合包免费分发，不得用于商业用途。
 

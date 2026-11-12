@@ -35,8 +35,10 @@ function whenText(at){
   const t = `${p2(d.getHours())}:${p2(d.getMinutes())}`;
   return d.toDateString() === now.toDateString() ? '今天 ' + t : `${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${t}`;
 }
+/* 连接自己的名字（ID 中「服务商/」之后的部分）与型号不同时，用它区分同一服务商、同一型号的多个连接 */
+function connTail(p){ const t = String(p.id || '').slice(String(p.source_id || '').length + 1); return t && t !== p.model ? t : ''; }
 function modelOptions(select, models, value){
-  select.replaceChildren(...models.map(p => new Option(p.name + ' / ' + p.model, p.id)));
+  select.replaceChildren(...models.map(p => new Option(p.name + ' / ' + (connTail(p) || p.model), p.id)));
   if (models.some(p => p.id === value)) select.value = value;
 }
 function modelTab(name){
@@ -68,7 +70,7 @@ async function loadModels(){
     const c = p.check;
     const st = !p.key_set ? ['w', '尚未配置密钥', ''] : !c ? ['w', '尚未验证', ''] : c.ok ? ['g', '连接正常 · ' + whenText(c.at), c.message]
       : ['b', (PROBE_SHORT[c.status] || '验证未通过') + ' · ' + whenText(c.at), c.message];
-    return `<div class="conn" data-id="${esc(p.id)}"><div class="cn">${iconHTML(rowPreset(p))}<div style="min-width:0"><b>${esc(p.name)}</b><code>${esc(p.model)}</code></div></div>
+    return `<div class="conn" data-id="${esc(p.id)}"><div class="cn">${iconHTML(rowPreset(p))}<div style="min-width:0"><b>${esc(p.name)}</b>${connTail(p) ? `<code data-tip="${esc('型号：' + p.model)}">${esc(connTail(p))}</code>` : `<code>${esc(p.model)}</code>`}</div></div>
       <div class="tags">${tags.join('')}</div>
       <div class="st"${st[2] ? ` data-tip="${esc(st[2])}"` : ''}><span class="dot ${st[0]}"></span><span>${esc(st[1])}</span></div>
       <div class="ops"><button class="ghost" data-op="verify">验证</button><button class="ghost" data-op="edit">编辑</button><button class="ghost danger" data-op="del">删除</button></div></div>`;

@@ -517,13 +517,21 @@ def zip_ok(path: Path) -> bool:
         return False
 
 
+def _is_tag(tag: str) -> bool:
+    """像版本号的标签（v4.18.42、4.29.4）。加速站没有跳转时会得到 releases、latest 之类的路径名。"""
+    return bool(re.match(r"^v?\d+(\.\d+)+", tag or ""))
+
+
 def github_latest_asset(repo: str, name_pred) -> tuple[str, str]:
-    """(版本, 下载地址)。API 不通时用 releases/latest 的跳转拿版本号。"""
+    """(版本, 下载地址)。API 不通时用 releases/latest 的跳转拿版本号；找不到对应文件时下载地址为空，由调用方按标签拼接。"""
     try:
         d = http_json(f"https://api.github.com/repos/{repo}/releases/latest", timeout=10)
+        tag = str(d.get("tag_name") or "")
         for a in d.get("assets", []):
             if name_pred(a["name"]):
-                return d.get("tag_name", ""), a["browser_download_url"]
+                return tag, a["browser_download_url"]
+        if _is_tag(tag):
+            return tag, ""
     except Exception as e:
         log(f"GitHub API 不通：{e}")
     for p in GH_PROXIES:
@@ -532,7 +540,7 @@ def github_latest_asset(repo: str, name_pred) -> tuple[str, str]:
                                          headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=10) as r:
                 tag = r.geturl().rstrip("/").rsplit("/", 1)[-1]
-                if tag and tag != "latest":
+                if _is_tag(tag):
                     return tag, ""
         except Exception:
             continue
