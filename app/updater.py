@@ -87,6 +87,16 @@ def _save_record(comp: str, rec: dict | None) -> None:
     update_state(updates=r)
 
 
+def _backup_missing(rec: dict) -> bool:
+    """备份文件（或旧版文件夹）已不在原处。pip 方式只记版本号，不算缺失。"""
+    if rec.get("kind") == "pip":
+        return False
+    p = Path(rec.get("backup") or "")
+    if rec.get("kind") == "dir":
+        return not (p / "NapCatWinBootMain.exe").exists()
+    return not p.is_file()
+
+
 def _drop_backup(rec: dict | None) -> None:
     """删掉一份备份（zip 文件或整个文件夹）。"""
     if not rec or not rec.get("backup"):
@@ -234,7 +244,7 @@ def info(force: bool = False) -> dict:
             "current": cur, "latest": lat.get("version", ""), "date": lat.get("date", ""), "notes": lat.get("notes", ""),
             "newer": _newer(lat.get("version", ""), cur),
             "backup": ({"from": rec.get("from"), "to": rec.get("to"), "at": rec.get("at"), "kind": rec.get("kind"),
-                        "size": _size(bk) if bk else 0, "exists": bool(bk and bk.exists()) or rec.get("kind") == "pip"}
+                        "size": _size(bk) if bk else 0, "exists": not _backup_missing(rec)}
                        if rec else None),
         }
     res["astrbot"]["mode"] = "source" if ab_source_root() else "pip"
@@ -443,6 +453,8 @@ def rollback_astrbot() -> str:
     rec = _records().get("astrbot")
     if not rec:
         raise RuntimeError("没有可用于回退的备份")
+    if _backup_missing(rec):                   # 先检查再停止，免得停了之后才发现回退不了
+        raise RuntimeError("备份文件已不存在，无法回退。可在「组件更新」中清除这条备份记录。")
     cur = ab_current()
     root = ab_source_root()
     # 更新完要不要让它接着跑：本来在跑，或者用户希望她在线（总览点过启动）
@@ -696,6 +708,8 @@ def rollback_napcat() -> str:
     rec = _records().get("napcat")
     if not rec:
         raise RuntimeError("没有可用于回退的备份")
+    if _backup_missing(rec):
+        raise RuntimeError("备份文件已不存在，无法回退。可在「组件更新」中清除这条备份记录。")
     cur = nc_current()
     job_line(f"回退到 NapCat {rec.get('from')}…")
     services.stop_napcat()

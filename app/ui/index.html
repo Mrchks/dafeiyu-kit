@@ -3842,6 +3842,8 @@ async function loadUpdates(force){
     const pillHtml = off ? '<span class="pill">未启用</span>' : x.newer ? '<span class="pill w">有新版本</span>' : x.latest ? '<span class="pill g">已是最新</span>' : '<span class="pill">未查询到</span>';
     const b = x.backup;
     const bk = !b ? '<div class="kv">上一版备份：无</div>'
+      : b.exists === false ? `<div class="kv">上一版备份：${esc(b.from || '?')}（备份文件已不存在，无法回退）</div>
+         <div class="row" style="margin-top:6px"><button data-udb="${comp}">清除记录</button></div>`
       : `<div class="kv">上一版备份：${esc(b.from || '?')}${b.kind === 'pip' ? '（仅记录版本号，不占用空间）' : `（${fmt(b.size)}${b.kind === 'dir' ? '，整套旧版' : ''}）`} · ${new Date(b.at * 1000).toLocaleDateString()}</div>
          <div class="row" style="margin-top:6px"><button data-urb="${comp}">回退到上一版本</button>${b.kind === 'pip' ? '' : `<button data-udb="${comp}" class="danger">删除备份</button>`}</div>`;
     let state = '';
@@ -3892,7 +3894,7 @@ async function loadUpdates(force){
     const r = await api('/api/updates/rollback', {comp: b.dataset.urb}); if (!r.ok) return alert(r.msg || r.error);
     busy(b); jobUI({running: true, name: con ? '回退控制台版本' : '回退到上一版本', at: Date.now()/1000}); });
   $$('#updCards [data-udb]').forEach(b => b.onclick = async () => {
-    if (!(await ask('删除上一版本的备份？删除后将无法一键回退。', '删除'))) return;
+    if (b.textContent !== '清除记录' && !(await ask('删除上一版本的备份？删除后将无法一键回退。', '删除'))) return;
     const r = await api('/api/updates/delete-backup', {comp: b.dataset.udb}); if (!r.ok) return alert(r.error); toast(r.msg, 'ok'); loadUpdates(); });
   const cf = $('#updCards [data-cfull]'); if (cf) cf.onclick = () => window.open(u.console.page, '_blank');
   const cz = $('#updCards [data-czip]'); if (cz) cz.onclick = zipUpdateDlg;
