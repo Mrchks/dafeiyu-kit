@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "1.5.1"
+VERSION = "1.5.2"
 CONSOLE_PORT = 6190
 # 6190 用不了时依次换这些。Windows 会把一段段端口「保留」给 Hyper-V、WSL、Docker 等用（每次开机可能不同），
 # 落在保留段里的端口没有人在用，却绑不上（WinError 10013）。换端口后记进 state.json 的 console_port。
