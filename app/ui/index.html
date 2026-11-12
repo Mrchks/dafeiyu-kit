@@ -1288,7 +1288,7 @@ input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in sr
         </div>
       </div>
       <div class="ktab" id="kt-use" hidden>
-        <div class="section" style="max-width:820px">
+        <div class="section">
           <h2>启用的知识库</h2>
           <p class="hint">bot 只查询已勾选的知识库。</p>
           <div id="kbUse" class="chips"></div>
@@ -3862,7 +3862,7 @@ async function loadUpdates(force){
       <div class="grow"></div>
       <div class="row" style="margin-top:8px">${main}
       ${x.notes ? `<button data-unotes="${comp}">更新说明</button>` : ''}
-      ${comp === 'napcat' ? '<button data-uup="napcat_full" data-tip="新版 NapCat 要求更新版本的 QQ 时使用">完整更新（含 QQ 内核）</button>' : ''}
+      ${comp === 'napcat' ? '<button data-uup="napcat_full" data-tip="同时更新 QQ 内核。新版 NapCat 要求更新版本的 QQ 时使用。">完整更新</button>' : ''}
       ${con ? '<button data-czip>从压缩包更新</button>' : ''}</div>
       ${bk}`;
   };

@@ -214,6 +214,18 @@ def nc_latest() -> dict:
 _check_lock = threading.Lock()
 
 
+def _check_error(e: Exception) -> str:
+    """检查新版本失败时给界面看的说明；原始报错只写进日志。"""
+    t = str(e)
+    if isinstance(e, RuntimeError) and not t.startswith("<"):
+        return t[:120]                         # 本模块自己抛出的说明
+    if "403" in t or "rate limit" in t.lower():
+        return "GitHub 暂时限制了查询次数，请稍后再点击「检查更新」。"
+    if "timed out" in t.lower() or "timeout" in t.lower():
+        return "连接 GitHub 超时，请稍后重试。"
+    return "无法连接到 GitHub（网络或代理问题），请稍后重试。"
+
+
 def check(force: bool = False) -> dict:
     s = load_state()
     c = s.get("update_check") or {}
@@ -226,7 +238,7 @@ def check(force: bool = False) -> dict:
                 out[comp] = fn()
             except Exception as e:  # noqa: BLE001
                 out[comp] = (c.get(comp) or {})
-                out["errors"][comp] = str(e)[:200]
+                out["errors"][comp] = _check_error(e)
                 log(f"检查 {comp} 新版本失败：{e}")
         update_state(update_check=out)
         return out

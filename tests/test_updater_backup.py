@@ -44,5 +44,16 @@ class BackupMissing(unittest.TestCase):
             sn.assert_not_called()
 
 
+
+class CheckError(unittest.TestCase):
+    def test_no_raw_errors(self):
+        import urllib.error
+        e = urllib.error.URLError("[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1010)")
+        self.assertEqual(updater._check_error(e), "无法连接到 GitHub（网络或代理问题），请稍后重试。")
+        self.assertIn("限制了查询次数", updater._check_error(OSError("HTTP Error 403: rate limit exceeded")))
+        self.assertIn("超时", updater._check_error(TimeoutError("timed out")))
+        self.assertEqual(updater._check_error(RuntimeError("更新包签名无效")), "更新包签名无效")
+
+
 if __name__ == "__main__":
     unittest.main()
