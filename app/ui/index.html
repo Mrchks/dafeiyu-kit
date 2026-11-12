@@ -54,8 +54,6 @@ button.ghost{border-color:transparent;background:none;color:var(--text2);padding
 button.ghost:hover{background:var(--panel2)}
 button.ghost.danger{color:var(--bad)}
 button:disabled{opacity:.45;cursor:default}
-button.busy{display:inline-flex;align-items:center;gap:6px;opacity:1!important}
-button.busy .spin{width:12px;height:12px}
 
 /* ---- 输入控件 ---- */
 input,select,textarea{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line2);border-radius:var(--r-sm);padding:6px 10px;transition:border-color .15s}
@@ -204,7 +202,6 @@ tr:last-child td{border-bottom:0}
 th{color:var(--muted);font-weight:500;font-size:12px;border-bottom:1px solid var(--line2)}
 .logbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 pre.log{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin:0;font:12px/1.65 var(--mono);height:calc(100vh - 218px);overflow:auto;white-space:pre-wrap;word-break:break-all;color:var(--text2)}
-pre.log.short{height:260px}
 pre.log .e{color:var(--bad)} pre.log .w{color:var(--warn)} pre.log .k{background:var(--warn-soft)}
 .checks{list-style:none;padding:0;margin:0}
 .checks li{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
@@ -241,7 +238,7 @@ pre.log .e{color:var(--bad)} pre.log .w{color:var(--warn)} pre.log .k{background
 
 /* ---- 对话测试 ---- */
 .chatwrap{max-width:1000px}
-.chat{display:flex;flex-direction:column;gap:12px;height:calc(100vh - 250px);overflow:auto;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md)}
+.chat{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow:auto;padding:18px}
 .msg{max-width:70%;padding:9px 13px;border-radius:14px;white-space:pre-wrap;word-break:break-word;font-size:14px}
 .msg.me{align-self:flex-end;background:var(--primary);color:var(--on-primary);border-bottom-right-radius:4px}
 .msg.bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
@@ -250,8 +247,6 @@ pre.log .e{color:var(--bad)} pre.log .w{color:var(--warn)} pre.log .k{background
 .model-grid .field{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;min-width:0}
 .model-grid .field label{margin:0}.model-grid .field .csel{width:100%}
 .model-wide{grid-column:1/-1}
-.model-advanced{margin-top:16px}.model-advanced summary{cursor:pointer;padding:10px 0;color:var(--text2)}
-.model-advanced textarea{min-height:72px;font-family:var(--mono)}
 .model-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:20px}
 .model-table{overflow-x:auto}.model-table td{vertical-align:top}.model-table small{display:block;color:var(--muted);overflow-wrap:anywhere;max-width:380px}
 .model-table .row{flex-wrap:wrap;gap:6px}.model-table button{white-space:nowrap}
@@ -266,17 +261,15 @@ pre.log .e{color:var(--bad)} pre.log .w{color:var(--warn)} pre.log .k{background
 .chat-option .csel{width:100%;min-width:0}
 .chat-info{font-size:13px;color:var(--text2);margin:8px 0;line-height:1.6;overflow-wrap:anywhere}
 .chat-scope{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.6}
-#p-chat .chat{height:clamp(240px,calc(100vh - 460px),640px)}
 .connection-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 24px;background:var(--warn-soft);color:var(--text);border-bottom:1px solid var(--line);font-size:13px}
 .connection-bar button{flex:none}
 @media(max-width:600px){.chat-options{grid-template-columns:1fr}.chatbar{flex-wrap:wrap}.chatbar input{min-width:0;flex-basis:100%}.connection-bar{padding:10px 16px}}
 
 /* ---- 人设 ---- */
 .plist{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start}
-#pText{height:calc(100vh - 430px);min-height:220px;resize:none;margin-top:4px}
+#pText{flex:1;min-height:120px;resize:none;margin-top:4px}
 .ptabs{margin:0 0 16px}
 .ptabs .tabn{font-size:12px;color:var(--faint);font-weight:400}
-.ptab{min-height:calc(100vh - 240px)}
 .plist ul{list-style:none;margin:0;padding:0}
 .plist li{padding:7px 10px;border-radius:var(--r-sm);cursor:pointer;display:flex;align-items:center;gap:10px;color:var(--text2)}
 .plist li::before{content:attr(data-i);width:22px;height:22px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);flex:none}
@@ -826,6 +819,123 @@ dialog .field{grid-template-columns:72px 1fr}
 .mreplay .qa small{color:var(--faint);font-size:11.5px}
 @media (max-width:1100px){.mapgrid{grid-template-columns:1fr;grid-template-rows:minmax(360px,1fr) auto}.mapside{max-height:280px}}
 @media (max-width:860px){.mem-bar{flex-wrap:wrap}.mapgrid{min-height:520px}}
+
+/* ==========================================================================
+   v1.5.1 加载与状态：骨架屏、原位失败、按钮加载、滚动渐隐、一屏布局（详见 DESIGN.md「加载与状态」）
+   ========================================================================== */
+.page{position:relative}
+.skhost{position:relative}
+.page>:not(.head):not(.skel):not(.skfail),.skhost>:not(.skel):not(.skfail){transition:opacity .24s var(--ease)}
+.page.ld>:not(.head):not(.skel):not(.skfail),.skhost.ld>:not(.skel):not(.skfail){opacity:0!important;pointer-events:none}
+.skel{position:absolute;inset:0;z-index:5;pointer-events:none;animation:pin .16s var(--ease)}
+.skel.out{opacity:0;transition:opacity .2s var(--ease)}
+.sk-b{position:absolute;border-radius:var(--r-md)}
+.sk-b.box{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow-1);overflow:hidden}
+.sk-l{position:absolute;display:block;height:10px;border-radius:99px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--text) 6%,transparent) 30%,color-mix(in srgb,var(--text) 11%,transparent) 50%,color-mix(in srgb,var(--text) 6%,transparent) 70%);
+  background-size:300% 100%;animation:skm 1.6s ease-in-out infinite}
+.sk-l.h{height:12px}
+@keyframes skm{from{background-position:100% 0}to{background-position:0 0}}
+.skfail{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;animation:pin .2s var(--ease)}
+.skfail>div{text-align:center;max-width:440px}
+.skfail .ic{width:40px;height:40px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:var(--warn-soft);color:var(--warn)}
+.skfail .ic svg{width:18px;height:18px}
+.skfail b{display:block;font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.skfail p{margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.7;word-break:break-word}
+.skfail .row{justify-content:center;margin:0}
+/* 按钮加载：宽度锁定，文字隐去，中间转圈；期间不响应点击 */
+button.busy{position:relative;color:transparent!important;pointer-events:none;opacity:1!important}
+button.busy>*{visibility:hidden}
+button.busy::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;box-sizing:border-box;border-radius:50%;border:2px solid color-mix(in srgb,var(--text) 20%,transparent);border-top-color:var(--text);animation:s .8s linear infinite}
+button.primary.busy::after{border-color:color-mix(in srgb,var(--on-primary) 30%,transparent);border-top-color:var(--on-primary)}
+button.danger.busy::after{border-top-color:var(--bad)}
+/* 区域内滚动：上下边缘渐隐，有表头时从表头下方开始 */
+.sc{--tc:#000;--bc:#000;
+  -webkit-mask-image:linear-gradient(to bottom,#000 var(--hd,0px),var(--tc) var(--hd,0px),#000 calc(var(--hd,0px) + 20px),#000 calc(100% - 20px),var(--bc) 100%);
+  mask-image:linear-gradient(to bottom,#000 var(--hd,0px),var(--tc) var(--hd,0px),#000 calc(var(--hd,0px) + 20px),#000 calc(100% - 20px),var(--bc) 100%)}
+.sc.ft{--tc:transparent}.sc.fb{--bc:transparent}
+.tscroll{flex:1;min-height:0;overflow:auto;margin:0 -20px;padding:0 20px}
+.tscroll thead th{position:sticky;top:0;background:var(--panel);z-index:1}
+/* 一屏布局：窗口不小于 1280×720 时不出现整页滚动；更小的窗口才允许整页滚动 */
+@media (min-width:861px){.page.fit.on{min-height:680px}}
+.grow{flex:1}
+.page.fit.on>.section.grow,.fcol>.section.grow{display:flex;flex-direction:column;min-height:0;margin-bottom:0}
+.fcol{flex:1;min-height:0;display:flex;flex-direction:column}
+.fcol[hidden]{display:none!important}
+.fcol>.section{margin-bottom:16px}.fcol>.section:last-child{margin-bottom:0}
+.fcol>.section:not(.grow){flex:none}
+.page.fit.on>.seg{margin-bottom:16px}
+/* 对话测试 */
+#p-chat .chatwrap{flex:1;min-height:0;display:flex;flex-direction:column;max-width:1000px;width:100%}
+#p-chat .chat-options,#p-chat .chat-info,#p-chat .chat-scope,#p-chat .chatbar{flex:none}
+.chatbox{flex:1;min-height:0;display:flex;padding:0;margin:0}
+/* 人设 */
+#p-persona .plist{flex:1;min-height:0;grid-template-rows:minmax(0,1fr);align-items:stretch}
+#p-persona .plist>.section{display:flex;flex-direction:column;min-height:0}
+#p-persona .plist ul{flex:1;min-height:0;overflow:auto;margin:-4px -8px 0;padding:4px 8px}
+#p-persona .plist .row{flex:none}
+#p-persona .pedit>p.note{flex:none}
+.ptabs .tabn:empty{display:none}
+/* 模型与 API：列表一屏，添加和编辑在固定高度的窗口中进行 */
+.mtable td{vertical-align:middle}.mtable small{display:block;color:var(--muted);overflow-wrap:anywhere}
+.mtable .row{margin:0;flex-wrap:nowrap;justify-content:flex-end}
+.mtable td:last-child{width:1%;white-space:nowrap}
+.massign{display:grid;grid-template-columns:120px minmax(0,1fr) auto;align-items:center;gap:12px 16px;margin-top:12px}
+.massign label{color:var(--text2);font-size:13.5px}.massign .csel{width:100%;min-width:0}
+#modelDlg{width:min(760px,94vw);max-width:none;height:min(640px,90vh);padding:0}
+#modelDlg[open]{display:flex;flex-direction:column}
+.mdlg-head{display:flex;align-items:center;gap:16px;padding:20px 24px 0}
+.mdlg-head h3{margin:0;flex:1}
+.mdlg-body{flex:1;min-height:0;overflow:auto;padding:16px 24px}
+.mdlg-body .mpane[hidden]{display:none}
+.mdlg-body .mpane:not([hidden]){animation:pin .2s var(--ease)}
+.mdlg-body .field{grid-template-columns:132px 1fr}
+.mpane>.field:first-child{border-top:0}
+.fld-err:empty{display:none}
+.mdlg-body textarea{min-height:88px;resize:none}
+.mdlg-foot{display:flex;align-items:center;gap:8px;padding:14px 24px;border-top:1px solid var(--line)}
+.mdlg-foot .note{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fld-err{grid-column:2;color:var(--bad);font-size:12.5px;min-height:0}
+input.bad{border-color:var(--bad)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 14%,transparent)!important}
+/* 总览、用量在 1280×720 下一屏放下：状态卡和分区收紧，说明只占一行（完整内容在悬浮提示中） */
+#p-home .banner{height:46px;margin-bottom:12px}
+#p-home .cards{gap:12px}
+.homegrid{margin-top:12px;min-height:0;gap:12px}
+@media (min-width:1100px){.homegrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+#p-home .scard .top{padding:12px 16px 6px}
+#p-home .scard .st{padding:0 16px 8px;min-height:40px}
+#p-home .scard .kvs{margin:0 16px}
+#p-home .scard .kvs .kv{padding:6px 0;min-height:33px}
+#p-home .scard .bot{padding:4px 8px}
+.homegrid>.section{padding:16px 20px;min-height:0}
+.homegrid .sh{margin-bottom:10px}
+.homegrid .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 8px}
+.homegrid .sh-t .hint{margin:2px 0 0}
+.homegrid .trow{padding:9px 0}
+.homegrid .trow>div{display:flex;align-items:baseline;gap:12px;min-width:0;flex:1}
+.homegrid .trow b{flex:none}
+.homegrid .trow small{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#bootNote{min-height:0!important;margin:8px 0 0!important;padding-top:0}
+#bootNote:empty{display:none}
+#p-cost .stat{margin-bottom:12px;gap:12px}
+#p-cost .stat .card{padding:12px 16px}
+#p-cost .cache-meta{margin:0 0 6px}
+#p-cost .cache-models{margin-bottom:10px}
+#p-cost .cache-models:empty{display:none}
+.ctrend{padding:14px 20px;margin-bottom:12px}
+.ctrend .sh{margin-bottom:6px}
+.ctrend .bars{height:76px}
+.costgrid{min-height:200px;gap:12px}
+#con main{display:flex;flex-direction:column}
+#con main>.page{width:100%;flex:none}
+#con main>.page.fit.on,#con main>.page.frame.on{flex:1 0 0;height:auto}
+.connection-bar{flex:none}
+.sk-l.st{position:relative;display:block}
+.mtab.skhost,.cdet.skhost,.fb-what.skhost{position:relative}
+#kt-use:not([hidden]){flex:1;min-height:0;display:flex;flex-direction:column}
+#kt-use>.section{min-height:0;overflow:auto;margin:0;align-self:flex-start;width:100%}
+/* 空状态：说明 + 下一步操作 */
+.empty .row{justify-content:center;margin-top:12px}
 </style>
 </head>
 <body>
@@ -896,13 +1006,13 @@ dialog .field{grid-template-columns:72px 1fr}
       </div>
       <div class="grid2 homegrid">
       <div class="section diag">
-        <div class="sh"><div class="sh-t"><h2>故障诊断</h2><p class="hint">检查 AstrBot 运行状态、QQ 连接、模型余额、白名单和近期报错，找出 bot 没有回复消息的原因。</p></div><div class="act"><button class="ghost" id="diagReport" data-tip="将诊断结果、组件版本和近期日志打包为一个文件，便于发送给协助排查的人。QQ 号、群号和密钥均已隐去。">生成问题报告</button><button class="primary" id="diagBtn">开始诊断</button></div></div>
+        <div class="sh"><div class="sh-t"><h2>故障诊断</h2><p class="hint" data-tip="检查 AstrBot 运行状态、QQ 连接、模型余额、白名单和近期报错，找出 bot 没有回复消息的原因。">检查 AstrBot 运行状态、QQ 连接、模型余额、白名单和近期报错，找出 bot 没有回复消息的原因。</p></div><div class="act"><button class="ghost" id="diagReport" data-tip="将诊断结果、组件版本和近期日志打包为一个文件，便于发送给协助排查的人。QQ 号、群号和密钥均已隐去。">生成问题报告</button><button class="primary" id="diagBtn">开始诊断</button></div></div>
         <div class="dg-sum" id="diagSum"><span class="dg-st muted">尚未检查</span><span class="dg-at" id="diagAt"></span></div>
         <ul class="dg-list" id="diagList"><li class="dg-empty">点击右上角的「开始诊断」，几秒内完成</li></ul>
       </div>
       <div class="section">
         <h2>运行控制</h2>
-        <p class="hint">关闭此窗口不会让 bot 下线，后台程序和托盘图标会继续运行。需要让 bot 下线时，点击右上角的「全部停止」。</p>
+        <p class="hint" data-tip="关闭此窗口不会让 bot 下线，后台程序和托盘图标会继续运行。需要让 bot 下线时，点击右上角的「全部停止」。">关闭此窗口不会让 bot 下线，后台程序和托盘图标会继续运行。需要让 bot 下线时，点击右上角的「全部停止」。</p>
         <div class="trow"><div><b>开机自启</b><small>电脑开机后自动上线</small></div><label class="switch"><input type="checkbox" id="optAutostart"><span></span></label></div>
         <div class="trow"><div><b>掉线自动重启</b><small>NapCat 或 AstrBot 意外退出时自动重新启动</small></div><label class="switch"><input type="checkbox" id="optWatchdog"><span></span></label></div>
         <div class="trow"><div><b>系统通知</b><small>掉线、需要扫码登录或余额不足时，在屏幕右下角发出通知</small></div><label class="switch"><input type="checkbox" id="optNotify"><span></span></label></div>
@@ -912,7 +1022,7 @@ dialog .field{grid-template-columns:72px 1fr}
     </section>
 
     <!-- 测试聊天 -->
-    <section class="page" id="p-chat">
+    <section class="page fit" id="p-chat">
       <div class="head"><div><h1>对话测试</h1><p class="sub">选择人设和场景，查看 bot 的回复效果。</p></div></div>
       <div id="chatNeedLogin"></div>
       <div class="chatwrap">
@@ -924,7 +1034,7 @@ dialog .field{grid-template-columns:72px 1fr}
         </div>
         <div id="chatInfo" class="chat-info" role="status">尚未读取测试配置</div>
         <p class="chat-scope" id="chatScope">对话测试只生成文字，不向 QQ 发送消息，不执行提醒，也不修改记忆；不模拟群聊中的自动接话概率。发送时会调用所选模型。</p>
-        <div class="chat" id="chatBox" aria-live="polite"><div class="muted">输入一句话开始测试，例如「你是谁」。</div></div>
+        <div class="section chatbox"><div class="chat" id="chatBox" aria-live="polite"><div class="muted">输入一句话开始测试，例如「你是谁」。</div></div></div>
         <div class="chatbar"><input id="chatIn" aria-label="测试消息" placeholder="输入后按回车" maxlength="4000"><button class="primary" id="chatSend" disabled>发送</button><button id="chatNew">新建对话</button><button id="chatReload">刷新配置</button></div>
       </div>
     </section>
@@ -970,54 +1080,39 @@ dialog .field{grid-template-columns:72px 1fr}
     </section>
 
     <!-- 模型与 API -->
-    <section class="page" id="p-models">
-      <div class="head"><div><h1>模型与 API</h1><p class="sub">选择服务商预设并填写密钥；聊天和识图可以分别指定模型。</p></div><div class="act"><button id="modelRefresh">刷新</button><button class="primary" id="modelAdd">添加连接</button></div></div>
+    <section class="page fit" id="p-models">
+      <div class="head"><div><h1>模型与 API</h1><p class="sub">管理模型服务商的连接，并为聊天、识图和各会话指定模型。</p></div><div class="act"><button id="modelRefresh">刷新</button><button class="primary" id="modelAdd">添加连接</button></div></div>
       <div id="modelNeedLogin"></div>
-      <div class="section" id="modelEditor" hidden>
-        <div class="sh"><h2 id="modelEditTitle">添加模型连接</h2><button id="modelClose">关闭</button></div>
-        <input id="modelEditID" type="hidden">
-        <div class="model-grid">
-          <div class="field"><label for="modelPreset">API 预设</label><select id="modelPreset"></select></div>
-          <div class="field"><label for="modelName">连接名称</label><input id="modelName" maxlength="80" placeholder="例如：我的 OpenAI"></div>
-          <div class="field model-wide"><label for="modelKey">API Key</label><input id="modelKey" type="password" autocomplete="new-password" placeholder="填写密钥"><div class="tip" id="modelKeyNote">保存后不回显密钥。</div></div>
-        </div>
-        <p class="hint" id="modelPresetHint"></p>
-        <details class="model-advanced" id="modelAdvanced"><summary>模型、地址和协议</summary>
-          <div class="model-grid">
-            <div class="field model-wide"><label for="modelBase">API 基础地址</label><input id="modelBase" type="url" autocomplete="off" placeholder="https://api.example.com/v1"></div>
-            <div class="field"><label for="modelProtocol">接口协议</label><select id="modelProtocol"><option value="openai">OpenAI Chat Completions</option><option value="responses">OpenAI Responses</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Google Gemini 原生</option></select></div>
-            <div class="field"><label for="modelCode">模型 ID</label><input id="modelCode" placeholder="填写服务商给出的模型 ID"></div>
-            <div class="field model-wide"><label class="switch"><input id="modelVision" type="checkbox"><span></span></label><label for="modelVision">该型号支持图片输入</label><div class="tip" id="modelVisionNote">更换型号后需要重新确认图片能力，厂商名称不能代表所有型号。</div></div>
-            <div class="field"><label for="modelExtra">额外模型参数（JSON）</label><textarea id="modelExtra" spellcheck="false">{}</textarea></div>
-            <div class="field"><label for="modelHeaders">额外请求头（JSON，可选）</label><textarea id="modelHeaders" spellcheck="false" placeholder="留空保留原请求头"></textarea></div>
-          </div>
-        </details>
-        <div class="model-actions"><button class="primary" id="modelSave">保存连接</button><span class="note" id="modelSaveNote"></span></div>
+      <div class="seg" id="modelTabs"><button data-mt2="conn" class="on">连接</button><button data-mt2="use">用途分配</button></div>
+      <div class="fcol" id="mt2-conn">
+        <div class="section grow"><div class="sh"><div class="sh-t"><h2>已添加的连接</h2><p class="hint">保存连接不会切换正在使用的模型。「验证」会发起一次简短的 API 请求，可能产生极少量用量。</p></div></div>
+          <div class="tscroll"><table class="mtable"><thead><tr><th>连接 / 模型</th><th>能力与用途</th><th></th></tr></thead><tbody id="modelRows"></tbody></table></div></div>
       </div>
-      <div class="section"><div class="sh"><h2>已配置模型</h2><span class="note">保存连接不会自动切换正在使用的模型</span></div><div class="model-table"><table><thead><tr><th>连接 / 模型</th><th>能力与用途</th><th>操作</th></tr></thead><tbody id="modelRows"><tr><td colspan="3">正在读取…</td></tr></tbody></table></div><p class="hint">「验证模型」会发起一次简短的 API 请求，可能产生少量用量。各服务商的 API 权限、余额和中转服务能力，以实际验证结果为准。</p></div>
-      <div class="section"><h2>默认用途</h2><p class="hint">默认聊天模型用于未单独指定模型的会话。已指定模型的群和私聊，可在下方单独修改。</p>
-        <div class="model-assignment"><div><label for="modelDefaultChat">默认聊天模型</label><select id="modelDefaultChat"></select></div><button id="modelUseChat">应用到默认聊天</button></div>
-        <div class="model-assignment"><div><label for="modelImage">识图模型</label><select id="modelImage"></select></div><button id="modelUseImage">应用到识图</button></div>
-        <p class="hint">识图选择会同步到群聊图片描述。支持万象棋的血量、绿色昵称和独立界面区域识别规则；其他图片按普通图片读取。</p>
-        <div class="row"><button id="modelApplyRules">更新识图规则</button><span class="note" id="modelRoleNote"></span></div>
+      <div class="fcol" id="mt2-use" hidden>
+        <div class="section"><div class="sh"><div class="sh-t"><h2>默认用途</h2><p class="hint">默认聊天模型用于未单独指定模型的会话；识图模型的选择会同步到群聊图片描述。</p></div><div class="act"><button id="modelApplyRules" data-tip="识图规则支持识别万象棋的血量、绿色昵称和独立界面区域，其他图片按普通图片读取。">更新识图规则</button></div></div>
+          <div class="massign"><label for="modelDefaultChat">默认聊天模型</label><select id="modelDefaultChat"></select><button id="modelUseChat">应用</button></div>
+          <div class="massign"><label for="modelImage">识图模型</label><select id="modelImage"></select><button id="modelUseImage">应用</button></div>
+          <p class="note" id="modelRoleNote" style="margin:12px 0 0;min-height:1.6em"></p></div>
+        <div class="section grow"><div class="sh"><div class="sh-t"><h2>会话单独指定</h2><p class="hint">只列出白名单中的群和私聊。单独指定后，该会话不再跟随默认聊天模型。</p></div></div>
+          <div class="tscroll"><table class="mtable"><thead><tr><th>群聊 / 私聊</th><th>聊天模型</th><th></th></tr></thead><tbody id="modelSessions"></tbody></table></div></div>
       </div>
-      <div class="section"><h2>会话模型分配</h2><div class="model-table"><table><thead><tr><th>群聊 / 私聊</th><th>当前模型</th><th></th></tr></thead><tbody id="modelSessions"></tbody></table></div></div>
     </section>
 
     <!-- 人设 -->
-    <section class="page" id="p-persona">
+    <section class="page fit" id="p-persona">
       <div class="head"><div><h1>人设</h1><p class="sub">人设是写给 bot 的一段设定，用于说明它的身份和说话方式。保存后立即生效。</p></div></div>
       <div id="personaNeedLogin"></div>
       <div class="seg ptabs" role="tablist">
         <button data-ptab="edit" class="on">编辑人设</button>
         <button data-ptab="chats">会话分配 <span class="tabn" id="ptabChatsN"></span></button>
+        <button data-ptab="notes">主人吩咐 <span class="tabn" id="ptabNotesN"></span></button>
         <button data-ptab="memes">表情包配置 <span class="tabn" id="ptabMemesN"></span></button>
       </div>
 
-      <div class="ptab" id="ptab-edit">
+      <div class="ptab fcol" id="ptab-edit">
         <div class="plist">
           <div class="section" style="margin:0"><ul id="pList"></ul><div class="row"><button id="pNew">新建</button><button id="pCopy">复制</button></div></div>
-          <div class="section pedit" style="margin:0">
+          <div class="section pedit" style="margin:0;display:flex;flex-direction:column;min-height:0">
             <div class="field" style="margin-top:0"><label for="pName">名称</label><input id="pName" placeholder="例如 高冷猫猫"></div>
             <textarea id="pText" placeholder="填写 bot 的性格和说话方式……" aria-label="人设正文" aria-describedby="pFileHelp"></textarea>
             <div class="row"><button class="primary" id="pSave">保存</button><button id="pImport">从文件导入</button><button id="pExport">导出到文件</button><button class="danger" id="pDel">删除</button><span class="note" id="pNote" role="status" aria-live="polite"></span></div>
@@ -1029,31 +1124,29 @@ dialog .field{grid-template-columns:72px 1fr}
         </div>
       </div>
 
-      <div class="ptab" id="ptab-chats" hidden>
-        <div class="section">
-          <h2>会话人设分配</h2>
-          <p class="hint">为群或私聊指定人设后，该会话会一直使用它；未指定时使用默认人设（可在「常用设置」中修改）。关闭「发语音」后，该会话只发送文字。此处只列出白名单内的群和私聊。更换人设后，在该会话中发送一次 <code>/reset</code> 清除原有的聊天上下文，bot 就不会延续之前的语气。</p>
-          <table><thead><tr><th>会话</th><th>人设</th><th>语音回复</th><th>静音</th></tr></thead><tbody id="groupPersonaRows"><tr><td colspan="4" class="empty">加载中…</td></tr></tbody></table>
-          <p class="note">静音期间，bot 在该群不发言：不读取也不回复任何消息，主动接话、冷场话题和定时消息也不会发送到该群。主人在该群发送「解除静音」即可恢复，也可以通过私聊让 bot 恢复。</p>
+      <div class="ptab fcol" id="ptab-chats" hidden>
+        <div class="section grow">
+          <div class="sh"><div class="sh-t"><h2>会话人设分配</h2><p class="hint">为群或私聊指定人设后，该会话会一直使用它；未指定时使用默认人设（可在「常用设置」中修改）。关闭「发语音」后，该会话只发送文字。此处只列出白名单内的群和私聊。更换人设后，在该会话中发送一次 <code>/reset</code> 清除原有的聊天上下文，bot 就不会延续之前的语气。</p></div></div>
+          <div class="tscroll"><table><thead><tr><th>会话</th><th>人设</th><th>语音回复</th><th>静音</th></tr></thead><tbody id="groupPersonaRows"></tbody></table></div>
+          <p class="note" style="margin:12px 0 0">静音期间，bot 在该群不发言：不读取也不回复任何消息，主动接话、冷场话题和定时消息也不会发送到该群。主人在该群发送「解除静音」即可恢复，也可以通过私聊让 bot 恢复。</p>
         </div>
-        <div class="section">
-          <h2>主人吩咐</h2>
-          <p class="hint">为某个群或所有群设置的长期规则，例如「少说话，没人叫你别插嘴」「别提考试的事」。bot 在该群每次回复前都会读取这些规则，保存后立即生效。也可以直接通过私聊告诉 bot，它会自动记录到这里。</p>
-          <table><thead><tr><th style="width:200px">适用范围</th><th>吩咐</th><th style="width:90px"></th></tr></thead><tbody id="noteRows"><tr><td colspan="3" class="empty">加载中…</td></tr></tbody></table>
+      </div>
+
+      <div class="ptab fcol" id="ptab-notes" hidden>
+        <div class="section grow">
+          <div class="sh"><div class="sh-t"><h2>主人吩咐</h2><p class="hint">为某个群或所有群设置的长期规则，例如「少说话，没人叫你别插嘴」「别提考试的事」。bot 在该群每次回复前都会读取这些规则，保存后立即生效。也可以直接通过私聊告诉 bot，它会自动记录到这里。</p></div></div>
+          <div class="tscroll"><table><thead><tr><th style="width:200px">适用范围</th><th>吩咐</th><th style="width:90px"></th></tr></thead><tbody id="noteRows"></tbody></table></div>
           <div class="row"><select id="noteScope"></select><input id="noteText" placeholder="例如：少说话，没人叫你别插嘴" style="flex:1;min-width:220px"><button class="primary" id="noteAdd">添加</button></div>
         </div>
       </div>
 
-      <div class="ptab" id="ptab-memes" hidden>
-        <div class="section">
-          <h2>人设表情包配置</h2>
-          <p class="hint">勾选后，bot 只从所选表情包中选图；一个都不勾选时使用「默认表情包」。表情包随会话使用的人设自动切换，修改后立即生效。</p>
-          <table><thead><tr><th style="width:160px">人设</th><th>表情包</th></tr></thead><tbody id="memeRows"><tr><td colspan="2" class="empty">加载中…</td></tr></tbody></table>
+      <div class="ptab fcol" id="ptab-memes" hidden>
+        <div class="section grow">
+          <div class="sh"><div class="sh-t"><h2>人设表情包配置</h2><p class="hint">勾选后，bot 只从所选表情包中选图；一个都不勾选时使用「默认表情包」。表情包随会话使用的人设自动切换，修改后立即生效。</p></div></div>
+          <div class="tscroll"><table><thead><tr><th style="width:160px">人设</th><th>表情包</th></tr></thead><tbody id="memeRows"></tbody></table></div>
         </div>
         <div class="section">
-          <h2>新建表情包</h2>
-          <div class="row" style="margin-top:6px"><input id="memeNewName" placeholder="例如 小柚表情包" style="min-width:240px"><button id="memeNew">创建</button></div>
-          <p class="note">新建的表情包是空的，需要添加图片：进入「AstrBot 管理后台」→ 插件 → 表情包管理器，打开管理页面，选中该表情包后上传图片并分类。请在分类说明中写清使用场合，bot 会根据说明选图。</p>
+          <div class="sh"><div class="sh-t"><h2>新建表情包</h2><p class="hint">新建的表情包是空的，需要添加图片：进入「AstrBot 管理后台」→ 插件 → 表情包管理器，打开管理页面，选中该表情包后上传图片并分类。请在分类说明中写清使用场合，bot 会根据说明选图。</p></div><div class="act"><input id="memeNewName" placeholder="例如 小柚表情包" style="width:220px"><button id="memeNew">创建</button></div></div>
         </div>
       </div>
     </section>
@@ -1100,7 +1193,7 @@ dialog .field{grid-template-columns:72px 1fr}
       </div>
       <div id="memNotice"></div>
       <!-- 脑图 -->
-      <div class="mtab" id="mt-map">
+      <div class="mtab skhost" id="mt-map">
         <div class="mapgrid">
           <div class="section mapbox">
             <canvas id="memCanvas"></canvas>
@@ -1115,28 +1208,28 @@ dialog .field{grid-template-columns:72px 1fr}
         </div>
       </div>
       <!-- 档案 -->
-      <div class="mtab" id="mt-facts" hidden>
+      <div class="mtab skhost" id="mt-facts" hidden>
         <div class="section mlist">
           <div class="sh"><div class="sh-t"><h2 id="memFactsTitle">档案</h2><p class="hint">关于对方的稳定信息。主人的档案由所有人设共用。「保持度」表示记忆的清晰程度：长时间未被提及的档案会逐渐淡忘，保持度低于一定程度后移入「已淡忘」，可以恢复。</p></div><div class="act"><label class="muted"><input type="checkbox" id="memFactsAll"> 显示已淡忘和已删除</label><button id="memFactAdd">新增一条</button></div></div>
           <div class="mrows" id="memFacts"></div>
         </div>
       </div>
       <!-- 日记 -->
-      <div class="mtab" id="mt-diary" hidden>
+      <div class="mtab skhost" id="mt-diary" hidden>
         <div class="kbgrid">
           <div class="section"><div class="kbl-head"><span>日记与周记</span><span id="memDiaryCount"></span></div><div class="kbl" id="memDiaryList"></div></div>
           <div class="section" id="memDiaryBox"><div class="kbd-empty">读取中…</div></div>
         </div>
       </div>
       <!-- 待跟进 -->
-      <div class="mtab" id="mt-follow" hidden>
+      <div class="mtab skhost" id="mt-follow" hidden>
         <div class="section mlist">
           <div class="sh"><div class="sh-t"><h2>待跟进</h2><p class="hint">带有日期、需要后续关心的事项。到期当天傍晚，bot 会通过私聊询问主人（每天最多两次，主人正在聊天时不打扰）。</p></div><div class="act"><button id="memFollowAdd">新增一件</button></div></div>
           <div class="mrows" id="memFollows"></div>
         </div>
       </div>
       <!-- 预览与测试 -->
-      <div class="mtab" id="mt-test" hidden>
+      <div class="mtab skhost" id="mt-test" hidden>
         <div class="grid2 testgrid">
           <div class="section"><div class="sh"><div class="sh-t"><h2>当前注入的记忆</h2><p class="hint">每次回复前附加在人设之后的内容。同一天内数据没有变化时，这段内容逐字相同，可以命中模型的输入缓存。</p></div><div class="act"><button id="memPrevRefresh">刷新</button></div></div>
             <pre class="mprev" id="memPreview"></pre></div>
@@ -1165,7 +1258,7 @@ dialog .field{grid-template-columns:72px 1fr}
           <div class="sh"><h2>按人和群排行</h2><div class="act"><input id="costFind" placeholder="搜索名字或号码" autocomplete="off"></div></div>
           <div class="rlist" id="costRank"></div>
         </div>
-        <div class="section cdet"><div class="cd" id="costDetail"></div></div>
+        <div class="section cdet skhost"><div class="cd" id="costDetail"></div></div>
       </div>
     </section>
 
@@ -1187,13 +1280,13 @@ dialog .field{grid-template-columns:72px 1fr}
     </section>
 
     <!-- 备份 -->
-    <section class="page" id="p-backup">
+    <section class="page fit" id="p-backup">
       <div class="head"><div><h1>备份与还原</h1><p class="sub">备份人设、记忆、全部设置和 NapCat 配置。备份和还原期间，AstrBot 会暂停约半分钟。</p></div></div>
       <div class="section"><div class="row" style="margin-top:0">
         <button class="primary" id="backupBtn">立即备份</button>
-        <label class="muted"><input type="checkbox" id="incMemes"> 包含表情包（数百 MB，通常无需备份，可重新下载）</label>
+        <label class="muted"><input type="checkbox" id="incMemes"> 包含表情包（数百 MB，通常无需备份，可以重新下载）</label>
         <button id="openBackups">打开备份文件夹</button></div></div>
-      <div class="section"><table><thead><tr><th>备份</th><th>时间</th><th>大小</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div>
+      <div class="section grow"><div class="tscroll"><table><thead><tr><th>备份</th><th>时间</th><th>大小</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div></div>
     </section>
 
     <!-- 版本与更新：四个分页，每页一屏放得下 -->
@@ -1251,6 +1344,27 @@ dialog .field{grid-template-columns:72px 1fr}
 <dialog id="qrDlg"><h3 style="margin:0 0 6px">扫码登录</h3><p class="note" style="margin:0 0 10px">登录已过期。请使用<b>小号</b>所在手机的 QQ 扫描此二维码（二维码会自动刷新）。扫码完成后，此窗口自动关闭。</p>
   <div class="qr" style="margin:0"><img id="qrImg" alt="登录二维码"></div><div class="row" style="justify-content:flex-end"><button id="qrLater">稍后</button></div></dialog>
 <dialog id="loginDlg"></dialog>
+<dialog id="modelDlg" aria-labelledby="modelEditTitle">
+  <div class="mdlg-head"><h3 id="modelEditTitle">添加连接</h3><div class="seg sm" id="modelDlgTabs"><button data-mp="basic" class="on">基本</button><button data-mp="adv">高级</button></div></div>
+  <input id="modelEditID" type="hidden">
+  <div class="mdlg-body">
+    <div class="mpane" id="mp-basic">
+      <div class="field"><label for="modelPreset">服务商预设</label><select id="modelPreset"></select></div>
+      <div class="field"><label for="modelKey">API Key</label><input id="modelKey" type="password" autocomplete="new-password" spellcheck="false" placeholder="填写密钥"><div class="tip" id="modelKeyNote">保存后不回显密钥。</div></div>
+      <div class="field"><label>预设说明</label><div class="note" id="modelPresetHint"></div></div>
+      <div class="field"><label for="modelVision">图片输入</label><div><label class="switch"><input id="modelVision" type="checkbox"><span></span></label></div><div class="tip" id="modelVisionNote">图片能力仅对应所选型号，更换型号后需要重新确认。</div></div>
+    </div>
+    <div class="mpane" id="mp-adv" hidden>
+      <div class="field"><label for="modelName">连接名称</label><input id="modelName" maxlength="80" placeholder="例如：我的 OpenAI"></div>
+      <div class="field"><label for="modelBase">API 基础地址</label><input id="modelBase" autocomplete="off" spellcheck="false" placeholder="https://api.example.com/v1"><div class="fld-err" id="modelBaseErr"></div></div>
+      <div class="field"><label for="modelProtocol">接口协议</label><select id="modelProtocol"><option value="openai">OpenAI Chat Completions</option><option value="responses">OpenAI Responses</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Google Gemini 原生</option></select></div>
+      <div class="field"><label for="modelCode">模型 ID</label><input id="modelCode" spellcheck="false" placeholder="填写服务商给出的模型 ID"></div>
+      <div class="field"><label for="modelExtra">其他参数</label><textarea id="modelExtra" spellcheck="false">{}</textarea><div class="tip">JSON 对象，原样附加到请求体。</div></div>
+      <div class="field"><label for="modelHeaders">额外请求头</label><textarea id="modelHeaders" spellcheck="false" placeholder="留空则保留原请求头"></textarea><div class="tip">JSON 对象，可不填写。</div></div>
+    </div>
+  </div>
+  <div class="mdlg-foot"><span class="note" id="modelSaveNote"></span><button id="modelClose">取消</button><button class="primary" id="modelSave">保存连接</button></div>
+</dialog>
 <dialog id="infoDlg" style="width:min(680px,92vw)"><h3 style="margin:0 0 10px" id="infoTitle"></h3><div class="md fixed-scroll" id="infoBody"></div>
   <div class="row" style="justify-content:flex-end"><button class="primary" id="infoOk">关闭</button></div></dialog>
 <dialog id="noticeDlg" style="width:min(620px,92vw)">
@@ -1299,7 +1413,9 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 // 弹窗打开时让弹窗本身拿焦点：浏览器默认会把焦点给里面第一个控件（例如复选框），
 // 页面刚打开、还没点过鼠标时会给它画一圈黑框
 { const sm = HTMLDialogElement.prototype.showModal;
-  HTMLDialogElement.prototype.showModal = function(){ this.classList.remove('closing'); sm.call(this); this.setAttribute('tabindex', '-1'); this.focus({preventScroll: true}); };
+  HTMLDialogElement.prototype.showModal = function(){ this.classList.remove('closing'); sm.call(this); this.setAttribute('tabindex', '-1');
+    const first = [...this.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not([readonly]):not(:disabled),textarea:not([readonly]):not(:disabled)')].find(x => x.offsetParent);
+    (first || this).focus({preventScroll: true}); };
   const cl = HTMLDialogElement.prototype.close;
   HTMLDialogElement.prototype.close = function(v){
     if (!this.open || this._closing) return;
@@ -1400,7 +1516,7 @@ document.addEventListener('scroll', e => { if (MENU && !MENU.m.contains(e.target
 /* ---- 悬停提示：把 title 换成自己画的小气泡 ---- */
 let TIP = {el: null, t: 0, on: null};
 document.addEventListener('mouseover', e => {
-  const el = e.target.closest && e.target.closest('[title],[data-tip]'); if (!el || el === TIP.on) return;
+  const el = e.target.closest && e.target.closest('[title]:not(iframe),[data-tip]'); if (!el || el === TIP.on) return;
   if (el.hasAttribute('title')){ const t = el.getAttribute('title'); el.removeAttribute('title'); if (t) el.dataset.tip = t; else delete el.dataset.tip; }
   if (!el.dataset.tip) return;
   tipHide(); TIP.on = el;
@@ -1409,7 +1525,7 @@ document.addEventListener('mouseover', e => {
     const r = el.getBoundingClientRect(); let top = r.top - d.offsetHeight - 8; if (top < 8) top = r.bottom + 8;
     d.style.left = Math.max(8, Math.min(r.left + r.width / 2 - d.offsetWidth / 2, innerWidth - d.offsetWidth - 8)) + 'px'; d.style.top = top + 'px';
     requestAnimationFrame(() => d.classList.add('open')); TIP.el = d;
-  }, 450);
+  }, 200);
 });
 document.addEventListener('mouseout', e => { if (TIP.on && !TIP.on.contains(e.relatedTarget)) tipHide(); });
 document.addEventListener('mousedown', () => tipHide(), true);
@@ -1456,12 +1572,14 @@ function enhanceAll(root = document){
   root.querySelectorAll('input[type=number]').forEach(enhanceNumber);
   root.querySelectorAll('input[type=range]').forEach(rangeFill);
   root.querySelectorAll('.seg').forEach(watchSeg);
+  root.querySelectorAll(SC_SEL).forEach(scWatch);
 }
 function uiKitInit(){
   enhanceAll();
   new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 && !n.classList.contains('cmenu') && !n.classList.contains('ctip')){
     if (n.matches('select')) enhanceSelect(n); else if (n.matches('.seg')) watchSeg(n); else if (n.matches('input[type=number]')) enhanceNumber(n);
-    else if (n.querySelector('select,.seg,input[type=number],input[type=range]')) enhanceAll(n); } })
+    else if (n.querySelector('select,.seg,input[type=number],input[type=range]')) enhanceAll(n);
+    if (n.matches(SC_SEL)) scWatch(n); else if (n.firstElementChild) n.querySelectorAll(SC_SEL).forEach(scWatch); } })
     .observe(document.body, {childList: true, subtree: true});
   const nav = $('#con nav'); new ResizeObserver(() => { nav.classList.add('noanim'); navInd(); }).observe(nav);
   addEventListener('resize', () => { const n = $('#con nav'); n.classList.add('noanim'); navInd(); });
@@ -1550,6 +1668,144 @@ function dpOpen(anchor, r, onApply){
 function dpClose(now){ const el = DP.el; if (!el) return; DP.el = null; DP.anchor = null;
   if (now){ el.remove(); return; } el.classList.remove('open'); later(() => el.remove(), 180); }
 
+/* ======================= 加载约定（v1.5.1）：骨架屏、原位失败、按钮加载、滚动渐隐 =======================
+   首次进入：150 毫秒内拿到数据不显示骨架；骨架出现后至少保留 300 毫秒，数据到了原位淡入。
+   再次进入：直接显示上一次的内容，后台刷新，有变化才更新。读取失败：原位显示说明和「重试」。 */
+const NET = {n: 0, msg: ''};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const SK_BLOCK = '.section,.card,.banner,.seg,.logbar,pre.log,.framebox,.framenote,.chatbar,.chat-options,.mem-bar,.savebar,.setnav,.dg-sum,.stepinfo';
+const SK_W = [88, 72, 82, 60, 86, 68, 78, 64], SK_CTL = 'button,input:not([type=hidden]),select,textarea,.csel,.seg,.num,label.switch';
+function skCollect(root, out){
+  for (const c of root.children){
+    if (c.matches('.head,.skel,.skfail,script,dialog,input[type=hidden],[hidden]')) continue;
+    const r = c.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
+    if (c.matches(SK_BLOCK) || !c.querySelector(SK_BLOCK)) out.push(c); else skCollect(c, out);
+  }
+  return out;
+}
+function skLines(x, y, w, h, pad, step, first){
+  let out = '', ly = pad, i = 0; const n = h > 320 ? 8 : 6;
+  while (ly + 10 <= h - pad && i < n){
+    const pct = i === 0 && first ? 34 : SK_W[i % SK_W.length];
+    out += `<i class="sk-l${i === 0 && first ? ' h' : ''}" style="left:${x + pad}px;top:${y + ly}px;width:${Math.max(24, (w - pad * 2) * pct / 100)}px"></i>`;
+    ly += i === 0 && first ? step + 8 : step; i++;
+  }
+  return out;
+}
+function skShow(host){
+  skClear(host);
+  const hr = host.getBoundingClientRect(), blocks = skCollect(host, []);
+  const limit = host.scrollTop + host.clientHeight;
+  let html = '';
+  for (const el of blocks){
+    const r = el.getBoundingClientRect(), x = r.left - hr.left, y = r.top - hr.top + host.scrollTop;
+    if (y >= limit) continue;
+    const w = r.width, h = Math.min(r.height, Math.max(40, limit - y)), cs = getComputedStyle(el);
+    const boxy = el.matches('.section,.card,.banner,pre.log,.framebox') || !el.matches(SK_CTL) && parseFloat(cs.borderTopWidth) > 0 && cs.backgroundColor !== 'rgba(0, 0, 0, 0)';
+    if (boxy){ html += `<div class="sk-b box" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;border-radius:${cs.borderRadius}">${skLines(0, 0, w, h, Math.min(20, h / 3), 24, h > 60)}</div>`; continue; }
+    const ctl = k => k.matches(SK_CTL) || !!k.querySelector(SK_CTL);
+    if (el.matches('.seg') || el.matches(SK_CTL) || h <= 48 && ctl(el)){
+      const kids = [...el.children].filter(k => k.getBoundingClientRect().width > 4 && !k.matches('.grow,.ind,.csel-src,[hidden]'));
+      const parts = el.matches('.seg') || el.matches(SK_CTL) || !kids.length ? [el] : kids;
+      for (const k of parts){ const q = k.getBoundingClientRect(), isC = parts.length === 1 || ctl(k), kh = isC ? Math.min(q.height, 34) : 10;
+        html += `<i class="sk-l" style="left:${q.left - hr.left}px;top:${q.top - hr.top + host.scrollTop + (q.height - kh) / 2}px;width:${isC ? q.width : Math.min(q.width, 160)}px;height:${kh}px;border-radius:${isC ? 8 : 99}px"></i>`; }
+      continue;
+    }
+    html += skLines(x, y, w, h, 2, 22, false);
+  }
+  if (!html && !host.matches('.page')) html = skLines(0, host.scrollTop, host.clientWidth, Math.min(host.clientHeight, 260), 14, 22, false);
+  if (!html){ const head = host.querySelector(':scope>.head'), top = head ? head.offsetTop + head.offsetHeight + 20 : 0;
+    html = `<div class="sk-b box" style="left:${parseFloat(getComputedStyle(host).paddingLeft) || 0}px;right:${parseFloat(getComputedStyle(host).paddingRight) || 0}px;top:${top}px;height:280px">${skLines(0, 0, 800, 280, 20, 24, true)}</div>`; }
+  const sk = document.createElement('div'); sk.className = 'skel'; sk.setAttribute('aria-hidden', 'true'); sk.innerHTML = html;
+  host.appendChild(sk); host.setAttribute('aria-busy', 'true');
+}
+function skClear(host){ host.querySelectorAll(':scope>.skel,:scope>.skfail').forEach(x => x.remove()); host.removeAttribute('aria-busy'); }
+function skDone(host){
+  host.removeAttribute('aria-busy'); host.querySelector(':scope>.skfail')?.remove();
+  const sk = host.querySelector(':scope>.skel');
+  host.classList.remove('ld');
+  if (sk){ sk.classList.add('out'); later(() => sk.remove(), 220); }
+}
+function skFail(host, err, retry){
+  skClear(host); host.classList.add('ld');
+  const head = host.querySelector(':scope>.head'), top = head ? head.offsetTop + head.offsetHeight : 0;
+  const d = document.createElement('div'); d.className = 'skfail'; d.style.top = top + 'px'; d.setAttribute('role', 'alert');
+  const login = err && err.login;
+  d.innerHTML = `<div><span class="ic">${SVG.bang}</span><b>${login ? '尚未连接 AstrBot 后台' : '无法读取此处内容'}</b><p></p>
+    <div class="row">${login ? '<button class="primary" data-k="login">连接后台</button><button data-k="retry">重试</button>' : '<button class="primary" data-k="retry">重试</button>'}</div></div>`;
+  d.querySelector('p').textContent = (err && err.message) || '读取失败，请稍后重试。';
+  d.querySelector('[data-k=retry]').onclick = () => { d.remove(); retry(); };
+  if (login) d.querySelector('[data-k=login]').onclick = () => loginBox(err.el, () => { d.remove(); retry(); });
+  host.appendChild(d);
+}
+const SKDONE = new Set();
+// 表格内的占位行：区域内重新读取时使用，行高与正式内容一致
+function skRows(n, cols){ let h = ''; for (let i = 0; i < n; i++){ h += '<tr>'; for (let c = 0; c < cols; c++) h += `<td><i class="sk-l st" style="width:${c ? 40 + (i * 13 + c * 17) % 30 : 50 + (i * 23) % 40}%"></i></td>`; h += '</tr>'; } return h; }
+let SKN = 0;
+const skOnce = (host, fn) => skRun(host, fn, 'once' + (++SKN));   // 每次都按首次读取处理：较慢时在该区域显示骨架
+function skRun(host, fn, key){
+  if (!host) return Promise.resolve();
+  key = key || host.id;
+  if (SKDONE.has(key) && !host.querySelector(':scope>.skfail')) return Promise.resolve().then(fn).catch(() => {});   // 再次进入：后台刷新，保留现有内容
+  if (host._skp) return host._skp;
+  host.classList.add('ld'); host.querySelector(':scope>.skfail')?.remove();
+  let shown = 0; const n0 = NET.n;
+  const t = setTimeout(() => { if (host.classList.contains('ld')){ skShow(host); shown = performance.now(); } }, 150);
+  host._skp = (async () => {
+    let err = null;
+    try { await fn(); } catch(e){ err = e; }
+    if (!err && NET.n > n0) err = new Error(NET.msg);
+    clearTimeout(t);
+    if (shown){ const left = 300 - (performance.now() - shown); if (left > 0) await sleep(left); }
+    host._skp = null;
+    if (err){ skFail(host, err, () => skRun(host, fn, key)); return; }
+    SKDONE.add(key); skDone(host);
+  })();
+  return host._skp;
+}
+
+/* ---- 按钮加载：点击后发出的请求进行中时，按钮显示转圈并锁定宽度，期间点击无效 ---- */
+let CLK = null;
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('button');
+  if (b && b.classList.contains('busy')){ e.preventDefault(); e.stopImmediatePropagation(); return; }
+  CLK = b && !b.matches('.csel,.t-x') && !b.closest('.seg,.cmenu,.dp,.num,.t-ac,.clog-list,.kbl,.dp-pre') ? {b, t: performance.now()} : null;
+}, true);
+function btnBusy(b, on){
+  if (!b) return;
+  if (on){ if (b.classList.contains('busy')) return; b.style.width = b.offsetWidth + 'px'; b.classList.add('busy'); b.setAttribute('aria-busy', 'true'); }
+  else if (!b.dataset.job){ b.classList.remove('busy'); b.style.width = ''; b.removeAttribute('aria-busy'); }
+}
+function btnHold(b, p){
+  if (!b || !b.isConnected) return p;
+  b._hold = (b._hold || 0) + 1;
+  const t = setTimeout(() => { if (b._hold) btnBusy(b, true); }, 120);
+  const end = () => { clearTimeout(t); b._hold = Math.max(0, b._hold - 1); if (!b._hold) btnBusy(b, false); };
+  p.then(end, end); return p;
+}
+
+/* ---- 区域内滚动：上下边缘渐隐 ---- */
+const SC_SEL = '.dg-list,.rlist,.kbl,.kbd-docs,.mrows,.vscroll,.clog-list,.clog-body,.chat,.fixed-scroll,.cd,.mreplay,.kbd-out,.tscroll,#p-persona .plist ul,.mdlg-body';
+const scRO = new ResizeObserver(es => es.forEach(e => scFade(e.target)));
+function scFade(el){
+  const t = el.scrollTop > 1, b = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+  if (el.classList.contains('ft') !== t) el.classList.toggle('ft', t);
+  if (el.classList.contains('fb') !== b) el.classList.toggle('fb', b);
+  const th = el.querySelector(':scope>table>thead'), hd = th ? th.offsetHeight + 'px' : '0px';
+  if (el.style.getPropertyValue('--hd') !== hd) el.style.setProperty('--hd', hd);
+}
+function scWatch(el){ if (el._sc) return; el._sc = 1; el.classList.add('sc'); scRO.observe(el); new MutationObserver(() => scFade(el)).observe(el, {childList: true, subtree: true, characterData: true}); scFade(el); }
+document.addEventListener('scroll', e => { const t = e.target; if (t && t.classList && t.classList.contains('sc')) scFade(t); }, true);
+
+/* ---- 弹窗：按 Enter 触发主按钮（多行输入框、按钮和下拉除外） ---- */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.isComposing || e.shiftKey || e.ctrlKey || e.altKey || MENU || DP.el) return;
+  const d = e.target.closest && e.target.closest('dialog[open]'); if (!d || e.defaultPrevented) return;
+  if (e.target.matches('textarea,button,a,select,[contenteditable],input[type=checkbox],input[type=radio]')) return;
+  const p = [...d.querySelectorAll('button.primary')].filter(b => b.offsetParent && !b.disabled && !b.closest('[hidden]')).pop();
+  if (!p) return; e.preventDefault(); p.click();
+});
+
 async function api0(path, body){
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), body === undefined ? 10000 : 130000);
@@ -1558,14 +1814,21 @@ async function api0(path, body){
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || '控制台请求失败（' + r.status + '）');
     return data;
-  } catch(e){ if (e.name === 'AbortError') throw new Error('请求超时，请检查连接后重试'); throw e; }
+  } catch(e){
+    if (e.name === 'AbortError'){ NET.n++; NET.msg = '请求超时，请确认控制台正在运行后重试。'; throw new Error(NET.msg); }
+    if (e instanceof TypeError){ NET.n++; NET.msg = '无法连接控制台后台，请确认控制台正在运行后重试。'; throw new Error(NET.msg); }
+    throw e; }
   finally { clearTimeout(timer); }
 }
 /* 切换页面时不用每次都等 AstrBot：这些读数据的请求结果留 60 秒，再进同一页直接显示。
    任何修改操作（POST）、后台任务做完、打开 AstrBot / NapCat 后台都会清空，不会看到改之前的旧内容。 */
 const APIC = new Map(), API_CACHE = /^\/api\/(personas|kb|kb\/docs|memes|versions|groups|backups|group-rules|usage|updates)(\?(?!.*force=)|$)/;
 function apiFlush(){ APIC.clear(); }
-async function api(path, body){
+function api(path, body){
+  const b = CLK && performance.now() - CLK.t < 400 ? CLK.b : null;
+  return b ? btnHold(b, api1(path, body)) : api1(path, body);
+}
+async function api1(path, body){
   if (body !== undefined){ apiFlush(); return api0(path, body); }
   if (!API_CACHE.test(path)) return api0(path);
   let c = APIC.get(path);
@@ -1669,7 +1932,7 @@ async function runJob(path, body, onDone){
     const j = await api('/api/job').catch(()=>null); if (!j) return;
     const pr = $('#wProg'); if (pr){ if (j.progress != null){ pr.classList.remove('ind'); pr.firstElementChild.style.width = Math.round(j.progress*100)+'%'; } else pr.classList.add('ind'); }
     const lg = $('#wLog'); if (lg){ lg.textContent = (j.lines||[]).join('\n'); lg.scrollTop = lg.scrollHeight; }
-    const st = $('#wStageT'); if (st){ const last = (j.lines || []).filter(x => x && x.trim()).pop() || '准备中…'; st.textContent = last; st.title = last; }
+    const st = $('#wStageT'); if (st){ const last = (j.lines || []).filter(x => x && x.trim()).pop() || '准备中…'; st.textContent = last; st.dataset.tip = last; }
     if (!j.running){
       clearInterval(t); $$('#wizBody button').forEach(b => b.disabled = false);
       const m = $('#wMsg'); if (!m) return;
@@ -1719,11 +1982,11 @@ const VIEWS = {
   deepseek(){ return `<h1>模型 API</h1><p class="sub">选择服务商并填写 API Key。预设已包含接口地址和型号；使用中转站时请选择「自定义」。</p>
     <div class="section"><div class="field"><label for="wModelPreset">服务商</label><select id="wModelPreset"></select></div>
     <p class="note" id="wModelHint"></p><div class="field"><label for="dsKey">API Key</label><input id="dsKey" type="password" autocomplete="off" style="width:100%"></div>
-    <details id="wModelAdvanced"><summary>接口与型号（可修改）</summary>
+    <div id="wModelAdvanced">
     <div class="field"><label for="wModelBase">API 基础地址</label><input id="wModelBase" style="width:100%"></div>
     <div class="field"><label for="wModelCode">模型 ID</label><input id="wModelCode" style="width:100%"></div>
     <div class="field"><label for="wModelProtocol">接口协议</label><select id="wModelProtocol"><option value="openai">OpenAI Chat Completions</option><option value="responses">OpenAI Responses</option><option value="anthropic">Anthropic Messages</option><option value="gemini">Gemini 原生接口</option></select></div>
-    <label><input type="checkbox" id="wModelVision"> 此型号支持图片（自定义型号请自行确认）</label></details>
+    <div class="field"><label></label><label><input type="checkbox" id="wModelVision"> 此型号支持图片输入（自定义型号请自行确认）</label></div></div>
     <p class="note" id="dsMsg">保存时会检查填写格式；安装完成后，可在「模型与 API」中验证连接。API Key 只用于本机配置。</p></div>` + navBtns(); },
   qq(){ return `<h1>账号设置</h1><p class="sub">只需填写 QQ 号，<b>不要填写密码</b>。小号将在下一步通过手机扫码登录。</p>${stepInfo('1 分钟', '填写小号和主人的 QQ 号，不填写密码', '')}
     <div class="section"><div class="field" style="margin-top:0"><label>小号 QQ 号</label><input data-k="bot_qq" placeholder="bot 使用的 QQ 号"></div>
@@ -1775,7 +2038,7 @@ const BIND = {
     const fill = saved => { const p=catalog.presets.find(p=>p.id===select.value); if(!p) return;
       $('#wModelBase').value=saved?.base_url ?? p.base_url; $('#wModelCode').value=saved?.model ?? p.model;
       $('#wModelProtocol').value=saved?.protocol ?? p.protocol; $('#wModelVision').checked=saved?.vision ?? p.vision;
-      $('#wModelHint').textContent=p.note; $('#wModelAdvanced').open=p.id==='custom'; };
+      $('#wModelHint').textContent=p.note; };
     select.value=WZ.data.model?.preset || 'deepseek'; fill(WZ.data.model); select.onchange=()=>fill();
     $('#dsKey').value=WZ.secrets.ds || ''; $('#wModelCode').oninput=()=>{ $('#wModelVision').checked=false; };
     enhanceSelect(select); enhanceSelect($('#wModelProtocol'));
@@ -1823,9 +2086,11 @@ function page(p){
   requestAnimationFrame(() => $$(`#p-${p} .seg`).forEach(sg => { sg.classList.add('noanim'); segInd(sg); requestAnimationFrame(() => sg.classList.remove('noanim')); }));
   $$('#con .page').forEach(s => s.classList.toggle('on', s.id === 'p-' + p)); $('#con main').scrollTop = 0;
   if (p === 'settings') requestAnimationFrame(() => slideInd($('#setNav'), ':scope > a.on'));
-  ({settings: () => { if (!SET || SET.error) loadSettings(); else fillSettings(); }, logs: loadLogs, backup: loadBackups, persona: loadPersonas, kb: loadKb, memory: loadMemory, cost: loadCost,
-    astrbot: () => { apiFlush(); frame('ab'); }, napcat: () => { apiFlush(); frame('nc'); }, about: loadAbout, chat: loadChatOptions, models: () => { if (typeof loadModels === 'function') loadModels(); }}[p] || (()=>{}))();
+  const fn = PAGE_LOAD[p];
+  if (p === 'astrbot' || p === 'napcat') fn(); else if (fn) skRun($('#p-' + p), fn);
 }
+const PAGE_LOAD = {settings: () => (!SET || SET.error) ? loadSettings() : fillSettings(), logs: loadLogs, backup: loadBackups, persona: loadPersonas, kb: loadKb, memory: loadMemory, cost: loadCost,
+  astrbot: () => { apiFlush(); frame('ab'); }, napcat: () => { apiFlush(); frame('nc'); }, about: loadAbout, chat: loadChatOptions, models: () => loadModels(), home: () => refresh()};
 function pill(el, cls, text){ if (el.className !== 'pill ' + cls) el.className = 'pill ' + cls; if (el.textContent !== text) el.textContent = text; }
 function setHTML(el, html){ if (el && el.dataset.h !== html){ el.dataset.h = html; el.innerHTML = html; } }   // 内容没变就不碰，免得每 3 秒重排一次
 let refreshBusy = false, lastStatusAt = 0;
@@ -1842,7 +2107,7 @@ async function refresh(supplied){
     if (next.loading){ connectionState('正在读取运行状态，界面已就绪…'); return; }
     ST = next; lastStatusAt = (ST.sampled_at || Date.now()/1000) * 1000;
   } catch(e){
-    connectionState('暂时连不上控制台，' + (lastStatusAt ? '上次状态已过期。' : '') + e.message);
+    connectionState('暂时无法连接控制台' + (lastStatusAt ? '，上次读取的状态已过期' : '') + '。' + e.message);
     $$('[data-act]').forEach(x => x.disabled = true); return;
   } finally { refreshBusy = false; }
   if (!ST.setup_done) return;
@@ -1861,11 +2126,11 @@ async function refresh(supplied){
   else pill($('#abPill'), 'b', '已停止');
   // 同一行里换文字，不新增一行，卡片高度不变
   setHTML($('#abPortRow'), ab.running && !ab.managed
-    ? `后台端口 <b id="abPort" title="由其他程序启动，点击「重启」后改由控制台管理（切换到端口 ${ST.settings.astrbot_port}）">${esc(ab.port || '-')} · 外部启动</b>`
+    ? `后台端口 <b id="abPort" data-tip="由其他程序启动，点击「重启」后改由控制台管理（切换到端口 ${ST.settings.astrbot_port}）">${esc(ab.port || '-')} · 外部启动</b>`
     : `后台端口 <b id="abPort">${esc(ab.port || '-')}</b>`);
   homeBanner(nc, ab, B);
   $('#con nav a[data-page=about]').classList.toggle('upd', !!(ST.updates && ST.updates.length));
-  $('#con nav a[data-page=about]').title = ST.updates && ST.updates.length ? ST.updates.join('、') + ' 有新版本' : '';
+  $('#con nav a[data-page=about]').dataset.tip = ST.updates && ST.updates.length ? ST.updates.join('、') + ' 有新版本' : '';
   const lb = ST.last_boot;
   $('#hbR').textContent = lb ? `上次启动用时 ${Math.round(lb.total)} 秒` : '';
   const bn = lb ? `上次启动用时 ${Math.round(lb.total)} 秒（加载程序 ${Math.round(lb.load)} 秒，加载插件 ${Math.round(lb.plugins)} 秒）。` : '';
@@ -1908,7 +2173,7 @@ function homeBanner(nc, ab, B){
   else if (!ab.running){ c = 'b'; t = 'AstrBot 已停止'; d = '可以接收消息，但无法回复，请在下方 AstrBot 卡片中点击「启动」'; }
   else if (!nc.running){ c = 'b'; t = 'NapCat 已停止'; d = 'QQ 未登录，请在下方 NapCat 卡片中点击「启动」'; }
   else { c = 'w'; t = 'QQ 未连上 AstrBot'; d = '通常几秒内会自动连接；长时间未连接时，请点击「开始诊断」'; }
-  $('#hbDot').className = 'dot ' + c; $('#hbT').textContent = t; $('#hbD').textContent = d; $('#hbD').title = d;
+  $('#hbDot').className = 'dot ' + c; $('#hbT').textContent = t; $('#hbD').textContent = d; $('#hbD').dataset.tip = d;
   $('#navDot').className = 'dot ' + c;
   $('#navState').textContent = {g: '在线', w: starting ? '启动中' : '需处理', b: '离线'}[c];
 }
@@ -1926,12 +2191,8 @@ $$('[data-act]').forEach(b => b.onclick = async () => {
 });
 
 /* 按钮自己显示「xx中…」：原地变，不挪别的东西 */
-function busy(b){
-  const t = b.textContent.trim(); b.dataset.label = t; b.classList.add('busy'); b.disabled = true;
-  const verb = /停止/.test(t) ? '停止中…' : /重启/.test(t) ? '重启中…' : /启动/.test(t) ? '启动中…' : '进行中…';
-  b.style.minWidth = b.offsetWidth + 'px'; b.innerHTML = `<span class="spin"></span>${verb}`;
-}
-function unbusy(){ $$('button.busy').forEach(b => { b.classList.remove('busy'); b.textContent = b.dataset.label || b.textContent; b.style.minWidth = ''; }); }
+function busy(b){ btnBusy(b, true); b.dataset.job = '1'; b.disabled = true; }
+function unbusy(){ $$('button[data-job]').forEach(b => { delete b.dataset.job; btnBusy(b, false); }); }
 
 /* 右下角任务卡：显示正在做什么、做到哪一步；做完显示结果几秒后自己收起 */
 let JC = {closedAt: 0, hideTimer: null, poll: null, shownDoneAt: 0, retry: null};
@@ -1969,7 +2230,7 @@ function jobUI(j){
   const ic = $('#jcIc'); ic.classList.remove('pop'); void ic.offsetWidth; ic.classList.add('pop');
   const tr = !j.ok && j.trouble, ac = $('#jcAc');
   $('#jcName').textContent = tr ? j.name + '没有完成' : j.name;
-  $('#jcLine').textContent = tr ? tr.title + '。' + (tr.cause || '') : (j.msg || ''); $('#jcLine').title = j.msg || ''; $('#jcProg').hidden = true;
+  $('#jcLine').textContent = tr ? tr.title + '。' + (tr.cause || '') : (j.msg || ''); $('#jcLine').dataset.tip = j.msg || ''; $('#jcProg').hidden = true;
   ac.hidden = !tr; ac.innerHTML = '';
   if (tr){ const b = document.createElement('button'); b.className = 'primary'; b.textContent = '查看处理办法';
     const rt = JC.retryName === j.name ? JC.retry : null;      // 只有知道怎么重做的任务才显示「重试」
@@ -2064,7 +2325,7 @@ $('#diagReport').onclick = e => makeReport(e.currentTarget);
 let QR = {open: false, dismissedAt: 0};
 function qrUpdate(need){
   const d = $('#qrDlg'), p = $('#ncPill');
-  p.classList.toggle('click', need); p.title = need ? '点这里显示二维码' : '';
+  p.classList.toggle('click', need); p.dataset.tip = need ? '点击显示登录二维码' : '';
   p.onclick = need ? () => { QR.dismissedAt = 0; qrUpdate(true); } : null;
   if (!need){ if (d.open) d.close(); QR.open = false; return; }
   if (!d.open && Date.now() - QR.dismissedAt > 120000) d.showModal();   // 点了「稍后」两分钟内不再自己弹
@@ -2139,8 +2400,8 @@ async function showDashboardCred(){
   if (ok){ try { await navigator.clipboard.writeText(c.password); toast('密码已复制'); } catch { alert('复制失败，请手动选中后复制'); } }
 }
 function needLogin(r, el, after){
-  if (r && r.need_login){ loginBox(el, after); return true; }
-  if (r && r.error){ alert('读不到：' + r.error + '（AstrBot 未运行时，请先在总览页启动）'); return true; }
+  if (r && r.need_login){ loginBox(el, after); const e = new Error('控制台保存的 AstrBot 后台密码已失效，请重新连接后台。'); e.login = true; e.el = el; throw e; }
+  if (r && r.error) throw new Error(r.error + '。AstrBot 未运行时，请先在总览页启动。');
   return false;
 }
 
@@ -2173,7 +2434,7 @@ async function loadChatOptions(force = false){
     fill('#chatScene', r.scenes.map(x => [x.umo, x.scene === 'group' ? '群聊 · ' + x.label : x.label]));
     fill('#chatPersona', r.personas.map(x => [x,x])); fill('#chatProvider', r.providers.map(x => [x,x]));
     chatSceneChanged(); $('#chatSend').disabled = false;
-  } catch(e){ $('#chatInfo').textContent = '读取失败：' + e.message + '。可点击「刷新配置」重试。'; }
+  } catch(e){ $('#chatInfo').textContent = '读取失败：' + e.message; throw e; }
 }
 function chatSceneChanged(){
   const scene = CHAT.options?.scenes.find(x => x.umo === $('#chatScene').value);
@@ -2192,7 +2453,7 @@ async function chatSend(){
   try {
     const r = await api('/api/test-chat', {umo:$('#chatScene').value, text:t, persona:$('#chatPersona').value,
       provider:$('#chatProvider').value, identity:$('#chatIdentity').value, history:CHAT.history.slice(-20), session:CHAT.session});
-    if (r.need_login && needLogin(r, $('#chatNeedLogin'), () => {})) return;
+    if (r.need_login){ loginBox($('#chatNeedLogin'), () => {}); throw new Error('控制台保存的 AstrBot 后台密码已失效，请重新连接后台。'); }
     if (!r.ok || r.error || !r.reply) throw new Error(r.error || '没有收到回复');
     box.insertAdjacentHTML('beforeend', `<div class="msg bot">${esc(r.reply)}</div>`);
     CHAT.history.push({role:'user',text:t},{role:'assistant',text:r.reply});
@@ -2220,7 +2481,7 @@ function renderChips(box){
   (SET[key] || []).forEach((v, i) => {
     const c = document.createElement('span'); c.className = 'chip';
     c.innerHTML = esc(v) + (key==='groups' && SET._gnames && SET._gnames[v] ? ` <small>${esc(SET._gnames[v])}</small>` : '');
-    const x = document.createElement('button'); x.textContent = '×'; x.title = '移除';
+    const x = document.createElement('button'); x.textContent = '×'; x.dataset.tip = '移除'; x.setAttribute('aria-label', '移除');
     x.onclick = () => { SET[key].splice(i,1); renderChips(box); dirty(); }; c.appendChild(x); box.appendChild(c);
   });
   const add = document.createElement('span'); add.className = 'add';
@@ -2256,7 +2517,7 @@ function fillSettings(){
   $('#privProactive').checked = !!SET.private_proactive; $('#privProactive').onchange = e => { SET.private_proactive = e.target.checked; dirty(); };
   $('#othersNote').hidden = !SET.others.length; $('#othersNote').textContent = '另外还有 ' + SET.others.length + ' 条其他格式的白名单，将原样保留。';
 }
-async function loadSettings(){ SET = await api('/api/settings'); clean(); if (SET.error){ $('#saveNote').textContent = SET.error; return; } fillSettings(); $('#saveNote').textContent = ''; }
+async function loadSettings(){ const s = await api('/api/settings'); if (s.error) throw new Error(s.error); SET = s; clean(); fillSettings(); $('#saveNote').textContent = ''; }
 $('#saveBtn').onclick = async () => { if (!SET) return; if (!SET.admins.length && !(await ask('管理员列表为空，确定保存吗？'))) return;
   const r = await api('/api/settings', SET); if (!r.ok) return alert(r.msg || r.error || '有其他任务正在进行，请稍后再保存'); clean(); $('#saveNote').textContent = '正在保存并重启 AstrBot，约需半分钟…'; };
 $('#reloadBtn').onclick = async () => { if (SET && SET._dirty && !(await ask('放弃未保存的修改？', '放弃'))) return; SET = null; loadSettings(); };
@@ -2288,7 +2549,7 @@ async function loadPersonas(){
   const chats = [...s.groups.map(g => ['群', g, 'GroupMessage']), ...s.friends.map(q => ['私聊', q, 'FriendMessage'])];
   tb.innerHTML = chats.length ? '' : '<tr><td colspan="4" class="empty">白名单中暂无群或私聊</td></tr>';
   $('#ptabChatsN').textContent = chats.length ? `(${chats.length})` : '';
-  loadMemes();   // 和下面的聊天列表一起加载，不用等
+  const memes = loadMemes();   // 和下面的聊天列表同时读取
   // 一次把所有聊天的单独设置查回来（以前一个聊天一个请求，群多了要等好几秒）
   const umos = chats.map(([, g, mt]) => `${s.bot_name}:${mt}:${g}`);
   const all = umos.length ? await api('/api/session-services', {umos}) : {};
@@ -2307,7 +2568,7 @@ async function loadPersonas(){
     if (mt === 'GroupMessage') tr.children[3].appendChild(muteCtl(g)); else tr.children[3].innerHTML = '<span class="muted">—</span>';
     tb.appendChild(tr);
   }
-  loadRules(s);
+  await Promise.all([memes, loadRules(s)]);
 }
 
 /* 群聊静音和主人吩咐（规则文件由插件读，改完她下一条消息就照做） */
@@ -2349,7 +2610,8 @@ function scopeName(gid){ return gid === '*' ? '所有群' : (GNAMES[gid] ? `${GN
 function renderNotes(){
   const tb = $('#noteRows'); const rows = [];
   for (const [gid, lst] of Object.entries(RULES.notes || {})) for (const n of lst) rows.push([gid, n]);
-  if (!rows.length){ tb.innerHTML = '<tr><td colspan="3" class="empty">暂无吩咐</td></tr>'; return; }
+  $('#ptabNotesN').textContent = rows.length ? `(${rows.length})` : '';
+  if (!rows.length){ tb.innerHTML = '<tr><td colspan="3" class="empty">尚未添加吩咐。在下方选择适用范围并填写内容后，点击「添加」。</td></tr>'; return; }
   tb.innerHTML = '';
   for (const [gid, n] of rows){
     const tr = document.createElement('tr');
@@ -2488,7 +2750,7 @@ async function loadKb(){
   $('#kbEmbNote').textContent = KB.embeddings.length ? '使用所选「向量模型」将资料转换为可检索的形式（硅基流动的 bge-m3 免费）。' : '暂无向量模型。请在「AstrBot 管理后台 → 模型提供商」中添加一个 Embedding 模型（例如硅基流动 BAAI/bge-m3，免费），再返回此处新建。';
   $('#kbCreate').disabled = !KB.embeddings.length;
   if (!KB.kbs.some(k => k.kb_id === KBSEL)) KBSEL = KB.kbs.length ? KB.kbs[0].kb_id : null;
-  renderKbList(); renderKbDetail();
+  renderKbList(); await renderKbDetail();
 }
 function renderKbList(){
   $('#kbCount').textContent = KB.kbs.length ? KB.kbs.length + ' 个' : '';
@@ -2505,7 +2767,7 @@ async function renderKbDetail(){
       ${k.init_error?`<p class="note" style="color:var(--bad);margin:6px 0 0">${esc(k.init_error)}</p>`:''}
       <div class="row"><input type="file" multiple accept=".md,.txt,.pdf,.docx,.xlsx,.epub" hidden><button class="primary up">上传资料</button><button class="ksync">同步文件夹</button><button class="kopen">打开资料文件夹</button><span class="grow" style="flex:1"></span><button class="danger kdel">删除知识库</button></div>
       <div class="note kmsg" style="min-height:1.6em;margin-top:8px"></div></div>
-    <div class="kbd-docs"><table><tbody class="docs"><tr><td class="empty">读取中…</td></tr></tbody></table></div>
+    <div class="kbd-docs"><table><tbody class="docs">${skRows(4, 3)}</tbody></table></div>
     <div class="kbd-test"><div class="row"><input class="kq" placeholder="检索测试：输入一个问题，查看从此知识库中检索到的内容" style="flex:1"><button class="kt">检索</button></div><div class="kbd-out"><p class="note" style="margin:0">在文件夹中直接修改、添加或删除文件后，请点击「同步文件夹」。</p></div></div>`;
   const msg = box.querySelector('.kmsg');
   box.querySelector('.kopen').onclick = () => api('/api/kb/open-folder', {kb_name: k.kb_name});
@@ -2634,7 +2896,7 @@ async function loadCost(){
     row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); costSelect(row.dataset.key); } }; });
   costFilter();
   const keep = COST.sel && T.some(t => t.key === COST.sel);
-  if (keep) costMark(); else if (T.length) costSelect(T[0].key, true); else if (!COST.sel) $('#costDetail').innerHTML = '<div class="cd-empty">在左侧选择一个人或群，查看 bot 与对方的累计用量</div>';
+  if (keep) costMark(); else if (T.length) await costSelect(T[0].key, true); else if (!COST.sel) $('#costDetail').innerHTML = '<div class="cd-empty">在左侧选择一个人或群，查看 bot 与对方的累计用量</div>';
   else costMark();
 }
 function costFilter(){
@@ -2649,7 +2911,8 @@ function costMark(){
 }
 async function costSelect(key, quiet){
   COST.sel = key; costMark();
-  const d = await api('/api/usage/target?key=' + encodeURIComponent(key)).catch(e => ({error: String(e)}));
+  let d; const get = async () => { d = await api('/api/usage/target?key=' + encodeURIComponent(key)).catch(e => ({error: String(e)})); };
+  await (quiet ? get() : skOnce($('.cdet'), get));
   if (COST.sel !== key) return;
   const box = $('#costDetail');
   if (!d || d.error){ box.innerHTML = `<div class="cd-empty">${esc((d && d.error) || '读取失败')}</div>`; return; }
@@ -2703,7 +2966,7 @@ function memTab(t){
   $$('#p-memory .mtab').forEach(x => x.hidden = x.id !== 'mt-' + t);
   $('#memScopeWrap').hidden = t === 'map';               // 脑图按人设看全部对象
   $('#memPersonaWrap').hidden = t === 'facts' || t === 'follow';   // 档案、待跟进不分人设
-  memLoadTab();
+  skRun($('#mt-' + t), memLoadTab, 'mem-' + t);
 }
 $('#memScope').onchange = () => { MEM.scope = $('#memScope').value; MEM.diarySel = null; memLoadTab(); };
 $('#memPersona').onchange = () => { MEM.persona = $('#memPersona').value; MEM.diarySel = null; MAP.sel = null; memLoadTab(); };
@@ -2713,7 +2976,7 @@ $$('#memDim button').forEach(b => b.onclick = () => { $$('#memDim button').forEa
 
 async function loadMemory(){
   let ov;
-  try { ov = await mapi('/api/memory'); } catch(e){ $('#memNotice').innerHTML = `<div class="framenote"><span class="grow">${esc(e.message)}</span></div>`; return; }
+  try { ov = await mapi('/api/memory'); } catch(e){ $('#memNotice').innerHTML = `<div class="framenote"><span class="grow">${esc(e.message)}</span></div>`; throw e; }
   MEM.ov = ov;
   $('#memNotice').innerHTML = ov.installed ? '' : '<div class="framenote"><span class="grow">记忆插件尚未安装到 AstrBot。重启一次控制台后会自动安装，之后 bot 开始记录和整理记忆。</span></div>';
   const st = ov.stats || {};
@@ -2727,17 +2990,17 @@ async function loadMemory(){
   $('#memScope').innerHTML = ov.scopes.map(s => `<option value="${esc(s.scope)}">${esc(s.title)}</option>`).join('');
   $('#memScope').value = MEM.scope;
   $('#memScopeWrap').hidden = MEM.tab === 'map';
-  memLoadTab();
+  await memLoadTab(); SKDONE.add('mem-' + MEM.tab);
 }
 function memLoadTab(){
-  ({map: memLoadMap, facts: memLoadFacts, diary: memLoadDiaries, follow: memLoadFollows, test: memLoadTest}[MEM.tab] || (() => {}))();
+  return ({map: memLoadMap, facts: memLoadFacts, diary: memLoadDiaries, follow: memLoadFollows, test: memLoadTest}[MEM.tab] || (() => {}))();
 }
 
 /* ---- 立即整理：放一条任务给插件，等它做完 ---- */
 $('#memRun').onclick = async () => {
   const b = $('#memRun'); if (b.disabled) return;
   let r; try { r = await mapi('/api/memory/run', {kind: 'consolidate'}); } catch(e){ return toast('无法开始整理\n' + e.message, 'err'); }
-  b.disabled = true; b.classList.add('busy'); b.style.minWidth = b.offsetWidth + 'px'; b.innerHTML = '<span class="spin"></span>整理中…';
+  b.disabled = true; b.dataset.job = '1'; btnBusy(b, true);
   toast('已开始整理\n插件每分钟检查一次任务，每个对话的整理需要调用一次模型，通常在一至两分钟内完成。');
   const t0 = Date.now(); let j = {};
   while (Date.now() - t0 < 6 * 60000){
@@ -2745,7 +3008,7 @@ $('#memRun').onclick = async () => {
     try { j = await mapi('/api/memory/job?id=' + r.job); } catch(e){ j = {}; }
     if (j.status === 'done' || j.status === 'error') break;
   }
-  b.disabled = false; b.classList.remove('busy'); b.textContent = '立即整理'; b.style.minWidth = '';
+  b.disabled = false; delete b.dataset.job; btnBusy(b, false);
   if (j.status === 'done') toast('整理完成\n' + (j.result || ''), 'ok');
   else if (j.status === 'error') toast('整理出错\n' + (j.result || ''), 'err');
   else toast('整理尚未开始\n请确认 AstrBot 正在运行，且记忆插件已安装。任务会保留，插件启动后继续执行。', 'err');
@@ -3169,7 +3432,7 @@ $('#expGo').onclick = async () => {
 /* 备份 */
 async function loadBackups(){
   const list = await api('/api/backups'); const tb = $('#backupRows');
-  tb.innerHTML = list.length ? '' : '<tr><td colspan="4" class="empty">暂无备份</td></tr>';
+  tb.innerHTML = list.length ? '' : '<tr><td colspan="4" class="empty">尚未创建备份<div class="row"><button class="primary" onclick="$(\'#backupBtn\').click()">立即备份</button></div></td></tr>';
   list.forEach(b => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${esc(b.name)}</td><td>${b.time}</td><td>${(b.size/1048576).toFixed(1)} MB</td><td></td>`;
     const btn = document.createElement('button'); btn.textContent = '还原';
     btn.onclick = async () => { if (!(await ask('还原到 ' + esc(b.name) + '？<br>当前设置将被替换（还原前会自动另存一份）。', '还原'))) return;
@@ -3222,7 +3485,7 @@ async function loadUpdates(force){
       <div class="grow"></div>
       <div class="row" style="margin-top:8px">${main}
       ${x.notes ? `<button data-unotes="${comp}">更新说明</button>` : ''}
-      ${comp === 'napcat' ? '<button data-uup="napcat_full" title="新版 NapCat 要求更新版本的 QQ 时使用">完整更新（含 QQ 内核）</button>' : ''}
+      ${comp === 'napcat' ? '<button data-uup="napcat_full" data-tip="新版 NapCat 要求更新版本的 QQ 时使用">完整更新（含 QQ 内核）</button>' : ''}
       ${con ? '<button data-czip>从压缩包更新</button>' : ''}</div>
       ${bk}`;
   };
@@ -3309,9 +3572,9 @@ function renderChangelog(secs){
 
 let CUR_VER = '';
 async function loadAbout(){
-  loadUpdates();
+  const upd = loadUpdates();
   const p = await api('/api/ping'); CUR_VER = p.version; $('#verText').textContent = '当前版本 ' + p.version; $('#foot').textContent = 'v' + p.version;
-  const v = await api('/api/versions');
+  const v = await api('/api/versions'); await upd;
   renderChangelog(v.sections || []);
   const box = $('#verBox'), ban = $('#verBanner');
   ban.innerHTML = '';
@@ -3361,8 +3624,8 @@ async function fbPreview(){
   return FB.prev;
 }
 $('#fbWhat').onclick = async () => {
-  const box = $('#fbWhatBox'); box.innerHTML = '<p class="note" style="margin:8px 0">正在读取…</p>'; $('#fbWhatDlg').showModal();
-  const p = await fbPreview();
+  const box = $('#fbWhatBox'); box.innerHTML = ''; box.classList.add('skhost'); $('#fbWhatDlg').showModal();
+  let p; await skOnce(box, async () => { p = await fbPreview(); });
   if (p.error){ box.innerHTML = `<p class="note" style="margin:8px 0">${esc(p.error)}</p>`; return; }
   const kb = n => Math.max(1, Math.round(n / 1024)) + ' KB', ct = $('#fbContact').value.trim();
   box.innerHTML = `<table><tbody>
@@ -3458,7 +3721,12 @@ function frame(which, force){
 $('#abReload').onclick = () => frame('ab', true); $('#abCred').onclick = showDashboardCred; $('#ncReload').onclick = () => frame('nc', true);
 
 /* 启动：先显示壳，首次请求失败时保留导航和可见的恢复入口。 */
-let bootReady = false, bootBusy = false;
+let bootReady = false, bootBusy = false, bootWait = null;
+// 首次打开：总览页显示骨架，直到第一次读到运行状态；读不到时原位显示「重试」
+function homeFirst(){ return new Promise((res, rej) => { bootWait = {res, rej}; bootConsole(); }); }
+function bootSettle(err){ const w = bootWait;
+  if (!w){ const h = $('#p-home'); if (!err && h.querySelector(':scope>.skfail')){ SKDONE.add('p-home'); skDone(h); } return; }   // 定时重连成功后撤下失败说明
+  bootWait = null; err ? w.rej(err) : w.res(); }
 async function bootConsole(){
   if (bootBusy) return; bootBusy = true;
   try {
@@ -3467,21 +3735,21 @@ async function bootConsole(){
     if (state.loading){ connectionState('正在读取运行状态，界面已就绪…'); return; }
     ST = state;
     if (!ST.setup_done){
-      $('#con').hidden = true; $('#wiz').hidden = false; wizInit(); bootReady = true;
+      $('#con').hidden = true; $('#wiz').hidden = false; skRun($('#wizPage'), wizInit); bootReady = true; bootSettle();
       setInterval(async () => { const j = await api('/api/job').catch(()=>null); if (!j) return;
         const inline = $('#wProg') && !$('#wProg').hidden; if (!inline) jobUI(j); else $('#jobcard').hidden = true; }, 2000);
       return;
     }
-    bootReady = true; requestAnimationFrame(navInd); await refresh(state);
+    bootReady = true; requestAnimationFrame(navInd); await refresh(state); bootSettle();
     refreshBalance(); showNotice();
     api('/api/ping').then(p => { $('#foot').textContent = 'v' + p.version; }).catch(() => {});
-  } catch(e){ connectionState('暂时连不上控制台。' + e.message + '，请点重试。'); }
+  } catch(e){ connectionState('暂时无法连接控制台：' + e.message); bootSettle(e); }
   finally { bootBusy = false; }
 }
-$('#connectionRetry').onclick = () => bootReady ? refresh() : bootConsole();
+$('#connectionRetry').onclick = () => bootReady ? refresh() : skRun($('#p-home'), homeFirst);
 (async () => {
   $$('[data-act]').forEach(x => x.disabled = true);
-  uiKitInit(); bootConsole();
+  uiKitInit(); skRun($('#p-home'), homeFirst);
   setInterval(() => { if (!document.hidden) bootReady ? refresh() : bootConsole(); }, 3000);
   setInterval(() => { if (bootReady && ST?.setup_done) refreshBalance(); }, 600000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) bootReady ? refresh() : bootConsole(); });
