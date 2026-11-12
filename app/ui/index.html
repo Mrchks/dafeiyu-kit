@@ -1926,6 +1926,8 @@ function btnHold(b, p){
   b._hold = (b._hold || 0) + 1;
   // 点击后打开了弹窗（弹窗里在读数据）时，弹窗外的按钮不转圈
   const covered = () => [...document.querySelectorAll('dialog[open]')].some(d => !d.contains(b));
+  // 处理函数已经把按钮设为不可用时立即转圈：否则按钮会先按「不可用」样式变暗，0.12 秒后又恢复亮度，看起来闪一下
+  if (b.disabled && !covered()) btnBusy(b, true);
   const t = setTimeout(() => { if (b._hold && b.isConnected && !covered()) btnBusy(b, true); }, 120);
   const end = () => { clearTimeout(t); b._hold = Math.max(0, b._hold - 1); if (!b._hold) btnBusy(b, false); };
   p.then(end, end); return p;
